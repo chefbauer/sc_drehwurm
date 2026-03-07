@@ -10,16 +10,18 @@
 
 # Font Definitionen (Top-Level, nicht unter lvgl!)
 font:
-  - file: "fonts/Roboto-Bold.ttf"
+  - file: "gfonts://Roboto"
     id: font_title
     size: 60
+    weight: 700
     bpp: 4
     glyphs: |
       !"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyzäöüÄÖÜß{|}~
 
-  - file: "fonts/Roboto-Regular.ttf"
+  - file: "gfonts://Roboto"
     id: font_normal
     size: 28
+    weight: 400
     bpp: 4
     glyphs: |
       !"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyzäöüÄÖÜß{|}~
