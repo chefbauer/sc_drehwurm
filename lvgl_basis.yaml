@@ -64,69 +64,74 @@ lvgl:
                   text_color: 0x003366  # Dunkelblau
                   text_align: CENTER
               
-              # 3D-Behälter mit Wasserstand (Proportionen: Ø25cm / H24cm)
+              # 3D-Behälter – Alles als echte Kreise, dann Y 50% stauchen
+              # → Kreise werden zu Ellipsen (256=100%, 128=50%)
               - obj:
                   id: container_tank
-                  width: 360
-                  height: 360
+                  width: 320
+                  height: 840
                   align: CENTER
-                  y: 20
+                  y: 0
                   bg_opa: TRANSP
                   border_width: 0
+                  transform_scale_y: 128
                   widgets:
-                    # Zylinderkörper (Mantel-Rechteck)
+                    # Layer 1: Innenwand / Mantel (Rechteck, volle Höhe, zuerst)
                     - obj:
                         id: cyl_body
-                        width: 280
-                        height: 240
-                        align: TOP_MID
-                        y: 40
-                        bg_color: 0x708090
-                        border_width: 3
-                        border_color: 0x2A3A4A
-                        radius: 4
-                    # Boden-Ellipse – radius = Hälfte der Höhe → echte Oval-Form
-                    - obj:
-                        id: cyl_bottom
-                        width: 280
-                        height: 80
-                        align: TOP_MID
-                        y: 240
-                        radius: 40
-                        bg_color: 0x4A5A6A
-                        border_width: 3
-                        border_color: 0x2A3A4A
-                    # Wasser-Körper (füllt ~85% des Innenraums)
-                    - obj:
-                        id: water_body
-                        width: 264
-                        height: 204
-                        align: TOP_MID
-                        y: 76
-                        bg_color: 0x2E7BB5
-                        border_width: 0
-                        radius: 0
-                    # Wasser-Oberfläche (ovale Ellipse, radius = Hälfte der Höhe)
-                    - obj:
-                        id: water_surface
-                        width: 264
-                        height: 60
-                        align: TOP_MID
-                        y: 46
-                        radius: 30
-                        bg_color: 0x5BB0E0
-                        border_width: 0
-                    # Oberer Rand / Öffnung (zuletzt gezeichnet → überdeckt Körper-Oberkante)
-                    - obj:
-                        id: cyl_rim
-                        width: 280
-                        height: 80
+                        width: 300
+                        height: 648
                         align: TOP_MID
                         y: 0
-                        radius: 40
-                        bg_color: 0x8898A8
-                        border_width: 3
-                        border_color: 0x2A3A4A
+                        bg_color: 0x708090
+                        border_width: 0
+                        radius: 0
+                    # Layer 2: Boden – echter Kreis (radius = Hälfte height)
+                    #          → nach Stauchung: 300×150 Ellipse
+                    - obj:
+                        id: cyl_bottom
+                        width: 300
+                        height: 300
+                        radius: 150
+                        align: TOP_MID
+                        y: 498
+                        bg_color: 0x4A5A6A
+                        border_width: 0
+                    # Layer 3: Wasser-Körper (Rechteck, etwas schmäler als Wand)
+                    - obj:
+                        id: water_body
+                        width: 260
+                        height: 398
+                        align: TOP_MID
+                        y: 250
+                        bg_color: 0x1E6BAF
+                        border_width: 0
+                        radius: 0
+                    # Layer 4: Wasser-Oberfläche – echter Kreis
+                    #          → nach Stauchung: ovale Wasserfläche
+                    #          Mittelpunkt bei y=250 (80% Füllstand)
+                    - obj:
+                        id: water_surface
+                        width: 260
+                        height: 260
+                        radius: 130
+                        align: TOP_MID
+                        y: 120
+                        bg_color: 0x4AAEDD
+                        border_width: 0
+                    # Layer 5: Oberer Rand – Kreisring (bg TRANSP, nur Border)
+                    #          → nach Stauchung: Ellipsenring / offene Öffnung
+                    - obj:
+                        id: cyl_rim
+                        width: 300
+                        height: 300
+                        radius: 150
+                        align: TOP_MID
+                        y: 0
+                        bg_opa: TRANSP
+                        border_width: 14
+                        border_color: 0x9AAABB
+                        border_opa: COVER
 
               # Navigation Button zu Einstellungen
               - button:
