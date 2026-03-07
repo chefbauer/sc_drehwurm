@@ -28,6 +28,43 @@ font:
     bpp: 4
     glyphs: " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyzäöüÄÖÜß{|}~"
 
+  # Symbol-Font – Font Awesome Solid (Play/Pause)
+  - file: "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/webfonts/fa-solid-900.ttf"
+    id: font_icons
+    size: 40
+    bpp: 4
+    glyphs:
+      - "\uF04B"
+      - "\uF04C"
+
+# Timer-Globals für alle 6 Slots
+# Status: 0=gestoppt  1=läuft  2=pausiert
+globals:
+  - id: slot_start_ms
+    type: std::array<uint32_t, 6>
+    restore_value: false
+    initial_value: '{0, 0, 0, 0, 0, 0}'
+  - id: slot_elapsed_ms
+    type: std::array<uint32_t, 6>
+    restore_value: false
+    initial_value: '{0, 0, 0, 0, 0, 0}'
+  - id: slot_status
+    type: std::array<int, 6>
+    restore_value: false
+    initial_value: '{0, 0, 0, 0, 0, 0}'
+
+interval:
+  - interval: 1s
+    then:
+      - lambda: |-
+          uint32_t t = id(slot_elapsed_ms)[0];
+          if (id(slot_status)[0] == 1)
+            t += millis() - id(slot_start_ms)[0];
+          uint32_t s = t / 1000;
+          char buf[6];
+          snprintf(buf, sizeof(buf), "%02u:%02u", (unsigned)(s / 60), (unsigned)(s % 60));
+          lv_label_set_text(id(lbl_slot1_time), buf);
+
 # LVGL Configuration
 lvgl:
   log_level: INFO
@@ -143,6 +180,28 @@ lvgl:
                   border_width: 0
                   pad_all: 0
                   scrollable: false
+                  on_click:
+                    - lambda: |-
+                        int i = 0;
+                        if (id(slot_status)[i] == 0 || id(slot_status)[i] == 2) {
+                          id(slot_start_ms)[i] = millis();
+                          id(slot_status)[i] = 1;
+                          lv_label_set_text(id(lbl_slot1_symbol), LV_SYMBOL_PAUSE);
+                        } else {
+                          id(slot_elapsed_ms)[i] += millis() - id(slot_start_ms)[i];
+                          id(slot_status)[i] = 2;
+                          lv_label_set_text(id(lbl_slot1_symbol), LV_SYMBOL_PLAY);
+                        }
+                  on_long_press:
+                    - lambda: |-
+                        int i = 0;
+                        if (id(slot_status)[i] == 2) {
+                          id(slot_elapsed_ms)[i] = 0;
+                          id(slot_start_ms)[i] = 0;
+                          id(slot_status)[i] = 0;
+                          lv_label_set_text(id(lbl_slot1_time), "00:00");
+                          lv_label_set_text(id(lbl_slot1_symbol), LV_SYMBOL_PLAY);
+                        }
                   widgets:
                     - obj:
                         id: slot1_tab
@@ -174,22 +233,34 @@ lvgl:
                         bg_opa: 50%
                         border_width: 0
                         radius: 0
-                        pad_all: 0
+                        pad_left: 12
+                        pad_top: 0
+                        pad_right: 0
+                        pad_bottom: 0
                         scrollable: false
                         widgets:
                           - label:
                               id: lbl_slot1_timer_title
                               text: "Timer:"
-                              align: TOP_MID
-                              y: 15
+                              align: TOP_LEFT
+                              x: 0
+                              y: 10
                               text_font: font_normal
                               text_color: 0x880000
                           - label:
                               id: lbl_slot1_time
                               text: "00:00"
-                              align: TOP_MID
-                              y: 55
+                              align: TOP_LEFT
+                              x: 0
+                              y: 52
                               text_font: font_normal
+                              text_color: 0x880000
+                          - label:
+                              id: lbl_slot1_symbol
+                              text: "\uF04B"
+                              text_font: font_icons
+                              align: RIGHT_MID
+                              x: -8
                               text_color: 0x880000
               - obj:
                   id: slot2_yellow
