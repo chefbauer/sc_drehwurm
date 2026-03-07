@@ -64,67 +64,67 @@ lvgl:
                   text_color: 0x003366  # Dunkelblau
                   text_align: CENTER
               
-              # 3D-Behälter mit Wasserstand
+              # 3D-Behälter mit Wasserstand (Proportionen: Ø25cm / H24cm)
               - obj:
                   id: container_tank
-                  width: 260
-                  height: 380
+                  width: 360
+                  height: 360
                   align: CENTER
-                  y: 0
+                  y: 20
                   bg_opa: TRANSP
                   border_width: 0
                   widgets:
-                    # Zylinderkörper (Mantel)
+                    # Zylinderkörper (Mantel-Rechteck)
                     - obj:
                         id: cyl_body
-                        width: 200
-                        height: 280
+                        width: 280
+                        height: 240
                         align: TOP_MID
-                        y: 25
-                        bg_color: 0x607080
+                        y: 40
+                        bg_color: 0x708090
                         border_width: 3
                         border_color: 0x2A3A4A
-                        radius: 0
-                    # Boden-Ellipse (3D-Effekt)
+                        radius: 4
+                    # Boden-Ellipse – radius = Hälfte der Höhe → echte Oval-Form
                     - obj:
                         id: cyl_bottom
-                        width: 200
-                        height: 50
+                        width: 280
+                        height: 80
                         align: TOP_MID
-                        y: 280
-                        radius: 25
-                        bg_color: 0x405060
+                        y: 240
+                        radius: 40
+                        bg_color: 0x4A5A6A
                         border_width: 3
                         border_color: 0x2A3A4A
-                    # Wasser-Körper (blau)
+                    # Wasser-Körper (füllt ~85% des Innenraums)
                     - obj:
                         id: water_body
-                        width: 184
-                        height: 216
+                        width: 264
+                        height: 204
                         align: TOP_MID
-                        y: 89
-                        bg_color: 0x3A8FC0
+                        y: 76
+                        bg_color: 0x2E7BB5
                         border_width: 0
                         radius: 0
-                    # Wasser-Oberfläche (helle Ellipse)
+                    # Wasser-Oberfläche (ovale Ellipse, radius = Hälfte der Höhe)
                     - obj:
                         id: water_surface
-                        width: 184
-                        height: 38
+                        width: 264
+                        height: 60
                         align: TOP_MID
-                        y: 70
-                        radius: 19
-                        bg_color: 0x6BB8E0
+                        y: 46
+                        radius: 30
+                        bg_color: 0x5BB0E0
                         border_width: 0
-                    # Oberer Rand / Öffnung
+                    # Oberer Rand / Öffnung (zuletzt gezeichnet → überdeckt Körper-Oberkante)
                     - obj:
                         id: cyl_rim
-                        width: 200
-                        height: 50
+                        width: 280
+                        height: 80
                         align: TOP_MID
                         y: 0
-                        radius: 25
-                        bg_color: 0x8090A0
+                        radius: 40
+                        bg_color: 0x8898A8
                         border_width: 3
                         border_color: 0x2A3A4A
 
