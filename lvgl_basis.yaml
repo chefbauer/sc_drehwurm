@@ -99,7 +99,7 @@ lvgl:
                         text_color: 0x000000  # Schwarz
               
               # Navigation Button zu Einstellungen
-              - btn:
+              - button:
                   id: btn_to_settings
                   width: 200
                   height: 60
@@ -155,7 +155,7 @@ lvgl:
                         text_color: 0x000000  # Schwarz
               
               # Zurück Button
-              - btn:
+              - button:
                   id: btn_back
                   width: 200
                   height: 60
