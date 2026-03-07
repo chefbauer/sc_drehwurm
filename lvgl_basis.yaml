@@ -221,6 +221,7 @@ lvgl:
                         radius: 0
                         pad_all: 0
                         scrollable: false
+                        clickable: false
                         widgets:
                           - label:
                               text: "1"
@@ -243,6 +244,7 @@ lvgl:
                         pad_right: 0
                         pad_bottom: 0
                         scrollable: false
+                        clickable: false
                         widgets:
                           - label:
                               id: lbl_slot1_timer_title
