@@ -34,24 +34,6 @@ lvgl:
     obj:
       bg_color: 0xFFFFFF  # Weiß
       text_color: 0x000000  # Schwarz
-    
-  # Styles
-  styles:
-    - id: style_title
-      text_font: font_title
-      text_color: 0x003366  # Dunkelblau
-      text_align: CENTER
-      bg_color: 0xFFFFFF
-      bg_opa: COVER
-      pad_all: 10
-    
-    - id: style_container
-      bg_color: 0xF0F0F0  # Hellgrau
-      bg_opa: COVER
-      border_color: 0x003366  # Dunkelblau
-      border_width: 2
-      radius: 10
-      pad_all: 15
 
   # Pages/Screens Definition
   pages:
@@ -85,7 +67,12 @@ lvgl:
                   height: 400
                   align: CENTER
                   y: 50
-                  styles: style_container
+                  bg_color: 0xF0F0F0
+                  bg_opa: COVER
+                  border_color: 0x003366
+                  border_width: 2
+                  radius: 10
+                  pad_all: 15
                   widgets:
                     - label:
                         id: status_label
@@ -141,7 +128,12 @@ lvgl:
                   height: 400
                   align: CENTER
                   y: 50
-                  styles: style_container
+                  bg_color: 0xF0F0F0
+                  bg_opa: COVER
+                  border_color: 0x003366
+                  border_width: 2
+                  radius: 10
+                  pad_all: 15
                   widgets:
                     - label:
                         id: config_label
