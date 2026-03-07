@@ -141,8 +141,9 @@ lvgl:
                   clip_corner: true
                   bg_opa: TRANSP
                   border_width: 0
+                  scrollable: false
                   widgets:
-                    # Lasche links: volle Farbe, 50px, eckig (Parent clippt die Ecken)
+                    # Lasche links: volle Farbe 50px
                     - obj:
                         id: slot1_tab
                         width: 50
@@ -154,13 +155,14 @@ lvgl:
                         bg_opa: COVER
                         border_width: 0
                         radius: 0
+                        scrollable: false
                         widgets:
                           - label:
                               text: "1"
                               align: CENTER
                               text_font: font_normal
                               text_color: 0xFFFFFF
-                    # Timer-Bereich rechts: 50% Rot, eckig (Parent clippt die Ecken)
+                    # Timer-Bereich: 50% Rot, 240px breit
                     - obj:
                         id: slot1_timer_area
                         width: 240
@@ -172,21 +174,32 @@ lvgl:
                         bg_opa: 50%
                         border_width: 0
                         radius: 0
+                        scrollable: false
                         widgets:
-                          - label:
-                              id: lbl_slot1_timer_title
-                              text: "Timer:"
-                              align: TOP_MID
-                              y: 8
-                              text_font: font_normal
-                              text_color: 0x880000
-                          - label:
-                              id: lbl_slot1_time
-                              text: "00:00"
-                              align: BOTTOM_MID
-                              y: -5
-                              text_font: font_title
-                              text_color: 0x880000
+                          # Zentrierter Wrapper, linksbündige Labels innen
+                          - obj:
+                              id: slot1_text_wrap
+                              width: 180
+                              height: 110
+                              align: CENTER
+                              bg_opa: TRANSP
+                              border_width: 0
+                              scrollable: false
+                              widgets:
+                                - label:
+                                    id: lbl_slot1_timer_title
+                                    text: "Timer:"
+                                    align: TOP_LEFT
+                                    y: 5
+                                    text_font: font_normal
+                                    text_color: 0x880000
+                                - label:
+                                    id: lbl_slot1_time
+                                    text: "00:00"
+                                    align: TOP_LEFT
+                                    y: 45
+                                    text_font: font_title
+                                    text_color: 0x880000
               - obj:
                   id: slot2_yellow
                   width: 290
