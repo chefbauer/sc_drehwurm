@@ -143,11 +143,11 @@ lvgl:
                   border_width: 0
                   scrollable: false
                   widgets:
-                    # Lasche links: volle Farbe 50px
+                    # Lasche links: volle Farbe, 50px breit, 100% hoch
                     - obj:
                         id: slot1_tab
                         width: 50
-                        height: 120
+                        height: 100%
                         align: TOP_LEFT
                         x: 0
                         y: 0
@@ -162,13 +162,13 @@ lvgl:
                               align: CENTER
                               text_font: font_normal
                               text_color: 0xFFFFFF
-                    # Timer-Bereich: 50% Rot, 240px breit
+                    # Timer-Bereich: 50% Rot, restliche Breite, 100% hoch
                     - obj:
                         id: slot1_timer_area
                         width: 240
-                        height: 120
-                        align: TOP_LEFT
-                        x: 50
+                        height: 100%
+                        align: TOP_RIGHT
+                        x: 0
                         y: 0
                         bg_color: 0xFF0000
                         bg_opa: 50%
@@ -176,30 +176,20 @@ lvgl:
                         radius: 0
                         scrollable: false
                         widgets:
-                          # Zentrierter Wrapper, linksbündige Labels innen
-                          - obj:
-                              id: slot1_text_wrap
-                              width: 180
-                              height: 110
-                              align: CENTER
-                              bg_opa: TRANSP
-                              border_width: 0
-                              scrollable: false
-                              widgets:
-                                - label:
-                                    id: lbl_slot1_timer_title
-                                    text: "Timer:"
-                                    align: TOP_LEFT
-                                    y: 5
-                                    text_font: font_normal
-                                    text_color: 0x880000
-                                - label:
-                                    id: lbl_slot1_time
-                                    text: "00:00"
-                                    align: TOP_LEFT
-                                    y: 45
-                                    text_font: font_title
-                                    text_color: 0x880000
+                          - label:
+                              id: lbl_slot1_timer_title
+                              text: "Timer:"
+                              align: TOP_MID
+                              y: 10
+                              text_font: font_normal
+                              text_color: 0x880000
+                          - label:
+                              id: lbl_slot1_time
+                              text: "00:00"
+                              align: BOTTOM_MID
+                              y: -8
+                              text_font: font_title
+                              text_color: 0x880000
               - obj:
                   id: slot2_yellow
                   width: 290
