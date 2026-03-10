@@ -14,25 +14,25 @@ font:
     id: font_title
     size: 60
     bpp: 4
-    glyphs: " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyzäöüÄÖÜß{|}~"
+    glyphs: " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyzäöüÄÖÜß{|}~°"
 
   - file: "gfonts://Roboto@400"
     id: font_normal
     size: 28
     bpp: 4
-    glyphs: " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyzäöüÄÖÜß{|}~"
+    glyphs: " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyzäöüÄÖÜß{|}~°"
 
   - file: "gfonts://Roboto@400"
     id: font_tab
     size: 30
     bpp: 4
-    glyphs: " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyzäöüÄÖÜß{|}~"
+    glyphs: " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyzäöüÄÖÜß{|}~°"
 
   - file: "gfonts://Roboto@400"
     id: font_small
     size: 18
     bpp: 4
-    glyphs: " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyzäöüÄÖÜß{|}~"
+    glyphs: " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyzäöüÄÖÜß{|}~°"
 
   # Symbol-Font – Font Awesome Solid (Play/Pause)
   - file: "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/webfonts/fa-solid-900.ttf"
@@ -131,7 +131,7 @@ lvgl:
               # Titel oben mittig
               - label:
                   id: main_title
-                  text: "SC Drehwurm Kühler"
+                  text: "SC Schwippschwenker"
                   align: TOP_MID
                   y: 20
                   text_font: font_title
@@ -998,8 +998,8 @@ lvgl:
                                   text_color: 0x000000
                               - switch:
                                   id: sw_kuehlung
-                                  align: RIGHT_MID
-                                  x: -10
+                                  align: LEFT_MID
+                                  x: 200
                                   on_value:
                                     - lambda: |-
                                         auto call = id(climate_thermostat).make_call();
@@ -1033,13 +1033,16 @@ lvgl:
                                   align: RIGHT_MID
                                   x: -70
                                   min_value: 0
-                                  max_value: 100
+                                  max_value: 50
                                   value: 15
                                   on_value:
                                     - lambda: |-
                                         auto call = id(climate_thermostat).make_call();
-                                        call.set_target_temperature_high(x / 10.0f);
+                                        call.set_target_temperature(x / 10.0f);
                                         call.perform();
+                                        char buf[8];
+                                        snprintf(buf, sizeof(buf), "%.1f°", x / 10.0f);
+                                        lv_label_set_text(id(lbl_temp_wert), buf);
                               - label:
                                   id: lbl_temp_wert
                                   text: "1.5°"
@@ -1062,7 +1065,7 @@ lvgl:
                                   width: 120
                                   height: 50
                                   align: LEFT_MID
-                                  x: 10
+                                  x: 290
                                   widgets:
                                     - label:
                                         text: "1°C"
@@ -1072,7 +1075,7 @@ lvgl:
                                   on_click:
                                     - lambda: |-
                                         auto call = id(climate_thermostat).make_call();
-                                        call.set_target_temperature_high(1.0f);
+                                        call.set_target_temperature(1.0f);
                                         call.perform();
                                         lv_slider_set_value(id(slider_temp), 10, LV_ANIM_OFF);
                                         lv_label_set_text(id(lbl_temp_wert), "1.0°");
@@ -1081,7 +1084,7 @@ lvgl:
                                   width: 120
                                   height: 50
                                   align: LEFT_MID
-                                  x: 150
+                                  x: 420
                                   widgets:
                                     - label:
                                         text: "1.5°C"
@@ -1091,7 +1094,7 @@ lvgl:
                                   on_click:
                                     - lambda: |-
                                         auto call = id(climate_thermostat).make_call();
-                                        call.set_target_temperature_high(1.5f);
+                                        call.set_target_temperature(1.5f);
                                         call.perform();
                                         lv_slider_set_value(id(slider_temp), 15, LV_ANIM_OFF);
                                         lv_label_set_text(id(lbl_temp_wert), "1.5°");
@@ -1100,7 +1103,7 @@ lvgl:
                                   width: 120
                                   height: 50
                                   align: LEFT_MID
-                                  x: 290
+                                  x: 550
                                   widgets:
                                     - label:
                                         text: "5°C"
@@ -1110,7 +1113,7 @@ lvgl:
                                   on_click:
                                     - lambda: |-
                                         auto call = id(climate_thermostat).make_call();
-                                        call.set_target_temperature_high(5.0f);
+                                        call.set_target_temperature(5.0f);
                                         call.perform();
                                         lv_slider_set_value(id(slider_temp), 50, LV_ANIM_OFF);
                                         lv_label_set_text(id(lbl_temp_wert), "5.0°");
