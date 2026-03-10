@@ -1,3 +1,7 @@
+esphome:
+  includes:
+    - amg8833_helper.h
+
 mcp4728:
   - id: dac_output
 
@@ -30,6 +34,23 @@ output:
     id: output_kompressor_relais
     pin: ${pin_pwm4}
 
+i2c:
+  - id: i2c_bus
+    sda: ${pin_i2c_sda}
+    scl: ${pin_i2c_scl}
+    scan: true
+
+i2c_device:
+  - id: i2c_amg8833
+    address: 0x69
+    i2c_id: i2c_bus
+
+globals:
+  - id: amg_pixel_temps
+    type: std::array<float, 64>
+    restore_value: false
+    initial_value: '{}'
+
 sensor:
   # Temperatursensor Becken (Platzhalter, wird später ersetzt)
   - platform: template
@@ -40,6 +61,103 @@ sensor:
     state_class: measurement
     lambda: |-
       return 5.0;
+
+  # AMG8833 Infrarot-Temperatursensor (8x8 Matrix)
+  - platform: template
+    id: sensor_amg8833
+    name: "sensor_Temp_AMG8833"
+    unit_of_measurement: "°C"
+    accuracy_decimals: 1
+    update_interval: 1s
+    lambda: |-
+      const float EMISSIVITY = 0.92;
+
+      // Ambient lesen (Chip-Thermistor)
+      uint8_t amb_buf[2];
+      float ambient = 25.0;  // Fallback
+      if (id(i2c_amg8833).read_register(0x0E, amb_buf, 2) == i2c::ERROR_OK) {
+        int16_t raw = (amb_buf[1] << 8) | amb_buf[0];
+        ambient = raw * 0.0625f;
+      } else {
+        ESP_LOGW("amg", "Ambient fehlgeschlagen → Fallback 25 °C");
+      }
+
+      // Pixel-Block lesen
+      uint8_t buf[128];
+      if (id(i2c_amg8833).read_register(0x80, buf, 128) != i2c::ERROR_OK) {
+        ESP_LOGE("amg", "Pixel-Read fehlgeschlagen");
+        return {};
+      }
+
+      // Min/Max finden
+      float min_t = 999.9f;
+      float max_t = -999.9f;
+      int min_idx = -1;
+      int max_idx = -1;
+
+      ESP_LOGI("amg", "┌────────────────────────────── 8×8 Matrix (raw) ──────────────────────────────┐");
+
+      char ln[100];
+      for (int r = 0; r < 8; r++) {
+        int p = snprintf(ln, sizeof(ln), "│ ");
+        for (int c = 0; c < 8; c++) {
+          int idx = r * 8 + c;
+          int o = idx * 2;
+          int16_t raw = (buf[o+1] << 8) | buf[o];
+          float t = (raw <= -2048 || raw >= 2048) ? NAN : raw * 0.25f;
+          if (!isnan(t)) {
+            if (t < min_t) { min_t = t; min_idx = idx; }
+            if (t > max_t) { max_t = t; max_idx = idx; }
+          }
+          const char* mark = " ";
+          if (idx == max_idx) mark = "+";
+          if (idx == min_idx) mark = "-";
+          p += snprintf(ln + p, sizeof(ln) - p, "%s%5.1f ", mark, isnan(t) ? 0.0f : t);
+        }
+        snprintf(ln + p, sizeof(ln) - p, "│");
+        ESP_LOGI("amg", "%s", ln);
+      }
+
+      ESP_LOGI("amg", "└────────────────────────────────────────────────────────────────────────────");
+
+      if (min_idx >= 0 && max_idx >= 0) {
+        ESP_LOGI("amg", " - Kältester: %.1f °C   (Zeile %d, Spalte %d)", min_t, min_idx/8+1, min_idx%8+1);
+        ESP_LOGI("amg", " + Wärmster : %.1f °C   (Zeile %d, Spalte %d)", max_t, max_idx/8+1, max_idx%8+1);
+      }
+
+      // Pixel-Temperaturen in global array schreiben
+      for (int idx = 0; idx < 64; idx++) {
+        int o = idx * 2;
+        int16_t raw = (buf[o+1] << 8) | buf[o];
+        id(amg_pixel_temps)[idx] = (raw > -2048 && raw < 2048) ? raw * 0.25f : 0.0f;
+      }
+
+      // Inneres 4×4 für Mittelwert (rows 2–5, cols 2–5)
+      float inner_sum = 0.0f;
+      int inner_count = 0;
+      for (int r = 2; r <= 5; r++) {
+        for (int c = 2; c <= 5; c++) {
+          int idx = r * 8 + c;
+          int o = idx * 2;
+          int16_t raw = (buf[o+1] << 8) | buf[o];
+          if (raw > -2048 && raw < 2048) {
+            float rt = raw * 0.25f;
+            float corr = ambient + (rt - ambient) / EMISSIVITY;
+            inner_sum += corr;
+            inner_count++;
+          }
+        }
+      }
+
+      if (inner_count == 0) {
+        ESP_LOGW("amg", "Keine gültigen Werte im inneren 4×4");
+        return {};
+      }
+
+      float avg = inner_sum / inner_count;
+      ESP_LOGD("amg", "Mittelwert (inneres 4×4, ε=%.2f): %.2f °C   (Ambient: %.1f °C, %d Pixel)",
+               EMISSIVITY, avg, ambient, inner_count);
+      return avg;
 
 climate:
   - platform: thermostat

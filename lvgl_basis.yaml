@@ -101,6 +101,10 @@ interval:
             snprintf(buf, sizeof(buf), "%02u:%02u", (unsigned)(s / 60), (unsigned)(s % 60));
             lv_label_set_text(id(lbl_slot6_time), buf);
           }
+          // AMG8833 Overlay aktualisieren wenn sichtbar
+          if (!lv_obj_has_flag(id(overlay_amg8833), LV_OBJ_FLAG_HIDDEN)) {
+            amg_update_cells(id(amg_pixel_temps).data());
+          }
 
 # LVGL Configuration
 lvgl:
@@ -1182,6 +1186,24 @@ lvgl:
                                     - output.set_level:
                                         id: output_pumpe_pwm1
                                         level: !lambda "return x / 100.0;"
+                        # AMG8833 Live-Ansicht
+                        - button:
+                            id: btn_amg_live
+                            width: 220
+                            height: 60
+                            align: TOP_MID
+                            y: 200
+                            bg_color: 0x334466
+                            widgets:
+                              - label:
+                                  text: "AMG8833 Live"
+                                  align: CENTER
+                                  text_font: font_normal
+                                  text_color: 0xFFFFFF
+                            on_click:
+                              - lambda: |-
+                                  amg_create_grid(id(amg_grid_container), 62);
+                              - lvgl.widget.show: overlay_amg8833
 
               # Zurück Button
               - button:

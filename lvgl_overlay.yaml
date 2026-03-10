@@ -1,0 +1,46 @@
+lvgl:
+  top_layer:
+    widgets:
+      # ================================
+      # OVERLAY: AMG8833 Live-Ansicht
+      # ================================
+      - obj:
+          id: overlay_amg8833
+          width: 100%
+          height: 100%
+          bg_color: 0xFFFFFF
+          bg_opa: 90%
+          hidden: true
+          clickable: true
+          pad_all: 0
+          scrollable: false
+          widgets:
+            # 8×8 Grid Container (496×496 px, leicht links zentriert)
+            # Zellen werden per amg_create_grid() beim ersten Öffnen erstellt
+            - obj:
+                id: amg_grid_container
+                width: 496
+                height: 496
+                align: CENTER
+                x: -50
+                bg_opa: TRANSP
+                border_width: 0
+                pad_all: 0
+                scrollable: false
+
+            # Exit-Button (rechts neben Grid)
+            - button:
+                id: btn_amg_exit
+                width: 80
+                height: 80
+                align: RIGHT_MID
+                x: -20
+                bg_color: 0xCC3333
+                widgets:
+                  - label:
+                      text: "X"
+                      align: CENTER
+                      text_font: font_normal
+                      text_color: 0xFFFFFF
+                on_click:
+                  - lvgl.widget.hide: overlay_amg8833
