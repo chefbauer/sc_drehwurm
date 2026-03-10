@@ -6,15 +6,35 @@
 // AMG8833 Zell-Objekte (8x8 Grid, lazy-created beim ersten Overlay-Aufruf)
 static lv_obj_t* amg_cells[64] = {};
 
-// Farbinterpolation: 0°C = hellblau (#ADD8E6), ≥20°C = hellrot (#FF8080)
+// Thermisches Farbspektrum (Iron/Rainbow): 0°C = schwarz-blau, 30°C = weiß
+// Palette: schwarz → blau → cyan → grün → gelb → orange → rot → weiß
 inline lv_color_t amg_temp_color(float temp) {
-    float t = temp / 20.0f;
+    float t = temp / 30.0f;
     if (t < 0.0f) t = 0.0f;
     if (t > 1.0f) t = 1.0f;
-    uint8_t r = (uint8_t)(173 + t * (255 - 173));
-    uint8_t g = (uint8_t)(216 - t * (216 - 128));
-    uint8_t b = (uint8_t)(230 - t * (230 - 128));
-    return lv_color_make(r, g, b);
+
+    struct Stop { float pos; uint8_t r, g, b; };
+    static const Stop palette[8] = {
+        {0.000f,   0,   0,   0},  // schwarz
+        {0.143f,   0,   0, 220},  // blau
+        {0.286f,   0, 210, 220},  // cyan
+        {0.429f,   0, 210,   0},  // grün
+        {0.571f, 255, 255,   0},  // gelb
+        {0.714f, 255, 120,   0},  // orange
+        {0.857f, 255,   0,   0},  // rot
+        {1.000f, 255, 255, 255},  // weiß
+    };
+
+    for (int i = 0; i < 7; i++) {
+        if (t <= palette[i + 1].pos) {
+            float seg = (t - palette[i].pos) / (palette[i + 1].pos - palette[i].pos);
+            uint8_t r = (uint8_t)(palette[i].r + seg * (palette[i + 1].r - palette[i].r));
+            uint8_t g = (uint8_t)(palette[i].g + seg * (palette[i + 1].g - palette[i].g));
+            uint8_t b = (uint8_t)(palette[i].b + seg * (palette[i + 1].b - palette[i].b));
+            return lv_color_make(r, g, b);
+        }
+    }
+    return lv_color_make(255, 255, 255);
 }
 
 // Grid-Zellen programmatisch erstellen (einmalig beim ersten Aufruf)
