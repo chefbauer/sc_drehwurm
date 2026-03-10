@@ -82,14 +82,11 @@ climate:
       - lambda: |-
           if (x.get_mode() == CLIMATE_MODE_OFF)
           {
-            auto call = id(pumpe_steuerung).turn_off();
-            call.perform();
+            id(output_pumpe_pwm1).turn_off();
           }
           else
           {
-            auto call = id(pumpe_steuerung).turn_on();
-            call.set_brightness(${c_pumpe_standby_perc} / 100.0);
-            call.perform();
+            id(output_pumpe_pwm1).set_level(${c_pumpe_standby_perc} / 100.0);
           }
     on_state:
       - lvgl.label.update:
