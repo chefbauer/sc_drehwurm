@@ -895,7 +895,18 @@ lvgl:
                     text_font: font_tab
                     text_color: 0x000000
                   tabs:
-                    # Tab 1: Bildschirm
+                    # Tab 1: System
+                    - name: "System"
+                      id: tab_system
+                      widgets:
+                        - label:
+                            id: lbl_system_placeholder
+                            text: "System-Einstellungen folgen..."
+                            align: CENTER
+                            text_font: font_normal
+                            text_color: 0x000000
+
+                    # Tab 2: Bildschirm
                     - name: "Bildschirm"
                       id: tab_bildschirm
                       widgets:
@@ -967,17 +978,6 @@ lvgl:
                                   bg_color: 0x0000FF
                                   bg_opa: COVER
                                   border_width: 0
-
-                    # Tab 2: System
-                    - name: "System"
-                      id: tab_system
-                      widgets:
-                        - label:
-                            id: lbl_system_placeholder
-                            text: "System-Einstellungen folgen..."
-                            align: CENTER
-                            text_font: font_normal
-                            text_color: 0x000000
 
                     # Tab 3: Kuehler
                     - name: "Kühler"
@@ -1186,24 +1186,40 @@ lvgl:
                                     - output.set_level:
                                         id: output_pumpe_pwm1
                                         level: !lambda "return x / 100.0;"
-                        # AMG8833 Live-Ansicht
-                        - button:
-                            id: btn_amg_live
-                            width: 220
-                            height: 60
+                        # Overlays
+                        - obj:
+                            id: row_overlays
+                            width: 960
+                            height: 70
                             align: TOP_MID
                             y: 200
-                            bg_color: 0x334466
+                            bg_opa: TRANSP
+                            border_width: 0
                             widgets:
                               - label:
-                                  text: "AMG8833 Live"
-                                  align: CENTER
+                                  id: lbl_overlays
+                                  text: "Overlays:"
+                                  align: LEFT_MID
+                                  x: 10
                                   text_font: font_normal
-                                  text_color: 0xFFFFFF
-                            on_click:
-                              - lambda: |-
-                                  amg_create_grid(id(amg_grid_container), 62);
-                              - lvgl.widget.show: overlay_amg8833
+                                  text_color: 0x000000
+                              - button:
+                                  id: btn_amg_live
+                                  width: 220
+                                  height: 60
+                                  align: LEFT_MID
+                                  x: 200
+                                  bg_color: 0x334466
+                                  widgets:
+                                    - label:
+                                        text: "AMG8833 Live"
+                                        align: CENTER
+                                        text_font: font_normal
+                                        text_color: 0xFFFFFF
+                                  on_click:
+                                    - lambda: |-
+                                        amg_create_grid(id(amg_grid_container), 62);
+                                    - lvgl.widget.show: overlay_amg8833
 
               # Zurück Button
               - button:
