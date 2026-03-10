@@ -23,6 +23,24 @@ output:
     id: output_kompressor_relais
     pin: ${pin_pwm4}
 
+  # PWM Beckenpumpe (Mini-Brushless)
+  - platform: ledc
+    id: output_pumpe_pwm1
+    pin: ${pin_pwm1}
+    frequency: 80000 Hz
+    min_power: 0.3
+
+sensor:
+  # Temperatursensor Becken (Platzhalter, wird später ersetzt)
+  - platform: template
+    id: sensor_temp_becken
+    name: "Temperatur Becken"
+    unit_of_measurement: "°C"
+    device_class: temperature
+    state_class: measurement
+    lambda: |-
+      return 5.0;
+
 climate:
   - platform: thermostat
     name: thermostat
@@ -39,11 +57,17 @@ climate:
       - output.set_level:
           id: output_luefter_kompressor_pwm
           level: !lambda "return ${fan_kompressor_max_perc} / 100.0;"
+      - output.set_level:
+          id: output_pumpe_pwm1
+          level: !lambda "return ${pumpe_becken_max_perc} / 100.0;"
     idle_action:
       - switch.turn_off: output_kompressor_relais
       - output.set_level:
           id: output_luefter_kompressor_pwm
           level: !lambda "return ${fan_kompressor_min_perc} / 100.0;"
+      - output.set_level:
+          id: output_pumpe_pwm1
+          level: !lambda "return 0.0;"
     default_preset: Eco
     preset:
       - name: Eco

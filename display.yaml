@@ -17,4 +17,4 @@ substitutions:
   fan_kompressor_min_perc: 20
   fan_kompressor_max_perc: 90
   
-
+  pumpe_becken_max_perc: 80
