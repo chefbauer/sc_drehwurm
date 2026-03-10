@@ -74,7 +74,7 @@ inline void amg_create_grid(lv_obj_t* parent, int cell_size) {
     for (int i = 0; i < 64; i++) {
         if (amg_cells[i] != nullptr) continue;
         int row = i / 8;
-        int col = i % 8;
+        int col = 7 - (i % 8);  // X-Spiegel: AMG8833 Pixel 0 = oben rechts
         lv_obj_t* cell = lv_obj_create(parent);
         lv_obj_set_size(cell, cell_size - 2, cell_size - 2);
         lv_obj_set_pos(cell, col * cell_size, row * cell_size);

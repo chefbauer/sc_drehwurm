@@ -1,8 +1,20 @@
-# Display Drehwurm - Pflichtenheft
+# SC Drehwurm – Projektinfo
 
-## Projekt Übersicht
+## Was ist das hier?
 
-ESPHome LVGL Display-Konfiguration für einen "Supercooler Drehwurm Kühler".
+**Schnellkühlanlage** auf Basis eines Kompressorkühlers.
+
+- Eine **Umwälzpumpe** für die Kühlung des Kühlwassers
+- Eine **Pumpe** für Vorratsbecken → Überlaufbecken
+- **Überlaufbecken mit Dreher** per Schrittmotor
+
+Ausgelegt für **Dosen und Flaschen** — durch das Drehen wird die Kühlleistung deutlich erhöht.
+
+---
+
+## Display / ESPHome
+
+ESPHome LVGL Display-Konfiguration für den "Supercooler Drehwurm Kühler".
 
 `lvgl_basis.yaml` wird in ESPHome via `packages:` importiert.  
 `lvgl_overlay.yaml` enthält alle Top-Layer Overlays.  

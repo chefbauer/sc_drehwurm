@@ -248,3 +248,279 @@ sensor:
 
       ESP_LOGD("mlx", "Object: %.2f °C | Ambient: %.2f °C", To, ambient_temp);
       return To;
+
+
+# MLX
+button:
+  - platform: template
+    name: "MLX90632 Set 8Hz, Extended + Continuous"
+    id: mlx_set_extended
+    on_press:
+      then:
+        script.execute: script_mlx90632_set_mode_continous_extended_16hz
+
+script:
+    - id: script_mlx90632_set_mode_continous_extended_16hz
+      then:
+        - lambda: |-
+            ESP_LOGI("mlx_button", "=== Setze Extended + Continuous ===");
+
+            uint8_t buf[2];
+            uint8_t new_buf[2];
+            uint16_t control = 0;
+            uint16_t new_control = 0;
+            uint16_t status = 0;
+            int32_t product_id = 0;
+            int32_t device_id = 0;
+            constexpr uint16_t REG_CONTROL = 0x3001;
+            constexpr uint16_t REG_STATUS = 0x3FFF;
+            constexpr uint16_t STAT_DATA_RDY = 1 << 0;
+            
+            static bool rate_set = false;
+
+            // // Hilfsfunktion für 32-Bit-Read (LSW + MSW)
+            // auto read32 = [&](uint16_t lsw_addr, int32_t& var) {
+            //     int16_t lsw = 0, msw = 0;
+            //     if (id(i2c_mlx90632).read_register16(lsw_addr, buf, 2) == i2c::ERROR_OK) {
+            //     lsw = (int16_t)((buf[0] << 8) | buf[1]);
+            //     } else {
+            //     ESP_LOGE("mlx_info", "Fehler LSW 0x%04X", lsw_addr);
+            //     }
+            //     if (id(i2c_mlx90632).read_register16(lsw_addr + 1, buf, 2) == i2c::ERROR_OK) {
+            //     msw = (int16_t)((buf[0] << 8) | buf[1]);
+            //     } else {
+            //     ESP_LOGE("mlx_info", "Fehler MSW 0x%04X", lsw_addr + 1);
+            //     }
+            //     var = ((int32_t)msw << 16) | (int32_t)(lsw & 0xFFFF);
+            // };
+
+            // ESP_LOGD("mlx", "Adafruit Addressed Reset (0x3005 = 0x0006) startet...");
+
+            // // Exakt Adafruit: 4 Bytes schreiben (Adresse 0x3005 + Daten 0x0006)
+            // uint8_t reset_cmd[4] = {0x30, 0x05, 0x00, 0x06};
+            // esp_err_t err = id(i2c_mlx90632)->write(reset_cmd, 4);
+
+            // 1. Addressed Reset (0x0006 an 0x3005) – sehr hilfreich gegen Sticky-States
+            uint8_t reset_buf[2] = {0x00, 0x06};
+            id(i2c_mlx90632).write_register16(0x3005U, reset_buf, 2);
+            delay(180);  // Reset braucht etwas Zeit
+
+
+            // Product ID (0x2400-0x2401)
+            read32(0x2400, product_id);
+
+            // Device ID / Variant (0x2402-0x2403)
+            read32(0x2402, device_id);
+
+            // Status-Register (0x3FFF)
+            if (id(i2c_mlx90632).read_register16(0x3FFF, buf, 2) == i2c::ERROR_OK) {
+                status = (buf[0] << 8) | buf[1];
+            } else {
+                ESP_LOGE("mlx_info", "Fehler Status-Register 0x3FFF");
+            }
+            // Control-Register (0x3001) – meas_select
+            if (id(i2c_mlx90632).read_register16(0x3001, buf, 2) == i2c::ERROR_OK) {
+                control = (buf[0] << 8) | buf[1];
+            } else {
+                ESP_LOGE("mlx_info", "Fehler Control-Register 0x3001");
+            }
+
+            // RATE AUSLESEN
+            ESP_LOGD("mlx", "Prüfe & setze Refresh-Rate auf 16 Hz (nur einmal)");
+
+
+            uint16_t meas1 = read16(0x24E1);
+            uint16_t meas2 = read16(0x24E2);
+            uint8_t rate1 = (meas1 >> 8) & 0x07;
+            uint8_t rate2 = (meas2 >> 8) & 0x07;
+            float hz1 = 0.5 * (1 << rate1);
+            float hz2 = 0.5 * (1 << rate2);
+            ESP_LOGD("mlx", "Aktuell EE_MEAS_1: 0x%04X → %.1f Hz", meas1, hz1);
+            ESP_LOGD("mlx", "Aktuell EE_MEAS_2: 0x%04X → %.1f Hz", meas2, hz2);
+
+            if (rate1 == 0x05 && rate2 == 0x05) {
+                ESP_LOGD("mlx", "Bereits 16 Hz eingestellt – kein Schreiben nötig");
+                rate_set = true;
+            }
+            else
+            {
+                //////////////////////////////////
+                // RATE 16Hz
+                ESP_LOGD("mlx", "Rate nicht 16 Hz → Setze 16 Hz (nur relevante Bits ändern)");
+
+                // Hilfsfunktion: Schreiben eines einzelnen EEPROM-Worts (mit Erase → Unlock → Write → Reset → Verify)
+ 
+
+
+                // UMSTELLUNG STEP MODE
+                if (id(i2c_mlx90632).read_register16(REG_CONTROL, buf, 2) == i2c::ERROR_OK) {
+                    control = (buf[0] << 8) | buf[1];
+                } else {
+                    ESP_LOGE("mlx_button", "Vorher Read fehlgeschlagen");
+                    return;
+                }
+
+                // Neuer Wert: nur Bits 1,2 und 4-8 ändern
+                new_control = control;
+                new_control &= ~(0x03 << 1); // Bits 1-2 löschen HALT MODE         
+                // new_control |= (0x2 << 1);    // Bits 1-2 = 00  // STEP
+                new_buf[0] = static_cast<uint8_t>(new_control >> 8);
+                new_buf[1] = static_cast<uint8_t>(new_control & 0xFF);
+
+                if (id(i2c_mlx90632).write_register16(REG_CONTROL, new_buf, 2) == i2c::ERROR_OK) {
+                    ESP_LOGI("mlx_button", "REG_CONTROL geschrieben: 0x%04X", new_control);
+                }
+                delay(500);
+
+
+                // // MEAS1: nur Bits 10:8 auf 4 setzen (8 Hz), Rest unverändert
+                // uint16_t new_meas1 = meas1;
+                // new_meas1 &= ~(0x07 << 8);   // Bits 10:8 löschen
+                // new_meas1 |= (0x04 << 8);    // Bits 10:8 = 4 (8 Hz)
+
+                // // MEAS2: nur Bits 10:8 auf 4 setzen, Rest unverändert
+                // uint16_t new_meas2 = meas2;
+                // new_meas2 &= ~(0x07 << 8);
+                // new_meas2 |= (0x04 << 8);
+
+                // uint8_t meas1_buf[2] = {
+                //     static_cast<uint8_t>((new_meas1 >> 8) & 0xFF),  // MSB – oberes Byte zuerst
+                //     static_cast<uint8_t>(new_meas1 & 0xFF)          // LSB – unteres Byte danach
+                // };
+                // uint8_t meas2_buf[2] = {
+                //     static_cast<uint8_t>((new_meas2 >> 8) & 0xFF),  // MSB – oberes Byte zuerst
+                //     static_cast<uint8_t>(new_meas2 & 0xFF)          // LSB – unteres Byte danach
+                // };
+                // delay(500);
+
+                bool meas1_ok = mlx_safe_write_eeprom(0x24E1U, 0x850D, "MEAS1");
+                delay(500);
+                bool meas2_ok = mlx_safe_write_eeprom(0x24E2U, 0x851D, "MEAS2");
+
+                if (meas1_ok && meas2_ok) {
+                    ESP_LOGI("mlx", "Refresh-Rate erfolgreich auf 16 Hz gesetzt (beide Zellen)");
+                    rate_set = true;
+
+                    // Optional: nochmal 1–2 Sekunden warten und die tatsächliche Messrate prüfen
+                    delay(1500);
+                    // Hier könntest du z.B. 10 Messungen mit Zeitstempel machen, um ~125 ms Abstand zu sehen
+                } else {
+                    ESP_LOGE("mlx", "EEPROM-Programmierung fehlgeschlagen – Rate bleibt bei 2 Hz");
+                }
+
+                // Nachher lesen
+                uint16_t verify_meas1 = read16(0x24E1);
+                uint16_t verify_meas2 = read16(0x24E2);
+                ESP_LOGD("mlx", "Nachher EE_MEAS1: 0x%04X", verify_meas1);
+                ESP_LOGD("mlx", "Nachher EE_MEAS2: 0x%04X", verify_meas2);
+
+                rate_set = true;
+            }
+            
+            
+            // Logging – bei jedem Update
+            ESP_LOGI("mlx_info", "Product ID (0x2400-0x2401): 0x%08X (%ld)", (uint32_t)product_id, product_id);
+            ESP_LOGI("mlx_info", "Device ID / Variant (0x2402-0x2403): 0x%08X (%ld)", (uint32_t)device_id, device_id);
+
+            ESP_LOGI("mlx_info", "Status-Register (0x3FFF): 0x%04X", status);
+            ESP_LOGD("mlx_info", "  DATA_RDY: %d", (status & 0x0800) >> 11);
+            ESP_LOGD("mlx_info", "  EE_RDY: %d", (status & 0x0400) >> 10);
+            ESP_LOGD("mlx_info", "  BROWN_OUT: %d", (status & 0x0200) >> 9);
+            ESP_LOGD("mlx_info", "  CYCLE_MEAS: %d", (status & 0x0100) >> 8);
+
+            ESP_LOGI("mlx_info", "Control-Register (0x3001): 0x%04X", control);
+            uint8_t meas_select = (control >> 4) & 0x1F;
+            ESP_LOGD("mlx_info", "  meas_select: 0x%02X", meas_select);
+            ESP_LOGD("mlx_info", "  Continuous: %s", (meas_select & 0x10) ? "Ja" : "Nein");
+            ESP_LOGD("mlx_info", "  Extended: %s", (meas_select & 0x01) ? "Ja" : "Nein");
+
+            // Medical / Normal / Fake-Erkennung (typische Muster)
+            if (product_id == 0x5A5A5A5A) {
+                ESP_LOGI("mlx_info", "→ Erkannt: Echter Melexis MLX90632 (Product ID 0x5A5A5A5A)");
+                if (meas_select == 0x11 || meas_select == 0x17) {
+                ESP_LOGI("mlx_info", "→ Modus: Extended + Continuous → wahrscheinlich Medical-Version");
+                } else {
+                ESP_LOGI("mlx_info", "→ Modus: Normal / Standard");
+                }
+            } else if (product_id == 0) {
+                ESP_LOGE("mlx_info", "→ WARNUNG: Product ID = 0 → Sensor antwortet nicht richtig (Fake / Defekt?)");
+            } else {
+                ESP_LOGW("mlx_info", "→ Unbekannte Product ID (0x%08X) – möglicher Fake oder Sonder-Variante", (uint32_t)product_id);
+            }
+
+            // Status-Register lesen und Bits loggen (am Start)
+            if (id(i2c_mlx90632).read_register16(REG_STATUS, buf, 2) == i2c::ERROR_OK) {
+                status = (buf[0] << 8) | buf[1];
+                ESP_LOGD("mlx", "REG_STATUS (0x3FFF): 0x%04X", status);
+                ESP_LOGD("mlx", "  DATA_RDY: %d", (status & STAT_DATA_RDY) != 0);
+
+                // Clean Start: NEW_DATA-Bit (DATA_RDY) auf 0 setzen
+                uint16_t new_status = status & ~STAT_DATA_RDY;
+
+                new_buf[0] = static_cast<uint8_t>(new_status >> 8);
+                new_buf[1] = static_cast<uint8_t>(new_status & 0xFF);
+                 
+                if (id(i2c_mlx90632).write_register16(REG_STATUS, new_buf, 2) == i2c::ERROR_OK) {
+                    ESP_LOGD("mlx", "REG_STATUS clean geschrieben: 0x%04X", new_status);
+                } else {
+                    ESP_LOGE("mlx", "REG_STATUS Write fehlgeschlagen");
+                }
+
+            } else {
+                ESP_LOGE("mlx", "REG_STATUS Read fehlgeschlagen");
+            }
+
+            delay(1000);
+
+            // Vorher lesen + Bits loggen
+            if (id(i2c_mlx90632).read_register16(REG_CONTROL, buf, 2) == i2c::ERROR_OK) {
+                control = (buf[0] << 8) | buf[1];
+                ESP_LOGI("mlx_button", "Vorher REG_CONTROL: 0x%04X", control);
+                ESP_LOGI("mlx_button", "Bits: 15-0: %d%d%d%d %d%d%d%d %d%d%d%d %d%d%d%d",
+                            (control >> 15) & 1, (control >> 14) & 1, (control >> 13) & 1, (control >> 12) & 1,
+                            (control >> 11) & 1, (control >> 10) & 1, (control >>  9) & 1, (control >>  8) & 1,
+                            (control >>  7) & 1, (control >>  6) & 1, (control >>  5) & 1, (control >>  4) & 1,
+                            (control >>  3) & 1, (control >>  2) & 1, (control >>  1) & 1, (control >>  0) & 1);
+            } else {
+                ESP_LOGE("mlx_button", "Vorher Read fehlgeschlagen");
+                return;
+            }
+
+            // Neuer Wert: nur Bits 1,2 und 4-8 ändern
+            new_control = control;
+            // new_control &= ~(0x01 << 0);    // Bit 0 = 0
+            // new_control |= (0x01 << 1);     // Bit 1 = 1
+            // new_control |= (0x01 << 2);     // Bit 2 = 1
+            new_control |= (0x3 << 1);    // Bits 1-2 = 11  // Continous
+            new_control |= (0x11 << 4);    // Bits 8:4 = 10001 (meas_select = 0x11)
+
+            new_buf[0] = static_cast<uint8_t>(new_control >> 8);
+            new_buf[1] = static_cast<uint8_t>(new_control & 0xFF);
+
+            if (id(i2c_mlx90632).write_register16(REG_CONTROL, new_buf, 2) == i2c::ERROR_OK) {
+                ESP_LOGI("mlx_button", "REG_CONTROL geschrieben: 0x%04X", new_control);
+                ESP_LOGI("mlx_button", "Bits: 15-0: %d%d%d%d %d%d%d%d %d%d%d%d %d%d%d%d",
+                            (new_control >> 15) & 1, (new_control >> 14) & 1, (new_control >> 13) & 1, (new_control >> 12) & 1,
+                            (new_control >> 11) & 1, (new_control >> 10) & 1, (new_control >>  9) & 1, (new_control >>  8) & 1,
+                            (new_control >>  7) & 1, (new_control >>  6) & 1, (new_control >>  5) & 1, (new_control >>  4) & 1,
+                            (new_control >>  3) & 1, (new_control >>  2) & 1, (new_control >>  1) & 1, (new_control >>  0) & 1);
+            } else {
+                ESP_LOGE("mlx_button", "Write fehlgeschlagen");
+                return;
+            }
+
+            delay(50);
+
+            // Nachher lesen + Bits loggen
+            if (id(i2c_mlx90632).read_register16(REG_CONTROL, buf, 2) == i2c::ERROR_OK) {
+            control = (buf[0] << 8) | buf[1];
+            ESP_LOGI("mlx_button", "Nachher REG_CONTROL: 0x%04X", control);
+            ESP_LOGI("mlx_button", "Bits: 15-0: %d%d%d%d %d%d%d%d %d%d%d%d %d%d%d%d",
+                        (control >> 15) & 1, (control >> 14) & 1, (control >> 13) & 1, (control >> 12) & 1,
+                        (control >> 11) & 1, (control >> 10) & 1, (control >>  9) & 1, (control >>  8) & 1,
+                        (control >>  7) & 1, (control >>  6) & 1, (control >>  5) & 1, (control >>  4) & 1,
+                        (control >>  3) & 1, (control >>  2) & 1, (control >>  1) & 1, (control >>  0) & 1);
+            } else {
+                ESP_LOGE("mlx_button", "Nachher Read fehlgeschlagen");
+            }
+            ESP_LOGI("mlx_button", "=== Setzen beendet ===");
