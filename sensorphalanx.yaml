@@ -24,6 +24,7 @@ sensor:
   # ── VL53L1X – Time-of-Flight Distanzsensor ────────────────
   - platform: vl53l1x
     id: distance_sensor
+    name: vlx53l4cd Distanz
     i2c_id: i2c_bus
     address: 0x29
     update_interval: 500ms
@@ -155,8 +156,32 @@ sensor:
               format: "IR: %.1f°C"
               args: ['x']
     lambda: |-
-      double emissivity = 0.90;
+      static setup_mode = true;
 
+      if (setup_mode) {
+        ESP_LOGI("mlx", "Erster Aufruf: Sensor-Setup wird durchgeführt...");
+        setup_mode = false;
+
+        // Vorher lesen + Bits loggen
+        if (id(i2c_mlx90632).read_register16(REG_CONTROL, buf, 2) == i2c::ERROR_OK) {
+            control = (buf[0] << 8) | buf[1];
+        }
+
+        // Neuer Wert: nur Bits 1,2 und 4-8 ändern
+        new_control = control;
+        new_control |= (0x3 << 1);    // Bits 1-2 = 11  // Continous
+        new_control |= (0x11 << 4);    // Bits 8:4 = 10001 (meas_select = 0x11)
+
+        new_buf[0] = static_cast<uint8_t>(new_control >> 8);
+        new_buf[1] = static_cast<uint8_t>(new_control & 0xFF);
+
+        if (id(i2c_mlx90632).write_register16(REG_CONTROL, new_buf, 2) == i2c::ERROR_OK) {
+            ESP_LOGI("mlx_button", "REG_CONTROL geschrieben: 0x%04X", new_control);
+        }
+        delay(500);
+      }
+
+      double emissivity = 0.90;
       uint8_t buf[2];
 
       static bool coeffs_read = false;
