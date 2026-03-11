@@ -962,7 +962,7 @@ lvgl:
                     - name: "Bildschirm"
                       id: tab_bildschirm
                       widgets:
-                        # Zeile: Helligkeit Label + Slider
+                        # Zeile: Helligkeit Label + Slider  (25% / 75%)
                         - obj:
                             id: row_helligkeit
                             width: 960
@@ -981,10 +981,10 @@ lvgl:
                                   text_color: 0x000000
                               - slider:
                                   id: slider_helligkeit
-                                  width: 650
+                                  width: 710
                                   height: 20
-                                  align: RIGHT_MID
-                                  x: -10
+                                  align: LEFT_MID
+                                  x: 240
                                   min_value: 0
                                   max_value: 100
                                   value: 80
@@ -999,13 +999,13 @@ lvgl:
                                           lv_obj_clear_state(id(sw_brightness_auto), LV_STATE_CHECKED);
                                         }
 
-                        # Auto-Button mit Switch direkt unter Slider (VEML7700)
+                        # Auto-Button mit Switch — bündig mit Slider-Anfang (x=240)
                         - button:
                             id: btn_auto_helligkeit
                             width: 210
                             height: 50
-                            align: TOP_RIGHT
-                            x: -10
+                            align: TOP_LEFT
+                            x: 240
                             y: 100
                             bg_color: 0x334466
                             bg_opa: COVER
