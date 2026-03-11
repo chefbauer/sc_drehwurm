@@ -14,7 +14,7 @@ font:
     id: font_title
     size: 60
     bpp: 4
-    glyphs: " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyzäöüÄÖÜß{|}~°"
+    glyphs: " -CEPSaceghiklnoprstuwx"  # nur tatsächlich verwendete Zeichen (Größe ≥60 → minimale Glyph-Liste!)
 
   - file: "gfonts://Roboto@400"
     id: font_normal
@@ -39,7 +39,7 @@ font:
     id: font_clock
     size: 22
     bpp: 4
-    glyphs: "0123456789:- ,.DFMSaceghimnorstwD"
+    glyphs: "0123456789:- ,.DFMSaceghimnorstww"
 
   # Symbol-Font – Font Awesome Solid (Play/Pause/Schneeflocke/Einstellungen)
   - file: "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/webfonts/fa-solid-900.ttf"

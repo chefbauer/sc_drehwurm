@@ -45,6 +45,11 @@ Ausgelegt für **Dosen und Flaschen** — durch das Drehen wird die Kühlleistun
 
 ## Fonts
 
+**Regel für große Fonts (Größe ≥ 60):** Glyphs auf die tatsächlich verwendeten Zeichen beschränken – vollständige Zeichensätze erzeugen hier zu große Binaries.  
+Bei Änderungen von Texten mit `font_title` muss die Glyph-Liste manuell aktualisiert werden.
+
+**Fonts < 60:** Vollständiger Standardzeichensatz (`a–z`, `A–Z`, `0–9`, Sonderzeichen) ist OK und bevorzugt.
+
 | ID | Datei | Größe | Verwendung |
 |---|---|---|---|
 | `font_title` | Roboto 700 (gfonts) | 60 | Seitentitel |
