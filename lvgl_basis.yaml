@@ -140,6 +140,8 @@ lvgl:
             height: 600
             bg_color: 0xFFFFFF  # Weiß
             bg_opa: COVER
+            scrollable: false
+            scrollbar_mode: "off"
             widgets:
               # Titel oben mittig
               - label:
@@ -881,6 +883,8 @@ lvgl:
             height: 600
             bg_color: 0xFFFFFF
             bg_opa: COVER
+            scrollable: false
+            scrollbar_mode: "off"
             widgets:
               # Titel oben mittig
               - label:
@@ -899,6 +903,8 @@ lvgl:
                   height: 490
                   align: TOP_MID
                   y: 100
+                  scrollable: false
+                  scrollbar_mode: "off"
                   tab_style:
                     bg_color: 0xE0E0E0
                     text_font: font_tab
@@ -907,6 +913,7 @@ lvgl:
                     # Tab 1: System
                     - name: "System"
                       id: tab_system
+                      scrollable: false
                       widgets:
                         # Overlays
                         - obj:
@@ -961,6 +968,7 @@ lvgl:
                     # Tab 2: Bildschirm
                     - name: "Bildschirm"
                       id: tab_bildschirm
+                      scrollable: false
                       widgets:
                         # Zeile: Helligkeit Label + Slider  (25% / 75%)
                         - obj:
@@ -1068,6 +1076,7 @@ lvgl:
                     # Tab 3: Kuehler
                     - name: "Kühler"
                       id: tab_kuehler
+                      scrollable: false
                       widgets:
                         # Zeile: Kühlung Ein/Aus
                         - obj:
@@ -1211,6 +1220,7 @@ lvgl:
                     # Tab 4: Test
                     - name: "Test"
                       id: tab_test
+                      scrollable: false
                       widgets:
                         # Zeile: Turmpumpe Label + Slider
                         - obj:
