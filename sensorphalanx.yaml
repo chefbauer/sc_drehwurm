@@ -41,11 +41,7 @@ sensor:
           return x * 1000 - 17;     // - 26;             // Offset -26mm, Meter -> Millimeter
     on_value:
       then:
-        - lvgl.label.update:
-            id: distance_value_label
-            text:
-              format: "%.0fmm"
-              args: ['x']
+        - lvgl.widget.refresh: distance_value_label
 
   # ── VL53L1X – Time-of-Flight Distanzsensor ────────────────
 #  - platform: vl53l1x
@@ -68,28 +64,18 @@ sensor:
     i2c_id: i2c_bus
     update_interval: 1s
     temperature:
+      id: sensor_sht4x_temp
       name: "Temperature"
       on_value:
         then:
-          - lvgl.label.update:
-              id: temp_value_label
-              text:
-                format: "%.2f°C"
-                args: ['x']
-          - lvgl.label.update:
-              id: lbl_statusbar_temp
-              text:
-                format: "%.1f°C"
-                args: ['x']
+          - lvgl.widget.refresh: temp_value_label
+          - lvgl.widget.refresh: lbl_statusbar_temp
     humidity:
+      id: sensor_sht4x_humi
       name: "Relative Humidity"
       on_value:
         then:
-          - lvgl.label.update:
-              id: hum_value_label
-              text:
-                format: "%.1f%% rel."
-                args: ['x']
+          - lvgl.widget.refresh: hum_value_label
 
   # ── BMP581 – Barometrischer Druck und Temperatur ──────────
   - platform: bmp581_i2c
@@ -106,11 +92,7 @@ sensor:
         - lambda: return x/100;
       on_value:
         then:
-          - lvgl.label.update:
-              id: pressure_value_label
-              text:
-                format: "%.1fhPa"
-                args: ['x']
+          - lvgl.widget.refresh: pressure_value_label
 
   # ── Berechnete Höhe aus BMP581 (hypsometrische Formel) ────
   - platform: template
@@ -124,11 +106,7 @@ sensor:
     update_interval: 1s
     on_value:
       then:
-        - lvgl.label.update:
-            id: height_value_label
-            text:
-              format: "%.2fm"
-              args: ['x']
+        - lvgl.widget.refresh: height_value_label
     lambda: !lambda |-
       static const float P0         = 1013.25f;   // Standard-Referenzdruck [hPa]
       static const float lapse_rate = 0.0065f;    // K/m
@@ -157,14 +135,11 @@ sensor:
     address: 0x10
     update_interval: 2s
     ambient_light:
+      id: sensor_veml7700_lux
       name: "Ambient light"
       on_value:
         then:
-          - lvgl.label.update:
-              id: light_value_label
-              text:
-                format: "%.2flx"
-                args: ['x']
+          - lvgl.widget.refresh: light_value_label
           - lambda: |-
               if (id(brightness_auto_mode)) {
                 // 0 lux → 50%, 100 lux → 100%, darüber gedeckelt
@@ -192,11 +167,7 @@ sensor:
     update_interval: 1s
     on_value:
       then:
-        - lvgl.label.update:
-            id: mlx_value_label
-            text:
-              format: "IR: %.1f°C"
-              args: ['x']
+        - lvgl.widget.refresh: mlx_value_label
     lambda: |-
       static bool setup_mode = true;
       uint8_t buf[2];

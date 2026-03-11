@@ -155,7 +155,11 @@ lvgl:
                       text_color: 0x555555
                   - label:
                       id: distance_value_label
-                      text: "---"
+                      text: !lambda |-
+                        if (isnan(id(distance_sensor).state)) return std::string("---");
+                        char b[12];
+                        snprintf(b, sizeof(b), "%.0fmm", id(distance_sensor).state);
+                        return std::string(b);
                       align: RIGHT_MID
                       x: -15
                       text_font: font_normal
@@ -204,7 +208,11 @@ lvgl:
                       text_color: 0x555555
                   - label:
                       id: temp_value_label
-                      text: "---"
+                      text: !lambda |-
+                        if (isnan(id(sensor_sht4x_temp).state)) return std::string("---");
+                        char b[12];
+                        snprintf(b, sizeof(b), "%.2f°C", id(sensor_sht4x_temp).state);
+                        return std::string(b);
                       align: RIGHT_MID
                       x: -15
                       text_font: font_normal
@@ -253,7 +261,11 @@ lvgl:
                       text_color: 0x555555
                   - label:
                       id: hum_value_label
-                      text: "---"
+                      text: !lambda |-
+                        if (isnan(id(sensor_sht4x_humi).state)) return std::string("---");
+                        char b[16];
+                        snprintf(b, sizeof(b), "%.1f%% rel.", id(sensor_sht4x_humi).state);
+                        return std::string(b);
                       align: RIGHT_MID
                       x: -15
                       text_font: font_normal
@@ -302,7 +314,11 @@ lvgl:
                       text_color: 0x555555
                   - label:
                       id: pressure_value_label
-                      text: "---"
+                      text: !lambda |-
+                        if (isnan(id(bmp_pressure).state)) return std::string("---");
+                        char b[12];
+                        snprintf(b, sizeof(b), "%.1fhPa", id(bmp_pressure).state);
+                        return std::string(b);
                       align: RIGHT_MID
                       x: -15
                       text_font: font_normal
@@ -351,7 +367,11 @@ lvgl:
                       text_color: 0x555555
                   - label:
                       id: height_value_label
-                      text: "---"
+                      text: !lambda |-
+                        if (isnan(id(indoor_altitude).state)) return std::string("---");
+                        char b[12];
+                        snprintf(b, sizeof(b), "%.2fm", id(indoor_altitude).state);
+                        return std::string(b);
                       align: RIGHT_MID
                       x: -15
                       text_font: font_normal
@@ -400,7 +420,11 @@ lvgl:
                       text_color: 0x555555
                   - label:
                       id: light_value_label
-                      text: "---"
+                      text: !lambda |-
+                        if (isnan(id(sensor_veml7700_lux).state)) return std::string("---");
+                        char b[12];
+                        snprintf(b, sizeof(b), "%.2flx", id(sensor_veml7700_lux).state);
+                        return std::string(b);
                       align: RIGHT_MID
                       x: -15
                       text_font: font_normal
@@ -449,7 +473,11 @@ lvgl:
                       text_color: 0x555555
                   - label:
                       id: mlx_value_label
-                      text: "---"
+                      text: !lambda |-
+                        if (isnan(id(sensor_Temp_OBJECT).state)) return std::string("---");
+                        char b[16];
+                        snprintf(b, sizeof(b), "IR: %.1f°C", id(sensor_Temp_OBJECT).state);
+                        return std::string(b);
                       align: RIGHT_MID
                       x: -15
                       text_font: font_normal

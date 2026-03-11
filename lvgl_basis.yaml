@@ -907,7 +907,11 @@ lvgl:
                     # Temperatur (SHT4x) rechts neben Uhrzeit-Block
                     - label:
                         id: lbl_statusbar_temp
-                        text: "--.-°C"
+                        text: !lambda |-
+                          if (isnan(id(sensor_sht4x_temp).state)) return std::string("--.-°C");
+                          char b[12];
+                          snprintf(b, sizeof(b), "%.1f°C", id(sensor_sht4x_temp).state);
+                          return std::string(b);
                         text_font: font_temp
                         align: LEFT_MID
                         x: 230
