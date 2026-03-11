@@ -166,7 +166,10 @@ sensor:
                 float pct_f = x * 0.5f + 50.0f;
                 if (pct_f > 100.0f) pct_f = 100.0f;
                 if (pct_f < 50.0f)  pct_f = 50.0f;
-                int pct = (int)pct_f;
+                // Auf 5%-Raster runden → verhindert Dauerschwanken
+                int pct = (int)(pct_f / 5.0f + 0.5f) * 5;
+                int current = lv_slider_get_value(id(slider_helligkeit));
+                if (abs(pct - current) < 5) return;  // < 5% Änderung ignorieren
                 id(brightness_auto_updating) = true;
                 lv_slider_set_value(id(slider_helligkeit), pct, LV_ANIM_OFF);
                 id(brightness_auto_updating) = false;
