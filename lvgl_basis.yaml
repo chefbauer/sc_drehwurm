@@ -999,27 +999,30 @@ lvgl:
                                           lv_obj_clear_state(id(sw_brightness_auto), LV_STATE_CHECKED);
                                         }
 
-                        # Zeile: Auto-Helligkeit (VEML7700)
-                        - obj:
-                            id: row_auto_brightness
-                            width: 960
-                            height: 60
-                            align: TOP_MID
+                        # Auto-Button mit Switch direkt unter Slider (VEML7700)
+                        - button:
+                            id: btn_auto_helligkeit
+                            width: 210
+                            height: 50
+                            align: TOP_RIGHT
+                            x: -10
                             y: 100
-                            bg_opa: TRANSP
+                            bg_color: 0x334466
+                            bg_opa: COVER
                             border_width: 0
+                            radius: 10
+                            clickable: false
                             widgets:
                               - label:
-                                  id: lbl_auto_brightness
-                                  text: "Auto (VEML7700)"
+                                  text: "Auto"
                                   align: LEFT_MID
-                                  x: 10
+                                  x: 12
                                   text_font: font_normal
-                                  text_color: 0x444444
+                                  text_color: 0xFFFFFF
                               - switch:
                                   id: sw_brightness_auto
                                   align: RIGHT_MID
-                                  x: -10
+                                  x: -12
                                   on_value:
                                     - lambda: |-
                                         id(brightness_auto_mode) = x;
