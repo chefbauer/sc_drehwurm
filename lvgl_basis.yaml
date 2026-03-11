@@ -894,14 +894,16 @@ lvgl:
                               id: lbl_status_clock
                               text: "--:--:--"
                               text_font: font_clock
-                              align: TOP_MID
+                              align: TOP_LEFT
+                              x: 0
                               y: 4
                               text_color: 0x333333
                           - label:
                               id: lbl_status_date
-                              text: "---, --.--." 
+                              text: "---, --.--."
                               text_font: font_clock
-                              align: BOTTOM_MID
+                              align: BOTTOM_LEFT
+                              x: 0
                               y: -4
                               text_color: 0x555555
                     # Temperatur (SHT4x) rechts neben Uhrzeit-Block
@@ -916,6 +918,9 @@ lvgl:
                         align: LEFT_MID
                         x: 230
                         text_color: 0x999999
+                        clickable: true
+                        on_click:
+                          - lvgl.widget.show: overlay_sensorphalanx
                     # Schneeflocken-Icon mittig
                     - label:
                         id: lbl_kompressor_icon
