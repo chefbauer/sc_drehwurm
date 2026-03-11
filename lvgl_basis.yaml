@@ -39,7 +39,7 @@ font:
     id: font_clock
     size: 22
     bpp: 4
-    glyphs: "0123456789:- ,.DFMSaceghimnoorstw"
+    glyphs: "0123456789:- ,.DFMSaceghimnorstw"
 
   # Symbol-Font – Font Awesome Solid (Play/Pause/Schneeflocke/Einstellungen)
   - file: "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/webfonts/fa-solid-900.ttf"
