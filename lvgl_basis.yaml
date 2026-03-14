@@ -1239,6 +1239,36 @@ lvgl:
                                   x: -10
                                   text_font: font_normal
                                   text_color: 0x003366
+                        # Zeile: Lüfter-Status
+                        - obj:
+                            id: row_luefter
+                            width: 960
+                            height: 70
+                            align: TOP_MID
+                            y: 175
+                            bg_opa: TRANSP
+                            border_width: 0
+                            scrollable: false
+                            scrollbar_mode: "off"
+                            widgets:
+                              - label:
+                                  id: lbl_luefter
+                                  text: "Lüfter"
+                                  align: LEFT_MID
+                                  x: 10
+                                  text_font: font_normal
+                                  text_color: 0x000000
+                              - label:
+                                  id: lbl_luefter_wert
+                                  text: !lambda |-
+                                    char buf[12];
+                                    float level = id(output_luefter_kompressor_pwm).current_value * 100.0f;
+                                    snprintf(buf, sizeof(buf), "%.0f %%", level);
+                                    return std::string(buf);
+                                  align: LEFT_MID
+                                  x: 240
+                                  text_font: font_normal
+                                  text_color: 0x003366
                         # Preset-Tasten
                         - obj:
                             id: row_presets
@@ -1344,9 +1374,9 @@ lvgl:
                                     - output.set_level:
                                         id: output_pumpe_dacA
                                         level: !lambda "return x / 100.0;"
-                        # Zeile: Beckenpumpe Label + Slider
+                        # Zeile: Umwälzpumpe Label + Slider
                         - obj:
-                            id: row_beckenpumpe
+                            id: row_umwaelzpumpe
                             width: 960
                             height: 70
                             align: TOP_MID
@@ -1355,14 +1385,14 @@ lvgl:
                             border_width: 0
                             widgets:
                               - label:
-                                  id: lbl_beckenpumpe
-                                  text: "Beckenpumpe"
+                                  id: lbl_umwaelzpumpe
+                                  text: "Umwälzpumpe"
                                   align: LEFT_MID
                                   x: 10
                                   text_font: font_normal
                                   text_color: 0x000000
                               - slider:
-                                  id: slider_beckenpumpe
+                                  id: slider_umwaelzpumpe
                                   width: 650
                                   height: 20
                                   align: RIGHT_MID
@@ -1372,7 +1402,7 @@ lvgl:
                                   value: 0
                                   on_value:
                                     - output.set_level:
-                                        id: output_pumpe_pwm1
+                                        id: output_pumpe_dacB
                                         level: !lambda "return x / 100.0;"
 
               # Zurück Button

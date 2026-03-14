@@ -24,24 +24,29 @@ output:
     max_power: 0.855          # ← das ist der entscheidende Wert
     zero_means_zero: true
 
+  # DAC Umwälzpumpe (Channel B)
+  - platform: mcp4728
+    id: output_pumpe_dacB
+    mcp4728_id: dac_output
+    channel: B
+    vref: internal
+    gain: X2                  # → 4,096 V Max
+    power_down: normal
+    min_power: 0.15           # z. B. 20 % → ca. 0,82 V (je nach Kalibrierung)
+    max_power: 0.855          # ← das ist der entscheidende Wert
+    zero_means_zero: true
+
   # PWM Lüftersteuerung (Kompressor-Lüfter)
   - platform: ledc
     id: output_luefter_kompressor_pwm
-    pin: ${pin_pwm3}
+    pin: ${pin_pwm4}
     frequency: 25000 Hz
     min_power: 0.03
-
-  # PWM Beckenpumpe (Mini-Brushless)
-  - platform: ledc
-    id: output_pumpe_pwm1
-    pin: ${pin_pwm1}
-    frequency: 80000 Hz
-    min_power: 0.3
 
   # Kompressor-Relais Ein/Aus
   - platform: gpio
     id: output_kompressor_relais
-    pin: ${pin_pwm4}
+    pin: ${pin_pwm1}
 
 
 i2c_device:
@@ -180,14 +185,14 @@ climate:
           id: output_luefter_kompressor_pwm
           level: !lambda "return ${fan_kompressor_max_perc} / 100.0;"
       - output.set_level:
-          id: output_pumpe_pwm1
+          id: output_pumpe_dacB
           level: !lambda "return ${pumpe_becken_max_perc} / 100.0;"
     idle_action:
       - output.turn_off: output_kompressor_relais
       - output.set_level:
           id: output_luefter_kompressor_pwm
           level: !lambda "return ${fan_kompressor_min_perc} / 100.0;"
-      - output.turn_off: output_pumpe_pwm1
+      - output.turn_off: output_pumpe_dacB
     default_preset: Eco
     preset:
       - name: Eco
@@ -202,11 +207,11 @@ climate:
       - lambda: |-
           if (x.get_mode() == CLIMATE_MODE_OFF)
           {
-            id(output_pumpe_pwm1).turn_off();
+            id(output_pumpe_dacB).turn_off();
           }
           else
           {
-            id(output_pumpe_pwm1).set_level(${c_pumpe_standby_perc} / 100.0);
+            id(output_pumpe_dacB).set_level(${c_pumpe_standby_perc} / 100.0);
           }
     on_state:
       - lvgl.label.update:
@@ -216,3 +221,10 @@ climate:
               return lv_color_hex(0x0055FF); // Blau
             }
             return lv_color_hex(0xCCCCCC); // Grau
+      - lambda: |-
+          // Synchronisiere Kühlung-Switch mit aktuellem Climate-Mode
+          if (id(climate_thermostat).mode == CLIMATE_MODE_COOL) {
+            lv_obj_add_state(id(sw_kuehlung), LV_STATE_CHECKED);
+          } else {
+            lv_obj_clear_state(id(sw_kuehlung), LV_STATE_CHECKED);
+          }
