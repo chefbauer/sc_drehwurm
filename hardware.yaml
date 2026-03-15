@@ -252,7 +252,7 @@ climate:
           }
           else
           {
-            id(output_pumpe_dacB).set_level(${c_pumpe_standby_perc} / 100.0);
+            id(output_pumpe_dacB).set_level(${c_pumpe_umwaelzung_ein_perc} / 100.0);
           }
     on_state:
       - lvgl.label.update:
@@ -276,3 +276,9 @@ climate:
             : ${fan_kompressor_min_perc};
           snprintf(buf, sizeof(buf), "%.0f %%", perc);
           lv_label_set_text(id(lbl_luefter_wert), buf);
+      - lambda: |-
+          // Umwälzpumpe-Slider mit Thermostat-Modus synchronisieren
+          int pump_val = (id(climate_thermostat).mode == CLIMATE_MODE_COOL)
+            ? ${c_pumpe_umwaelzung_ein_perc}
+            : 0;
+          lv_slider_set_value(id(slider_umwaelzpumpe), pump_val, LV_ANIM_OFF);

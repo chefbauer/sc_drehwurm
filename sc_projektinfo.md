@@ -541,3 +541,8 @@ Anordnung im Uhrzeigersinn nach Farbrad:
 | 2026-03-15 | 1-Wire / DS2484 / DS18B20 aufgegeben – SHT30 I²C als `sensor_temp_becken` eingebaut | `hardware.yaml` |
 | 2026-03-15 | Becken-Temperatur-Label `lbl_temp_becken` in Statusleiste (rechts neben Schneeflocke, Farbe `#2299DD`) | `lvgl_basis.yaml` |
 | 2026-03-15 | `lbl_temp_becken`: Font auf `font_temp` (hat `°C`), Update via `lvgl.widget.refresh` + Lambda im Widget | `hardware.yaml`, `lvgl_basis.yaml` |
+| 2026-03-15 | TCA9548A-Multiplexer (0x70) eingebaut; sensorphalanx-Sensoren auf `i2c_mux_ch0`, SHT30 auf Haupt-`i2c_bus` | `hardware.yaml`, `sensorphalanx.yaml` |
+| 2026-03-15 | `mcp4728` fehlende `i2c_id: i2c_bus` ergänzt | `hardware.yaml` |
+| 2026-03-15 | `c_pumpe_standby_perc` → `c_pumpe_umwaelzung_ein_perc: 30` in Substitutions | `display.yaml` |
+| 2026-03-15 | Pump-Slider (`row_turmpumpe`, `row_umwaelzpumpe`) von Tab "Test" → Tab "System" (y:110/200, nach row_overlays) | `lvgl_basis.yaml` |
+| 2026-03-15 | `on_control`: `c_pumpe_standby_perc` → `c_pumpe_umwaelzung_ein_perc`; `on_state`: `slider_umwaelzpumpe` synchronisiert Thermostat-Modus | `hardware.yaml` |

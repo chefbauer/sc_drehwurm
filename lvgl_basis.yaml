@@ -1063,6 +1063,72 @@ lvgl:
                                   on_click:
                                     - lvgl.widget.show: overlay_sensorphalanx
 
+                        # Zeile: Turmpumpe Label + Slider
+                        - obj:
+                            id: row_turmpumpe
+                            width: 960
+                            height: 70
+                            align: TOP_MID
+                            y: 110
+                            bg_opa: TRANSP
+                            border_width: 0
+                            scrollable: false
+                            scrollbar_mode: "off"
+                            widgets:
+                              - label:
+                                  id: lbl_turmpumpe
+                                  text: "Turmpumpe"
+                                  align: LEFT_MID
+                                  x: 10
+                                  text_font: font_normal
+                                  text_color: 0x000000
+                              - slider:
+                                  id: slider_turmpumpe
+                                  width: 650
+                                  height: 20
+                                  align: RIGHT_MID
+                                  x: -10
+                                  min_value: 0
+                                  max_value: 100
+                                  value: 0
+                                  on_value:
+                                    - output.set_level:
+                                        id: output_pumpe_dacA
+                                        level: !lambda "return x / 100.0;"
+
+                        # Zeile: Umwälzpumpe Label + Slider (wird durch Thermostat gesteuert)
+                        - obj:
+                            id: row_umwaelzpumpe
+                            width: 960
+                            height: 70
+                            align: TOP_MID
+                            y: 200
+                            bg_opa: TRANSP
+                            border_width: 0
+                            scrollable: false
+                            scrollbar_mode: "off"
+                            widgets:
+                              - label:
+                                  id: lbl_umwaelzpumpe
+                                  text: "Umwälzpumpe"
+                                  align: LEFT_MID
+                                  x: 10
+                                  text_font: font_normal
+                                  text_color: 0x000000
+                              - slider:
+                                  id: slider_umwaelzpumpe
+                                  width: 650
+                                  height: 20
+                                  align: RIGHT_MID
+                                  x: -10
+                                  min_value: 0
+                                  max_value: 100
+                                  value: 0
+                                  on_value:
+                                    - output.set_level:
+                                        id: output_pumpe_dacB
+                                        level: !lambda "return x / 100.0;"
+
                     # Tab 2: Bildschirm
                     - name: "Bildschirm"
                       id: tab_bildschirm
@@ -1352,66 +1418,11 @@ lvgl:
                       id: tab_test
                       scrollable: false
                       widgets:
-                        # Zeile: Turmpumpe Label + Slider
-                        - obj:
-                            id: row_turmpumpe
-                            width: 960
-                            height: 70
-                            align: TOP_MID
-                            y: 20
-                            bg_opa: TRANSP
-                            border_width: 0
-                            widgets:
-                              - label:
-                                  id: lbl_turmpumpe
-                                  text: "Turmpumpe"
-                                  align: LEFT_MID
-                                  x: 10
-                                  text_font: font_normal
-                                  text_color: 0x000000
-                              - slider:
-                                  id: slider_turmpumpe
-                                  width: 650
-                                  height: 20
-                                  align: RIGHT_MID
-                                  x: -10
-                                  min_value: 0
-                                  max_value: 100
-                                  value: 0
-                                  on_value:
-                                    - output.set_level:
-                                        id: output_pumpe_dacA
-                                        level: !lambda "return x / 100.0;"
-                        # Zeile: Umwälzpumpe Label + Slider
-                        - obj:
-                            id: row_umwaelzpumpe
-                            width: 960
-                            height: 70
-                            align: TOP_MID
-                            y: 110
-                            bg_opa: TRANSP
-                            border_width: 0
-                            widgets:
-                              - label:
-                                  id: lbl_umwaelzpumpe
-                                  text: "Umwälzpumpe"
-                                  align: LEFT_MID
-                                  x: 10
-                                  text_font: font_normal
-                                  text_color: 0x000000
-                              - slider:
-                                  id: slider_umwaelzpumpe
-                                  width: 650
-                                  height: 20
-                                  align: RIGHT_MID
-                                  x: -10
-                                  min_value: 0
-                                  max_value: 100
-                                  value: 0
-                                  on_value:
-                                    - output.set_level:
-                                        id: output_pumpe_dacB
-                                        level: !lambda "return x / 100.0;"
+                        - label:
+                            text: "(leer)"
+                            align: CENTER
+                            text_font: font_normal
+                            text_color: 0x888888
 
               # Zurück Button
               - button:

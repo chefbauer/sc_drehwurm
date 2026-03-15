@@ -18,7 +18,7 @@ substitutions:
   fan_kompressor_max_perc: 92
 
 
+
   
-  
-  pumpe_becken_max_perc: 80
-  c_pumpe_standby_perc: 30
+  c_pumpe_umwaelzung_ein_perc: 30
+  #c_pumpe_standby_perc: 30
