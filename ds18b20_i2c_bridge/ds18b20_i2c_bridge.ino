@@ -7,7 +7,7 @@
  * Sensor-GND : GPIO2  (OUTPUT LOW  → GND)
  * Direktanschluss DS18B20: Pin0=3V3, Pin1=Data, Pin2=GND
  * I²C Slave : SDA = GPIO4, SCL = GPIO3
- * I²C-Adresse: 0x48  (0x48–0x4F frei wählbar per #define)
+ * Onboard-LED: GPIO8 (blau) — 2× kurz blinken bei gültiger Messung
  *
  * Register-Layout (2 Byte, MSB first, LM75-kompatibel):
  *   Wert = int16_raw / 16.0  →  Auflösung 0.0625 °C
@@ -57,8 +57,9 @@
 #define PIN_SENSOR_GND  2        // OUTPUT LOW  → GND für Sensor
 #define I2C_SDA         4        // I²C Slave SDA
 #define I2C_SCL         3        // I²C Slave SCL
-#define I2C_ADDR       0x48     // Slave-Adresse (0x48–0x4F, Jumper-frei wählbar)
-#define UPDATE_MS       750     // Messintervall [ms] – DS18B20 12-bit Wandlung ~750 ms
+#define I2C_ADDR        0x48     // Slave-Adresse (0x48–0x4F, Jumper-frei wählbar)
+#define UPDATE_MS        750     // Messintervall [ms] – DS18B20 12-bit Wandlung ~750 ms
+#define PIN_LED           8      // Onboard-LED (blau, active LOW)
 // ─────────────────────────────────────────────────────────────────────────────
 
 OneWire           oneWire(ONE_WIRE_PIN);
@@ -87,14 +88,22 @@ void onRequest() {
     valid = g_valid;
   portEXIT_CRITICAL_ISR(&tempMux);
 
+  // Debug: 1× langer Blitz → Master hat uns adressiert
+  digitalWrite(PIN_LED, LOW);   // an
+  // (LED bleibt an bis nach dem Write – Wire-CB muss schnell sein, kein delay hier!)
+
   if (!valid) {
-    // 0x8000 = Error-Marker (außerhalb des DS18B20-Messbereichs -55…+125 °C)
     Wire.write((uint8_t)0x80);
     Wire.write((uint8_t)0x00);
+    digitalWrite(PIN_LED, HIGH);  // aus
+    Serial.println("  [I2C] onRequest → ERROR-Marker gesendet (kein gültiger Wert)");
     return;
   }
   Wire.write((uint8_t)((snap >> 8) & 0xFF));  // MSB
   Wire.write((uint8_t)( snap       & 0xFF));  // LSB
+  digitalWrite(PIN_LED, HIGH);  // aus
+  Serial.printf("  [I2C] onRequest → gesendet: 0x%02X 0x%02X  (%.4f °C)\n",
+                (snap >> 8) & 0xFF, snap & 0xFF, snap / 16.0f);
 }
 
 // ── Setup ──────────────────────────────────────────────────────────────────────
@@ -119,6 +128,10 @@ void setup() {
   pinMode(PIN_SENSOR_VCC, OUTPUT);
   digitalWrite(PIN_SENSOR_VCC, HIGH);
   delay(10);  // Sensor hochlaufen lassen
+
+  // Onboard-LED (active LOW → HIGH = aus)
+  pinMode(PIN_LED, OUTPUT);
+  digitalWrite(PIN_LED, HIGH);
 
   // 1-Wire initialisieren
   ds18b20.begin();
@@ -170,6 +183,12 @@ void loop() {
     g_temp_raw = raw;
     g_valid    = true;
   portEXIT_CRITICAL(&tempMux);
+
+  // 2× kurz blinken (active LOW)
+  for (int i = 0; i < 2; i++) {
+    digitalWrite(PIN_LED, LOW);  delay(40);
+    digitalWrite(PIN_LED, HIGH); delay(80);
+  }
 
   Serial.printf("  Temp: %+7.4f °C   raw=0x%04X (%d)\n",
                 t, (uint16_t)raw, raw);

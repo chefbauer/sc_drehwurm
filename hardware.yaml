@@ -105,10 +105,19 @@ sensor:
     update_interval: 1s
     lambda: |-
       uint8_t buf[2];
-      if (id(temp_bridge).read_register(0x00, buf, 2) != i2c::ERROR_OK) return {};
+      if (id(temp_bridge).read_register(0x00, buf, 2) != i2c::ERROR_OK) {
+        ESP_LOGE("bridge", "I2C read_register fehlgeschlagen (0x48)");
+        return {};
+      }
       int16_t raw = (int16_t)((buf[0] << 8) | buf[1]);
-      if (raw == (int16_t)0x8000) return {};
-      return raw / 16.0f;
+      ESP_LOGD("bridge", "raw bytes: 0x%02X 0x%02X → raw=%d", buf[0], buf[1], raw);
+      if (raw == (int16_t)0x8000) {
+        ESP_LOGW("bridge", "Error-Marker empfangen – C3 hat keinen gültigen Sensorwert");
+        return {};
+      }
+      float t = raw / 16.0f;
+      ESP_LOGI("bridge", "Becken-Temp: %.4f °C", t);
+      return t;
     on_value:
       - lvgl.widget.refresh: lbl_temp_becken
 
