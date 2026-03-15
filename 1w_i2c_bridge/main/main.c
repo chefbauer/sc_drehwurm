@@ -103,7 +103,7 @@ static void i2c_tx_fill(void)
         (uint8_t)((raw >> 8) & 0xFF),   // MSB
         (uint8_t)( raw       & 0xFF),   // LSB
     };
-    i2c_slave_write(s_slave, buf, sizeof(buf), 0);  // timeout=0 → nicht blockierend
+    i2c_slave_write_ram(s_slave, buf, sizeof(buf));  // non-blocking, IDF 5.5 API
 }
 
 static void led_blink(int n)
