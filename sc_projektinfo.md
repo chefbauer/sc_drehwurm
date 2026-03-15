@@ -53,13 +53,13 @@ Ausgelegt für **Dosen und Flaschen** — durch das Drehen wird die Kühlleistun
 | LVGL Version | 8.x (kein LVGL 9!) |
 | Betrieb | Standalone (kein Home Assistant nötig) |
 | Zeit-Quelle | SNTP (NTP) — RTC wird später hinzugefügt |
-| 1-Wire Bus | ~~entfernt~~ – ersetzt durch SHT30 I²C |
+| 1-Wire Bus | DS18B20 an ESP32-S3 Bridge → I²C `0x48` |
 
 ---
 
 ## Becken-Temperatursensor
 
-**Sensor:** SHT30 direkt auf `i2c_bus` (Adresse `0x44`)
+**Sensor:** DS18B20 via I²C-Bridge (ESP32-C3 Slave, Adresse `0x48`)
 
 **Multiplexer:** TCA9548A (`0x70`) – alle sensorphalanx-Sensoren auf Kanal 0 (`i2c_mux_ch0`):
 - MLX90632 (`i2c_device`, `0x3A`)
@@ -71,7 +71,6 @@ Ausgelegt für **Dosen und Flaschen** — durch das Drehen wird die Kühlleistun
 | ID | Typ | Wert |
 |---|---|---|
 | `sensor_temp_becken` | Temperatur | Thermostat + Statusleiste |
-| `sensor_humi_becken` | Luftfeuchtigkeit | `internal: true` |
 
 ---
 

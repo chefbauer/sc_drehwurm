@@ -73,6 +73,11 @@ i2c_device:
     address: 0x69
     i2c_id: i2c_bus
 
+  # DS18B20 I²C-Bridge (ESP32-S3 Slave)
+  - id: temp_bridge
+    address: 0x48
+    i2c_id: i2c_bus
+
 # TCA9548A I2C-Multiplexer (Adresse 0x70)
 tca9548a:
   - id: i2c_mux
@@ -89,28 +94,23 @@ globals:
     initial_value: '{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}'
 
 sensor:
-  # Becken-Temperatursensor SHT30 direkt auf i2c_bus (Adresse 0x44)
-  # Kein Adresskonflikt mehr – SHT4x liegt hinter TCA9548A Kanal 0
-  - platform: sht3xd
-    id: sht30_becken
-    i2c_id: i2c_bus
-    address: 0x44
-    update_interval: 10s
-    temperature:
-      id: sensor_temp_becken
-      name: "Temperatur Becken"
-      accuracy_decimals: 1
-      unit_of_measurement: "°C"
-      device_class: temperature
-      state_class: measurement
-      on_value:
-        - lvgl.widget.refresh: lbl_temp_becken
-    humidity:
-      id: sensor_humi_becken
-      name: "Luftfeuchtigkeit Becken"
-      accuracy_decimals: 0
-      unit_of_measurement: "%"
-      internal: true
+  # Becken-Temperatursensor DS18B20 via I²C-Bridge (ESP32-C3, Adresse 0x48)
+  - platform: template
+    id: sensor_temp_becken
+    name: "Temperatur Becken"
+    accuracy_decimals: 1
+    unit_of_measurement: "°C"
+    device_class: temperature
+    state_class: measurement
+    update_interval: 1s
+    lambda: |-
+      uint8_t buf[2];
+      if (id(temp_bridge).read_register(0x00, buf, 2) != i2c::ERROR_OK) return {};
+      int16_t raw = (int16_t)((buf[0] << 8) | buf[1]);
+      if (raw == (int16_t)0x8000) return {};
+      return raw / 16.0f;
+    on_value:
+      - lvgl.widget.refresh: lbl_temp_becken
 
   # AMG8833 Infrarot-Temperatursensor (8x8 Matrix)
   - platform: template
