@@ -93,8 +93,8 @@ sensor:
     name: "Temperatur Becken"
     address: 0xae00000fba143528
     one_wire_id: one_wire_bus
-    update_interval: 10s
-    resolution: 9
+    update_interval: 3s
+    resolution: 12
     accuracy_decimals: 1
     unit_of_measurement: "°C"
     device_class: temperature
