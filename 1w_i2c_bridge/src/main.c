@@ -154,7 +154,6 @@ static void temp_task(void *arg)
 
     if (!ds) {
         ESP_LOGE(TAG, "Kein DS18B20 gefunden – Pull-Up (4.7 kΩ) prüfen!");
-        /* Error-Marker bleibt dauerhaft im TX-Puffer, Task beendet sich */
         vTaskDelete(NULL);
         return;
     }
@@ -174,7 +173,6 @@ static void temp_task(void *arg)
         esp_err_t err = ds18b20_get_temperature(ds, &temp);
 
         if (err == ESP_OK && temp != 85.0f) {
-            /* 85 °C = Power-On-Default → als Fehler behandeln */
             int16_t raw = (int16_t)roundf(temp * 16.0f);
 
             xSemaphoreTake(s_mutex, portMAX_DELAY);
@@ -216,9 +214,9 @@ void app_main(void)
         .intr_type    = GPIO_INTR_DISABLE,
     };
     ESP_ERROR_CHECK(gpio_config(&io_cfg));
-    gpio_set_level(PIN_SENSOR_GND, 0);   // GND
-    gpio_set_level(PIN_SENSOR_VCC, 1);   // 3.3 V
-    gpio_set_level(PIN_LED, 1);          // LED aus (active LOW)
+    gpio_set_level(PIN_SENSOR_GND, 0);
+    gpio_set_level(PIN_SENSOR_VCC, 1);
+    gpio_set_level(PIN_LED, 1);
 
     s_mutex = xSemaphoreCreateMutex();
     configASSERT(s_mutex);
