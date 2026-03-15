@@ -84,7 +84,7 @@ sensor:
     id: sht30_becken
     i2c_id: i2c_bus
     address: 0x44
-    update_interval: 10s
+    update_interval: 3s
     temperature:
       id: sensor_temp_becken
       name: "Temperatur Becken"
