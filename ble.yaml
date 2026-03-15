@@ -6,20 +6,32 @@
 #
 # BLE-Empfangsseite:
 #   - BTHome v2 Advertisements von DS18B20-BLE-Bridge (ESP32-C3)
-#   - Temperatursensor wird nach MAC-Ermittlung aktiviert
+#   - Externe Komponente: github://dz0ny/esphome-bthome (bthome_receiver)
 # ================================
+
+external_components:
+  - source:
+      type: git
+      url: https://github.com/dz0ny/esphome-bthome
+      ref: main
+    components: [bthome_receiver]
 
 esp32_ble_tracker:
   scan_parameters:
     active: false          # kein Active Scan → spart Strom, reicht für BTHome
-    interval: 320ms        # Scan-Fenster-Intervall
-    window: 30ms           # aktives Lauschen pro Intervall
-    continuous: true       # dauerhaft scannen
+    interval: 320ms
+    window: 30ms
+    continuous: true
+
+bthome_receiver:
+  devices:
+    - mac_address: "dc:da:0c:a1:89:8e"
+      name: "DS18B20 BLE-Bridge"
 
 # ── Temperatursensor (BTHome v2) ─────────────────────────────────────────────
 
 sensor:
-  - platform: bthome
+  - platform: bthome_receiver
     mac_address: "dc:da:0c:a1:89:8e"
     temperature:
       id: sensor_temp_becken
