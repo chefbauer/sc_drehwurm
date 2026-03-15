@@ -73,6 +73,11 @@ i2c_device:
     address: 0x69
     i2c_id: i2c_bus
 
+  # DS18B20 I²C-Bridge (ESP32-C3 Slave, Adresse 0x48)
+  - id: temp_bridge
+    address: 0x48
+    i2c_id: i2c_bus
+
 # TCA9548A I2C-Multiplexer (Adresse 0x70)
 tca9548a:
   - id: i2c_mux
@@ -89,6 +94,25 @@ globals:
     initial_value: '{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}'
 
 sensor:
+  # Becken-Temperatursensor DS18B20 via I²C-Bridge (ESP32-C3, Adresse 0x48)
+  - platform: template
+    id: sensor_temp_becken
+    name: "Temperatur Becken"
+    accuracy_decimals: 1
+    unit_of_measurement: "°C"
+    device_class: temperature
+    state_class: measurement
+    update_interval: 3s
+    lambda: |-
+      uint8_t buf[2];
+      auto err = id(i2c_bus)->read(0x48, buf, 2);
+      if (err != i2c::ERROR_OK) return {};
+      int16_t raw = (int16_t)((buf[0] << 8) | buf[1]);
+      if (raw == (int16_t)0x8000) return {};
+      return raw / 16.0f;
+    on_value:
+      - lvgl.widget.refresh: lbl_temp_becken
+
   # AMG8833 Infrarot-Temperatursensor (8x8 Matrix)
   - platform: template
     id: sensor_amg8833
