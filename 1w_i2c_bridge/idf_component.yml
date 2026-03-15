@@ -1,0 +1,6 @@
+## IDF Component Manager
+## PlatformIO lädt diese Komponenten beim ersten Build automatisch herunter.
+dependencies:
+  idf: ">=5.0"
+  espressif/onewire_bus: ">=0.1.0"
+  espressif/ds18b20: ">=0.1.0"
