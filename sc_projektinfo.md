@@ -296,6 +296,17 @@ Alle Sensoren auf `i2c_id: i2c_bus` (fremdkonfiguriert in main_config).
 
 ---
 
+## LVGL-Update-Konvention
+
+**Labels werden per `lvgl.widget.refresh` aktualisiert**, nicht per `lvgl.label.update`.
+
+- Der Sensor-Trigger enthält nur `- lvgl.widget.refresh: <label_id>`
+- Das zugehörige Label-Widget in `lvgl_basis.yaml` / `lvgl_overlay.yaml` trägt das `text: !lambda`-Statement direkt
+- So bleibt die Anzeigelogik zentral im LVGL-Block, der Sensor-Code bleibt schlank
+- Ausnahme: Overlays / einmalige Aktionen, wo kein persistentes Widget existiert
+
+---
+
 ## Bekannte LVGL-8-Einschränkungen
 
 | Problem | Lösung |
@@ -508,3 +519,4 @@ Anordnung im Uhrzeigersinn nach Farbrad:
 | 2026-03-15 | 1-Wire: DS2484 (I2C-Bridge) entfernt → Nativer GPIO-Bus auf GPIO45 (`pin_1w`) | `hardware.yaml` |
 | 2026-03-15 | DS18B20 `0xae00000fba143528` als `sensor_temp_becken` eingebunden, Template entfernt | `hardware.yaml` |
 | 2026-03-15 | Becken-Temperatur-Label `lbl_temp_becken` in Statusleiste (rechts neben Schneeflocke, Farbe `#2299DD`) | `lvgl_basis.yaml` |
+| 2026-03-15 | `lbl_temp_becken`: Font auf `font_temp` (hat `°C`), Update via `lvgl.widget.refresh` + Lambda im Widget | `hardware.yaml`, `lvgl_basis.yaml` |

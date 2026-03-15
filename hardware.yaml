@@ -96,6 +96,8 @@ sensor:
     unit_of_measurement: "°C"
     device_class: temperature
     state_class: measurement
+    on_value:
+      - lvgl.widget.refresh: lbl_temp_becken
 
   # AMG8833 Infrarot-Temperatursensor (8x8 Matrix)
   - platform: template

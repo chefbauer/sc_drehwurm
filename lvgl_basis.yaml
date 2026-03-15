@@ -945,9 +945,9 @@ lvgl:
                           char b[12];
                           snprintf(b, sizeof(b), "%.1f°C", id(sensor_temp_becken).state);
                           return std::string(b);
-                        text_font: font_clock
+                        text_font: font_temp
                         align: CENTER
-                        x: 80
+                        x: 120
                         text_color: 0x2299DD
                     # Einstellungen-Button rechts (Zahnrad-Icon)
                     - button:
