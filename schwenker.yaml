@@ -239,7 +239,7 @@ script:
 
   # ── System AUS ───────────────────────────────────────────
   - id: script_system_aus
-    mode: single
+    mode: restart             # Notaus: zweiter Druck unterbricht und startet sofort erneut
     then:
       - lambda: |-
           id(system_ein) = false;

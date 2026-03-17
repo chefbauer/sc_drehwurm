@@ -227,9 +227,7 @@ lvgl:
                   pad_all: 0
                   on_press:
                     - lambda: |-
-                        if (id(system_ein)) {
-                          id(script_system_aus).execute();  // AUS: sofort
-                        }
+                        id(script_system_aus).execute();  // NOTAUS: immer, egal ob EIN oder AUS
                   on_long_press:
                     - lambda: |-
                         if (!id(system_ein)) {
