@@ -79,6 +79,7 @@ script:
           id(sw_aktiv)     = true;
           ESP_LOGI("schwenker", "START  halbperiode=%u ms  max=%d RPM",
                    id(sw_halbperiode_ms), id(sw_max_speed_rpm));
+          lv_obj_set_style_bg_color(id(btn_schwenker_main), lv_color_hex(0x229933), 0);
 
   # ── Stoppen ───────────────────────────────────────────────
   - id: script_schwenker_stop
@@ -86,6 +87,7 @@ script:
     then:
       - lambda: |-
           id(sw_aktiv) = false;
+          lv_obj_set_style_bg_color(id(btn_schwenker_main), lv_color_hex(0xAA2200), 0);
           ESP_LOGI("schwenker", "STOP");
           // F5 speed=0 an aktuellem Ziel → Motor bremst und stoppt
           uint8_t acc   = (uint8_t)id(sw_acc);
@@ -96,6 +98,39 @@ script:
           uint8_t p_l   = (uint8_t)( val         & 0xFF);
           id(can_bus)->send_data(${motor_can_id}, false,
               add_crc(${motor_can_id}, { 0xF5, 0x00, 0x00, acc, p_hh, p_h, p_l }));
+
+  # ── System EIN ───────────────────────────────────────────
+  - id: script_system_ein
+    mode: single
+    then:
+      - lambda: |-
+          id(system_ein) = true;
+          lv_obj_set_style_bg_color(id(btn_system_power), lv_color_hex(0x229933), 0);
+          // Thermostat → COOL
+          auto call = id(climate_thermostat).make_call();
+          call.set_mode("cool");
+          call.perform();
+          // Schwenker starten
+          id(script_schwenker_start).execute();
+          ESP_LOGI("system", "EIN");
+
+  # ── System AUS ───────────────────────────────────────────
+  - id: script_system_aus
+    mode: single
+    then:
+      - lambda: |-
+          id(system_ein) = false;
+          lv_obj_set_style_bg_color(id(btn_system_power), lv_color_hex(0xAA2200), 0);
+          // Schwenker stoppen
+          id(script_schwenker_stop).execute();
+          // Thermostat → OFF
+          auto call = id(climate_thermostat).make_call();
+          call.set_mode("off");
+          call.perform();
+          // Pumpen aus
+          id(output_pumpe_dacA).turn_off();
+          id(output_pumpe_dacB).turn_off();
+          ESP_LOGI("system", "AUS");
 
 # ============================================================
 # 50 ms Takt – Sinus-Regelschleife

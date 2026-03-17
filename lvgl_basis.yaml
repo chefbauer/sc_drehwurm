@@ -65,6 +65,7 @@ font:
       - "\uF6FC"  # Mountain (Höhe)
       - "\uF185"  # Sun (Licht)
       - "\uF05B"  # Crosshairs / Laser (IR)
+      - "\uF011"  # Power (Ein/Aus)
 
   # Dot-Matrix Font für Timer-Anzeige
   - file: "fonts/5x7-dot-matrix.ttf"
@@ -72,6 +73,14 @@ font:
     size: 35
     bpp: 1
     glyphs: "0123456789:"
+
+  # Großes Drehsymbol für Schwenker-Button (Font Awesome arrows-rotate U+F021)
+  - file: "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/webfonts/fa-solid-900.ttf"
+    id: font_icon_xl
+    size: 120
+    bpp: 4
+    glyphs:
+      - "\uF021"  # arrows-rotate (Drehsymbol)
 
 # Timer-Globals für alle 6 Slots
 # Status: 0=gestoppt  1=läuft  2=pausiert
@@ -96,6 +105,10 @@ globals:
   - id: brightness_auto_updating
     type: bool
     restore_value: false
+    initial_value: 'false'
+  - id: system_ein
+    type: bool
+    restore_value: true
     initial_value: 'false'
 interval:
   - interval: 500ms
@@ -188,71 +201,78 @@ lvgl:
                   text_font: font_title
                   text_color: 0x003366  # Dunkelblau
                   text_align: CENTER
+
+              # System-Hauptschalter rechts oben
+              - button:
+                  id: btn_system_power
+                  width: 80
+                  height: 80
+                  align: TOP_RIGHT
+                  x: -10
+                  y: 10
+                  radius: 40
+                  bg_color: 0xAA2200
+                  bg_opa: COVER
+                  border_width: 0
+                  shadow_width: 0
+                  outline_width: 0
+                  pad_all: 0
+                  on_press:
+                    - lambda: |-
+                        if (id(system_ein)) {
+                          id(script_system_aus).execute();
+                        } else {
+                          id(script_system_ein).execute();
+                        }
+                  widgets:
+                    - label:
+                        id: lbl_power_icon
+                        align: CENTER
+                        text: "\uF011"
+                        text_font: font_icons
+                        text_color: 0xFFFFFF
               
-              # 3D-Behälter mit Wasserstand (Proportionen: Ø25cm / H24cm)
-              # TODO: Durch echtes Bild ersetzen sobald verfügbar
+              # Schwenker-Steuerung: Großer runder Toggle-Button
               - obj:
-                  id: container_tank
+                  id: schwenker_ring
                   width: 360
                   height: 360
                   align: CENTER
                   y: 20
-                  bg_opa: TRANSP
-                  border_width: 0
+                  radius: 180
+                  bg_color: 0x1A1A2E
+                  bg_opa: COVER
+                  border_width: 6
+                  border_color: 0x4455AA
+                  clickable: false
+                  pad_all: 0
                   widgets:
-                    # Zylinderkörper (Mantel-Rechteck)
-                    - obj:
-                        id: cyl_body
+                    - button:
+                        id: btn_schwenker_main
                         width: 280
-                        height: 240
-                        align: TOP_MID
-                        y: 40
-                        bg_color: 0x708090
-                        border_width: 3
-                        border_color: 0x2A3A4A
-                        radius: 4
-                    # Boden-Ellipse – radius = Hälfte der Höhe → oval
-                    - obj:
-                        id: cyl_bottom
-                        width: 280
-                        height: 80
-                        align: TOP_MID
-                        y: 240
-                        radius: 40
-                        bg_color: 0x4A5A6A
-                        border_width: 3
-                        border_color: 0x2A3A4A
-                    # Wasser-Körper
-                    - obj:
-                        id: water_body
-                        width: 264
-                        height: 204
-                        align: TOP_MID
-                        y: 76
-                        bg_color: 0x2E7BB5
+                        height: 280
+                        align: CENTER
+                        radius: 140
+                        bg_color: 0xAA2200
+                        bg_opa: COVER
                         border_width: 0
-                        radius: 0
-                    # Wasser-Oberfläche
-                    - obj:
-                        id: water_surface
-                        width: 264
-                        height: 60
-                        align: TOP_MID
-                        y: 46
-                        radius: 30
-                        bg_color: 0x5BB0E0
-                        border_width: 0
-                    # Oberer Rand / Öffnung
-                    - obj:
-                        id: cyl_rim
-                        width: 280
-                        height: 80
-                        align: TOP_MID
-                        y: 0
-                        radius: 40
-                        bg_color: 0x8898A8
-                        border_width: 3
-                        border_color: 0x2A3A4A
+                        shadow_width: 0
+                        outline_width: 0
+                        pad_all: 0
+                        on_press:
+                          - lambda: |-
+                              if (id(sw_aktiv)) {
+                                id(script_schwenker_stop).execute();
+                              } else {
+                                id(script_schwenker_start).execute();
+                              }
+                        widgets:
+                          - label:
+                              id: lbl_schwenker_icon
+                              align: CENTER
+                              text: "\uF021"
+                              text_font: font_icon_xl
+                              text_color: 0xFFFFFF
 
               # ---- Slot-Container links: Slot 1 (R), 2 (Y), 3 (G) ----
               - button:
