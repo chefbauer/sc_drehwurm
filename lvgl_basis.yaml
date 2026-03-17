@@ -270,6 +270,15 @@ lvgl:
                               } else {
                                 id(script_schwenker_start).execute();
                               }
+                        on_long_press:
+                          - lambda: |-
+                              lv_arc_set_value(id(arc_schwenkzeit), (int)(id(sw_halbperiode_ms) / 100));
+                              lv_arc_set_value(id(arc_rpm), id(sw_max_speed_rpm));
+                              char b1[8]; snprintf(b1,sizeof(b1),"%.1fs",id(sw_halbperiode_ms)/1000.0f);
+                              lv_label_set_text(id(lbl_arc_zeit_val), b1);
+                              char b2[6]; snprintf(b2,sizeof(b2),"%d",id(sw_max_speed_rpm));
+                              lv_label_set_text(id(lbl_arc_rpm_val), b2);
+                          - lvgl.widget.show: overlay_schwenker_settings
                         widgets:
                           - label:
                               id: lbl_schwenker_icon
@@ -1335,13 +1344,48 @@ lvgl:
                       id: tab_schwenker
                       scrollable: false
                       widgets:
+                        # Einstellungen öffnen
+                        - button:
+                            id: btn_open_schwenker_settings
+                            width: 960
+                            height: 62
+                            align: TOP_MID
+                            y: 8
+                            bg_color: 0x223355
+                            border_width: 2
+                            border_color: 0x4477AA
+                            radius: 10
+                            widgets:
+                              - label:
+                                  text: "Schwenkereinstellungen"
+                                  align: LEFT_MID
+                                  x: 20
+                                  text_font: font_normal
+                                  text_color: 0xFFFFFF
+                              - label:
+                                  text: "\uF013"
+                                  align: RIGHT_MID
+                                  x: -20
+                                  text_font: font_icons
+                                  text_color: 0x99AACC
+                            on_click:
+                              - lambda: |-
+                                  // Arcs auf aktuelle Werte setzen beim Öffnen
+                                  lv_arc_set_value(id(arc_schwenkzeit), (int)(id(sw_halbperiode_ms) / 100));
+                                  lv_arc_set_value(id(arc_rpm), id(sw_max_speed_rpm));
+                                  char b1[8]; snprintf(b1,sizeof(b1),"%.1fs",id(sw_halbperiode_ms)/1000.0f);
+                                  lv_label_set_text(id(lbl_arc_zeit_val), b1);
+                                  char b2[6]; snprintf(b2,sizeof(b2),"%d",id(sw_max_speed_rpm));
+                                  lv_label_set_text(id(lbl_arc_rpm_val), b2);
+                              - lvgl.widget.show: overlay_schwenker_settings
+
                         # Zeile: Motor-Steuerung
                         - obj:
                             id: row_motor_controls
                             width: 960
                             height: 70
                             align: TOP_MID
-                            y: 20
+                            y: 90
                             bg_opa: TRANSP
                             border_width: 0
                             scrollable: false

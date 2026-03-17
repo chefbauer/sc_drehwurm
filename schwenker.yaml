@@ -69,6 +69,34 @@ globals:
     restore_value: no
     initial_value: '0'
 
+  # ── Schwenker-Presets ─────────────────────────────────────
+  - id: preset1_hp_ms
+    type: uint32_t
+    restore_value: yes
+    initial_value: '3200'   # 3.2 s
+  - id: preset1_rpm
+    type: int
+    restore_value: yes
+    initial_value: '4'
+
+  - id: preset2_hp_ms
+    type: uint32_t
+    restore_value: yes
+    initial_value: '2000'   # 2.0 s
+  - id: preset2_rpm
+    type: int
+    restore_value: yes
+    initial_value: '8'
+
+  - id: preset3_hp_ms
+    type: uint32_t
+    restore_value: yes
+    initial_value: '5000'   # 5.0 s
+  - id: preset3_rpm
+    type: int
+    restore_value: yes
+    initial_value: '12'
+
 # ============================================================
 # Scripts
 # ============================================================

@@ -73,6 +73,310 @@ lvgl:
       # OVERLAY: Sensor-Phalanx
       # MLX90632 · VL53L1X · SHT4x · BMP581 · VEML7700
       # ================================
+      # OVERLAY: Schwenker-Einstellungen
+      # ================================
+      - obj:
+          id: overlay_schwenker_settings
+          width: 100%
+          height: 100%
+          bg_color: 0x111122
+          bg_opa: 96%
+          hidden: true
+          clickable: true
+          pad_all: 0
+          scrollable: false
+          widgets:
+            # Titel
+            - label:
+                text: "Schwenker Einstellungen"
+                align: TOP_MID
+                y: 18
+                text_font: font_title
+                text_color: 0x99CCFF
+                text_align: CENTER
+
+            # Exit-Button
+            - button:
+                id: btn_schwenker_settings_exit
+                width: 80
+                height: 55
+                align: TOP_RIGHT
+                x: -10
+                y: 10
+                bg_color: 0xCC3333
+                widgets:
+                  - label:
+                      text: "X"
+                      align: CENTER
+                      text_font: font_normal
+                      text_color: 0xFFFFFF
+                on_click:
+                  - lvgl.widget.hide: overlay_schwenker_settings
+
+            # ── Arc 1: Schwenkzeit ─────────────────────────────────
+            - obj:
+                id: arc_area_zeit
+                width: 420
+                height: 340
+                align: TOP_LEFT
+                x: 60
+                y: 100
+                bg_opa: TRANSP
+                border_width: 0
+                scrollable: false
+                pad_all: 0
+                widgets:
+                  - label:
+                      text: "Schwenkzeit"
+                      align: TOP_MID
+                      y: 0
+                      text_font: font_normal
+                      text_color: 0xAABBCC
+                  - arc:
+                      id: arc_schwenkzeit
+                      width: 280
+                      height: 280
+                      align: TOP_MID
+                      y: 35
+                      min_value: 10      # = 1.0 s
+                      max_value: 100     # = 10.0 s
+                      value: 32          # = 3.2 s (default)
+                      arc_color: 0x2299FF
+                      arc_width: 18
+                      indicator:
+                        arc_color: 0x55EEFF
+                        arc_width: 18
+                      knob:
+                        bg_color: 0x55EEFF
+                        width: 26
+                        height: 26
+                        radius: 13
+                      on_value:
+                        - lambda: |-
+                            id(sw_halbperiode_ms) = (uint32_t)(x * 100);
+                            char buf[8];
+                            snprintf(buf, sizeof(buf), "%.1fs", x / 10.0f);
+                            lv_label_set_text(id(lbl_arc_zeit_val), buf);
+                  - label:
+                      id: lbl_arc_zeit_val
+                      text: "3.2s"
+                      align: TOP_MID
+                      y: 148
+                      text_font: font_temp
+                      text_color: 0x55EEFF
+                      text_align: CENTER
+
+            # ── Arc 2: Max RPM ─────────────────────────────────────
+            - obj:
+                id: arc_area_rpm
+                width: 420
+                height: 340
+                align: TOP_RIGHT
+                x: -60
+                y: 100
+                bg_opa: TRANSP
+                border_width: 0
+                scrollable: false
+                pad_all: 0
+                widgets:
+                  - label:
+                      text: "Max Umdrehungen"
+                      align: TOP_MID
+                      y: 0
+                      text_font: font_normal
+                      text_color: 0xAABBCC
+                  - arc:
+                      id: arc_rpm
+                      width: 280
+                      height: 280
+                      align: TOP_MID
+                      y: 35
+                      min_value: 1
+                      max_value: 20
+                      value: 4           # default
+                      arc_color: 0x226622
+                      arc_width: 18
+                      indicator:
+                        arc_color: 0x44FF88
+                        arc_width: 18
+                      knob:
+                        bg_color: 0x44FF88
+                        width: 26
+                        height: 26
+                        radius: 13
+                      on_value:
+                        - lambda: |-
+                            id(sw_max_speed_rpm) = x;
+                            char buf[6];
+                            snprintf(buf, sizeof(buf), "%d", x);
+                            lv_label_set_text(id(lbl_arc_rpm_val), buf);
+                  - label:
+                      id: lbl_arc_rpm_val
+                      text: "4"
+                      align: TOP_MID
+                      y: 148
+                      text_font: font_temp
+                      text_color: 0x44FF88
+                      text_align: CENTER
+                  - label:
+                      text: "Upm"
+                      align: TOP_MID
+                      y: 198
+                      text_font: font_small
+                      text_color: 0x778899
+
+            # ── Preset-Buttons ──────────────────────────────────────
+            # Short Click: Preset laden  |  Long Click: aktuellen Wert speichern
+            - obj:
+                id: row_presets
+                width: 960
+                height: 100
+                align: BOTTOM_MID
+                y: -20
+                bg_opa: TRANSP
+                border_width: 0
+                scrollable: false
+                pad_all: 0
+                widgets:
+                  - button:
+                      id: btn_preset1
+                      width: 300
+                      height: 88
+                      align: LEFT_MID
+                      x: 10
+                      bg_color: 0x223355
+                      border_width: 2
+                      border_color: 0x4477AA
+                      radius: 12
+                      widgets:
+                        - label:
+                            id: lbl_preset1_name
+                            text: "P1"
+                            align: TOP_LEFT
+                            x: 14
+                            y: 10
+                            text_font: font_normal
+                            text_color: 0xFFFFFF
+                        - label:
+                            id: lbl_preset1_vals
+                            text: "3.2s · 4 Upm"
+                            align: BOTTOM_MID
+                            y: -10
+                            text_font: font_small
+                            text_color: 0xAABBFF
+                      on_short_click:
+                        - lambda: |-
+                            id(sw_halbperiode_ms)  = id(preset1_hp_ms);
+                            id(sw_max_speed_rpm)   = id(preset1_rpm);
+                            lv_arc_set_value(id(arc_schwenkzeit), (int)(id(preset1_hp_ms) / 100));
+                            lv_arc_set_value(id(arc_rpm), id(preset1_rpm));
+                            char b1[8]; snprintf(b1,sizeof(b1),"%.1fs",id(preset1_hp_ms)/1000.0f);
+                            lv_label_set_text(id(lbl_arc_zeit_val), b1);
+                            char b2[6]; snprintf(b2,sizeof(b2),"%d",id(preset1_rpm));
+                            lv_label_set_text(id(lbl_arc_rpm_val), b2);
+                            ESP_LOGI("preset","P1 geladen: %u ms, %d RPM",id(preset1_hp_ms),id(preset1_rpm));
+                      on_long_press:
+                        - lambda: |-
+                            id(preset1_hp_ms) = id(sw_halbperiode_ms);
+                            id(preset1_rpm)   = id(sw_max_speed_rpm);
+                            char buf[20];
+                            snprintf(buf,sizeof(buf),"%.1fs \xc2\xb7 %d Upm",
+                                     id(preset1_hp_ms)/1000.0f, id(preset1_rpm));
+                            lv_label_set_text(id(lbl_preset1_vals), buf);
+                            ESP_LOGI("preset","P1 gespeichert: %u ms, %d RPM",id(preset1_hp_ms),id(preset1_rpm));
+                  - button:
+                      id: btn_preset2
+                      width: 300
+                      height: 88
+                      align: CENTER
+                      bg_color: 0x223355
+                      border_width: 2
+                      border_color: 0x4477AA
+                      radius: 12
+                      widgets:
+                        - label:
+                            id: lbl_preset2_name
+                            text: "P2"
+                            align: TOP_LEFT
+                            x: 14
+                            y: 10
+                            text_font: font_normal
+                            text_color: 0xFFFFFF
+                        - label:
+                            id: lbl_preset2_vals
+                            text: "2.0s · 8 Upm"
+                            align: BOTTOM_MID
+                            y: -10
+                            text_font: font_small
+                            text_color: 0xAABBFF
+                      on_short_click:
+                        - lambda: |-
+                            id(sw_halbperiode_ms)  = id(preset2_hp_ms);
+                            id(sw_max_speed_rpm)   = id(preset2_rpm);
+                            lv_arc_set_value(id(arc_schwenkzeit), (int)(id(preset2_hp_ms) / 100));
+                            lv_arc_set_value(id(arc_rpm), id(preset2_rpm));
+                            char b1[8]; snprintf(b1,sizeof(b1),"%.1fs",id(preset2_hp_ms)/1000.0f);
+                            lv_label_set_text(id(lbl_arc_zeit_val), b1);
+                            char b2[6]; snprintf(b2,sizeof(b2),"%d",id(preset2_rpm));
+                            lv_label_set_text(id(lbl_arc_rpm_val), b2);
+                            ESP_LOGI("preset","P2 geladen: %u ms, %d RPM",id(preset2_hp_ms),id(preset2_rpm));
+                      on_long_press:
+                        - lambda: |-
+                            id(preset2_hp_ms) = id(sw_halbperiode_ms);
+                            id(preset2_rpm)   = id(sw_max_speed_rpm);
+                            char buf[20];
+                            snprintf(buf,sizeof(buf),"%.1fs \xc2\xb7 %d Upm",
+                                     id(preset2_hp_ms)/1000.0f, id(preset2_rpm));
+                            lv_label_set_text(id(lbl_preset2_vals), buf);
+                            ESP_LOGI("preset","P2 gespeichert: %u ms, %d RPM",id(preset2_hp_ms),id(preset2_rpm));
+                  - button:
+                      id: btn_preset3
+                      width: 300
+                      height: 88
+                      align: RIGHT_MID
+                      x: -10
+                      bg_color: 0x223355
+                      border_width: 2
+                      border_color: 0x4477AA
+                      radius: 12
+                      widgets:
+                        - label:
+                            id: lbl_preset3_name
+                            text: "P3"
+                            align: TOP_LEFT
+                            x: 14
+                            y: 10
+                            text_font: font_normal
+                            text_color: 0xFFFFFF
+                        - label:
+                            id: lbl_preset3_vals
+                            text: "5.0s · 12 Upm"
+                            align: BOTTOM_MID
+                            y: -10
+                            text_font: font_small
+                            text_color: 0xAABBFF
+                      on_short_click:
+                        - lambda: |-
+                            id(sw_halbperiode_ms)  = id(preset3_hp_ms);
+                            id(sw_max_speed_rpm)   = id(preset3_rpm);
+                            lv_arc_set_value(id(arc_schwenkzeit), (int)(id(preset3_hp_ms) / 100));
+                            lv_arc_set_value(id(arc_rpm), id(preset3_rpm));
+                            char b1[8]; snprintf(b1,sizeof(b1),"%.1fs",id(preset3_hp_ms)/1000.0f);
+                            lv_label_set_text(id(lbl_arc_zeit_val), b1);
+                            char b2[6]; snprintf(b2,sizeof(b2),"%d",id(preset3_rpm));
+                            lv_label_set_text(id(lbl_arc_rpm_val), b2);
+                            ESP_LOGI("preset","P3 geladen: %u ms, %d RPM",id(preset3_hp_ms),id(preset3_rpm));
+                      on_long_press:
+                        - lambda: |-
+                            id(preset3_hp_ms) = id(sw_halbperiode_ms);
+                            id(preset3_rpm)   = id(sw_max_speed_rpm);
+                            char buf[20];
+                            snprintf(buf,sizeof(buf),"%.1fs \xc2\xb7 %d Upm",
+                                     id(preset3_hp_ms)/1000.0f, id(preset3_rpm));
+                            lv_label_set_text(id(lbl_preset3_vals), buf);
+                            ESP_LOGI("preset","P3 gespeichert: %u ms, %d RPM",id(preset3_hp_ms),id(preset3_rpm));
+
+      # ================================
       - obj:
           id: overlay_sensorphalanx
           width: 100%

@@ -4,7 +4,7 @@
     {
       "label": "YAML validieren",
       "type": "shell",
-      "command": "for f in /workspaces/display_drehwurm/*.yaml; do python3 -c \"import yaml, sys; yaml.safe_load(open('$f'))\" 2>&1 && echo \"✓ $(basename $f)\" || echo \"✗ FEHLER: $(basename $f)\"; done",
+      "command": "for f in /workspaces/display_drehwurm/*.yaml; do python3 -c \"\nimport yaml, sys\nclass L(yaml.SafeLoader): pass\nyaml.add_multi_constructor('', lambda l,t,n: None, Loader=L)\nyaml.load(open('$f'), L)\n\" 2>&1 && echo \"✓ $(basename $f)\" || echo \"✗ FEHLER: $(basename $f)\"; done",
       "group": {
         "kind": "build",
         "isDefault": true
