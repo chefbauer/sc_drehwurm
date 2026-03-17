@@ -72,7 +72,18 @@ script:
   - id: script_schwenker_start
     mode: single              # mehrfaches Aufrufen ignoriert
     then:
-      # Kein 0x31 nötig – wir arbeiten mit festen Targets ±8.000.000
+      # Motor-Init: Closed Loop Mode 4, 64 Subdivisions, 2000 mA, 5% Standby
+      - lambda: |-
+          std::vector<unsigned char> data;
+          data = add_crc(${motor_can_id}, { 0x82, 0x04 });        // MODE: Closed Loop
+          id(can_bus)->send_data(${motor_can_id}, false, data);
+          data = add_crc(${motor_can_id}, { 0x84, 0x40 });        // MSTEP: 64 subdivisions
+          id(can_bus)->send_data(${motor_can_id}, false, data);
+          data = add_crc(${motor_can_id}, { 0x83, 0x07, 0xD0 });  // Work current: 2000 mA
+          id(can_bus)->send_data(${motor_can_id}, false, data);
+          data = add_crc(${motor_can_id}, { 0x9B, 0x00 });        // Idle current: param 0 = min (~10%)
+          id(can_bus)->send_data(${motor_can_id}, false, data);
+      - delay: 50ms
       - lambda: |-
           id(sw_phase_ms)  = 0;
           id(sw_richtung)  = 1;   // immer mit Rechtsdrehung (CW) starten
@@ -87,8 +98,10 @@ script:
     then:
       - lambda: |-
           id(sw_aktiv) = false;
-          lv_obj_set_style_bg_color(id(btn_schwenker_main), lv_color_hex(0xAA2200), 0);
+          lv_obj_set_style_bg_color(id(btn_schwenker_main), lv_color_hex(0x666666), 0);
           ESP_LOGI("schwenker", "STOP");
+          // Mode 5 = FOC → kein Haltestrom im Stillstand
+          id(can_bus)->send_data(${motor_can_id}, false, add_crc(${motor_can_id}, { 0x82, 0x05 }));
           // F5 speed=0 an aktuellem Ziel → Motor bremst und stoppt
           uint8_t acc   = (uint8_t)id(sw_acc);
           int32_t target = (int32_t)(id(sw_richtung)) * 8000000;
@@ -106,12 +119,9 @@ script:
       - lambda: |-
           id(system_ein) = true;
           lv_obj_set_style_bg_color(id(btn_system_power), lv_color_hex(0x229933), 0);
-          // Thermostat → COOL
           auto call = id(climate_thermostat).make_call();
           call.set_mode("cool");
           call.perform();
-          // Schwenker starten
-          id(script_schwenker_start).execute();
           ESP_LOGI("system", "EIN");
 
   # ── System AUS ───────────────────────────────────────────
@@ -121,13 +131,10 @@ script:
       - lambda: |-
           id(system_ein) = false;
           lv_obj_set_style_bg_color(id(btn_system_power), lv_color_hex(0xAA2200), 0);
-          // Schwenker stoppen
           id(script_schwenker_stop).execute();
-          // Thermostat → OFF
           auto call = id(climate_thermostat).make_call();
           call.set_mode("off");
           call.perform();
-          // Pumpen aus
           id(output_pumpe_dacA).turn_off();
           id(output_pumpe_dacB).turn_off();
           ESP_LOGI("system", "AUS");
