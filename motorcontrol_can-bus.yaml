@@ -469,9 +469,6 @@ script:
 
           //GOTO RELATIVE POSITION Degree
           id(can_bus)->send_data(${motor_can_id}, false, add_crc(${motor_can_id}, { 0xF4, speed_h, speed_l, accel_l, npr_hh, npr_h, npr_l })); // F4 relative °
-      - script.stop: script_motor_goto_relative_degree
-
-
       - script.execute: script_motor_get_status
       - delay: 250ms
       - while:
