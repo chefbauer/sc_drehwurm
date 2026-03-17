@@ -17,7 +17,7 @@ substitutions:
   fan_kompressor_min_perc: 25
   fan_kompressor_max_perc: 92
 
-  master_can_id: 1
+  master_can_id: "1"
   motor_can_id: "3"
   c_motor_direction: "1"    # 0 = links, 1 = rechts motor => welle
 
