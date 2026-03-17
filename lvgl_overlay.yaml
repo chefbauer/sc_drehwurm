@@ -265,9 +265,9 @@ lvgl:
                         radius: 13
                       on_value:
                         - lambda: |-
-                            id(sw_max_speed_rpm) = x;
+                            id(sw_max_speed_rpm) = (int)x;
                             char buf[6];
-                            snprintf(buf, sizeof(buf), "%d", x);
+                            snprintf(buf, sizeof(buf), "%d", (int)x);
                             lv_label_set_text(id(lbl_arc_rpm_val), buf);
                   - label:
                       id: lbl_arc_rpm_val
