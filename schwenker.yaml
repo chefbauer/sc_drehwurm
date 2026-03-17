@@ -2,28 +2,20 @@
 # Schwenker – Sinus-Pendelbewegung via F5 (MKS Servo42D CAN)
 # ============================================================
 #
-# Zwei Modi (sw_mode):
-#
-#  Modus 0 – Speed-Sinus (alt, Fallback)
+# Speed-Sinus:
 #   → speed = max_rpm × sin(π × t / T_half),  Ziel = ±8.000.000 (∞)
-#   → Motor-internem acc glättet die 50ms-Stufen
-#   → Speed-Auflösung: 1 RPM-Stufen
-#
-#  Modus 1 – Positions-Lookahead (neu, besser)
-#   → speed = sw_max_speed_rpm (Limit), Ziel = center + ampl × sin(2πt/T)
-#   → Motor fährt intern 1000x/s zur Zielposition, wir schauen T/10 voraus
-#   → Positions-Auflösung: 12800 Pulse/Umdrehung (MSTEP=64)
+#   → Motor-internes acc glättet die 50ms-Stufen
+#   → Speed-Auflösung: 1 RPM-Stufe
 #
 # F5-Format (verifiziert, offizielle Doku):
 #   { 0xF5, spd_H, spd_L, acc, pos_HH, pos_H, pos_L } + CRC
-#   speed:   0–3000 RPM  (2 Byte, in Modus 1 = Limit)
+#   speed:   0–3000 RPM  (2 Byte)
 #   acc:     1–254  = Motor interpoliert intern  |  0/255 = kein Ramping
 #   absAxis: int24_t, −8388607 … +8388607  (3 Byte Two's Complement)
 #
 # Parameter:
 #   sw_halbperiode_ms :  Zeit pro Richtung in ms  (default: 3000 ms)
-#   sw_max_speed_rpm  :  Scheitel-RPM (Modus 0) / Limit-RPM (Modus 1)
-#   sw_amplitude_deg  :  Schwenkwinkel ±Grad  (nur Modus 1, default: 45°)
+#   sw_max_speed_rpm  :  Scheitel-RPM
 #
 # ============================================================
 
@@ -34,12 +26,7 @@ globals:
     restore_value: no
     initial_value: 'false'
 
-  - id: sw_mode            # 0 = Speed-Sinus (alt), 1 = Positions-Lookahead (neu)
-    type: int
-    restore_value: yes
-    initial_value: '0'
-
-  # ── Modus 0: Speed-Sinus (alt) ─────────────────────────────────
+  # ── Speed-Sinus ──────────────────────────────────────────────
   - id: sw_richtung
     type: int
     restore_value: no
@@ -50,23 +37,7 @@ globals:
     restore_value: no
     initial_value: '0'          # Fortschritt innerhalb der aktuellen Halbperiode
 
-  # ── Modus 1: Positions-Lookahead (neu) ───────────────────────
-  - id: sw_elapsed_ms      # Gesamtzeit seit Start (für vollständige Sinus-Periode)
-    type: uint32_t
-    restore_value: no
-    initial_value: '0'
-
-  - id: sw_center_abs_axis # Abs-Axis-Position beim Start = Mitte der Pendelbewegung
-    type: int
-    restore_value: no
-    initial_value: '0'
-
-  - id: sw_amplitude_deg   # Schwenkwinkel ±Grad (default ±45°)
-    type: float
-    restore_value: yes
-    initial_value: '45.0'
-
-  # ── Konfiguration (beide Modi) ────────────────────────────────
+  # ── Konfiguration ─────────────────────────────────────────────
   - id: sw_halbperiode_ms
     type: uint32_t
     restore_value: yes
@@ -129,7 +100,7 @@ script:
   - id: script_schwenker_start
     mode: single              # mehrfaches Aufrufen ignoriert
     then:
-      # Motor-Init: konfigurierbarer Modus, 64 Subdivisions, 2000 mA, 5% Standby
+      # Motor-Init: konfigurierbarer Modus, 64 Subdivisions, 1000 mA, 5% Standby
       - lambda: |-
           std::vector<unsigned char> data;
           uint8_t mode_byte = (id(sw_motor_mode) == 1) ? 0x05 : 0x04;
@@ -138,45 +109,32 @@ script:
           ESP_LOGI("schwenker", "Motor-Modus: %s", id(sw_motor_mode)==1 ? "FOC (5)" : "Closed Loop (4)");
           data = add_crc(${motor_can_id}, { 0x84, 0x40 });        // MSTEP: 64 subdivisions
           id(can_bus)->send_data(${motor_can_id}, false, data);
-          data = add_crc(${motor_can_id}, { 0x83, 0x07, 0xD0 });  // Work current: 2000 mA
+          data = add_crc(${motor_can_id}, { 0x83, 0x03, 0xE8 });  // Work current: 1000 mA
           id(can_bus)->send_data(${motor_can_id}, false, data);
           data = add_crc(${motor_can_id}, { 0x9B, 0x00 });        // Idle current: param 0 = min (~10%)
           id(can_bus)->send_data(${motor_can_id}, false, data);
-          // Modus 1: Abs-Axis-Position abfragen → wird als Mitte gespeichert
-          if (id(sw_mode) == 1) {
-            id(can_bus)->send_data(${motor_can_id}, false, add_crc(${motor_can_id}, { 0x31 }));
-          }
-      - delay: 150ms   # init settle + 0x31-Antwort
+      - delay: 150ms   # init settle
       - lambda: |-
           // ── NVS-Schutz: veraltete Flash-Werte auf gültige Grenzen klemmen ──
-          // (Verhindert z.B. sw_max_speed_rpm=28 aus älterer Firmware, wo arc_rpm
-          //  noch einen größeren Maximalwert hatte)
           if (id(sw_max_speed_rpm) < 1 || id(sw_max_speed_rpm) > 20) {
             id(sw_max_speed_rpm) = std::max(1, std::min(20, id(sw_max_speed_rpm)));
             lv_arc_set_value(id(arc_rpm), id(sw_max_speed_rpm));
             char buf[6]; snprintf(buf, sizeof(buf), "%d", id(sw_max_speed_rpm));
             lv_label_set_text(id(lbl_arc_rpm_val), buf);
-            ESP_LOGW("schwenker", "sw_max_speed_rpm aus NVS war außerhalb [1..20] → korrigiert auf %d", id(sw_max_speed_rpm));
+            ESP_LOGW("schwenker", "sw_max_speed_rpm korrigiert auf %d", id(sw_max_speed_rpm));
           }
           if (id(sw_halbperiode_ms) < 1000 || id(sw_halbperiode_ms) > 10000) {
             id(sw_halbperiode_ms) = std::max((uint32_t)1000, std::min((uint32_t)10000, id(sw_halbperiode_ms)));
             lv_arc_set_value(id(arc_schwenkzeit), (int)(id(sw_halbperiode_ms) / 100));
             char buf[8]; snprintf(buf, sizeof(buf), "%.1fs", id(sw_halbperiode_ms) / 1000.0f);
             lv_label_set_text(id(lbl_arc_zeit_val), buf);
-            ESP_LOGW("schwenker", "sw_halbperiode_ms aus NVS war außerhalb [1000..10000] → korrigiert auf %u", id(sw_halbperiode_ms));
+            ESP_LOGW("schwenker", "sw_halbperiode_ms korrigiert auf %u", id(sw_halbperiode_ms));
           }
 
-          id(sw_richtung)   = 1;
-          id(sw_phase_ms)   = 0;
-          id(sw_elapsed_ms) = 0;
-          if (id(sw_mode) == 1) {
-            id(sw_center_abs_axis) = (int)(id(sensor_motor_position_abs_axis).state);
-            ESP_LOGI("schwenker", "START Lookahead  center=%d  ampl=±%.1f°  limit=%d RPM",
-                     id(sw_center_abs_axis), id(sw_amplitude_deg), id(sw_max_speed_rpm));
-          } else {
-            ESP_LOGI("schwenker", "START Speed  halbperiode=%u ms  max=%d RPM",
-                     id(sw_halbperiode_ms), id(sw_max_speed_rpm));
-          }
+          id(sw_richtung) = 1;
+          id(sw_phase_ms) = 0;
+          ESP_LOGI("schwenker", "START  halbperiode=%u ms  max=%d RPM",
+                   id(sw_halbperiode_ms), id(sw_max_speed_rpm));
           id(sw_aktiv)     = true;
           lv_obj_set_style_bg_color(id(btn_schwenker_main), lv_color_hex(0x229933), 0);
           lv_obj_set_style_bg_color(id(btn_schwenker_overlay_toggle), lv_color_hex(0x229933), 0);
@@ -252,14 +210,14 @@ script:
           ESP_LOGI("schwenker", "Motor Soft-Reboot (0x41) – Soll=Ist sync");
           id(can_bus)->send_data(${motor_can_id}, false, add_crc(${motor_can_id}, { 0x41 }));
       - delay: 2500ms   # Motor braucht ~2 s zum Hochfahren
-      # Re-Init: Closed-Loop, 64 Steps, 2000 mA, Respond ON
+      # Re-Init: Closed-Loop, 64 Steps, 1000 mA, Respond ON
       - lambda: |-
           std::vector<unsigned char> data;
           data = add_crc(${motor_can_id}, { 0x82, 0x04 });        // MODE: Closed Loop
           id(can_bus)->send_data(${motor_can_id}, false, data);
           data = add_crc(${motor_can_id}, { 0x84, 0x40 });        // MSTEP: 64 subdivisions
           id(can_bus)->send_data(${motor_can_id}, false, data);
-          data = add_crc(${motor_can_id}, { 0x83, 0x07, 0xD0 });  // Work current: 2000 mA
+          data = add_crc(${motor_can_id}, { 0x83, 0x03, 0xE8 });  // Work current: 1000 mA
           id(can_bus)->send_data(${motor_can_id}, false, data);
           data = add_crc(${motor_can_id}, { 0x9B, 0x00 });        // Idle current: min
           id(can_bus)->send_data(${motor_can_id}, false, data);
@@ -307,44 +265,25 @@ interval:
           if (!id(sw_aktiv)) return;
 
           uint8_t acc   = (uint8_t)id(sw_acc);
-          int     speed = id(sw_max_speed_rpm);
           int32_t target;
 
-          if (id(sw_mode) == 1) {
-            // ══ Modus 1: Positions-Lookahead ══════════════════════════════════
-            // Motor bekommt vorausberechnete Zielposition (Sinus-Kurve).
-            // Er nutzt 1-kHz-Regelschleife um glättestmöglich hinzufahren.
-            // Lookahead = T/10 → Motor hat 10% der Periode Zeit zum Ankommen.
-            id(sw_elapsed_ms) += 50;
-            float T_full    = 2.0f * (float)id(sw_halbperiode_ms);
-            float lookahead = T_full * 0.1f;
-            float t_ahead   = (float)id(sw_elapsed_ms) + lookahead;
-            float pos_sin   = sinf(2.0f * M_PI * t_ahead / T_full);
-            // Amplitude: Grad → Pulse (MSTEP=64: 200×64=12800 Pulse/Umdrehung)
-            float ampl_steps = id(sw_amplitude_deg) / 360.0f * 12800.0f;
-            target = id(sw_center_abs_axis) + (int32_t)(pos_sin * ampl_steps);
-            ESP_LOGD("schwenker", "Lookahead t=%u sin:%.3f target:%d",
-                     id(sw_elapsed_ms), pos_sin, target);
-          } else {
-            // ══ Modus 0: Speed-Sinus (alt, Fallback) ══════════════════════════
-            // speed = max_rpm × sin(π × phase),  Ziel = ±∞
-            id(sw_phase_ms) += 50;
-            float T      = (float)id(sw_halbperiode_ms);
-            float phase  = (float)id(sw_phase_ms) / T;
-            float sinval = sinf(M_PI * phase);
-            if (sinval < 0.0f) sinval = 0.0f;
-            speed  = (int)(id(sw_max_speed_rpm) * sinval);
-            target = (int32_t)(id(sw_richtung)) * 8000000;
-            ESP_LOGD("schwenker", "Speed Dir:%+d spd:%3d RPM sin:%.3f phase:%.3f",
-                     id(sw_richtung), speed, sinval, phase);
-            if (id(sw_phase_ms) >= id(sw_halbperiode_ms)) {
-              id(sw_richtung) *= -1;
-              id(sw_phase_ms)  = 0;
-              ESP_LOGI("schwenker", "Richtungswechsel → %+d", id(sw_richtung));
-            }
+          // ══ Speed-Sinus: speed = max_rpm × sin(π × phase),  Ziel = ±∞ ══
+          id(sw_phase_ms) += 50;
+          float T      = (float)id(sw_halbperiode_ms);
+          float phase  = (float)id(sw_phase_ms) / T;
+          float sinval = sinf(M_PI * phase);
+          if (sinval < 0.0f) sinval = 0.0f;
+          int speed  = (int)(id(sw_max_speed_rpm) * sinval);
+          target = (int32_t)(id(sw_richtung)) * 8000000;
+          ESP_LOGD("schwenker", "Dir:%+d spd:%3d RPM sin:%.3f",
+                   id(sw_richtung), speed, sinval);
+          if (id(sw_phase_ms) >= id(sw_halbperiode_ms)) {
+            id(sw_richtung) *= -1;
+            id(sw_phase_ms)  = 0;
+            ESP_LOGI("schwenker", "Richtungswechsel → %+d", id(sw_richtung));
           }
 
-          // ══ F5 CAN-Paket senden (beide Modi) ══════════════════════════════
+          // ══ F5 CAN-Paket senden ════════════════════════════════════════
           uint8_t  spd_h = (uint8_t)(speed >> 8);
           uint8_t  spd_l = (uint8_t)(speed & 0xFF);
           uint32_t val   = (uint32_t)(target) & 0x00FFFFFFU;
