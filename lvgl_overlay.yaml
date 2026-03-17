@@ -113,6 +113,32 @@ lvgl:
                 on_click:
                   - lvgl.widget.hide: overlay_schwenker_settings
 
+            # ── Modus-Toggle: Alt (Speed) / Neu (Lookahead) ───────
+            - button:
+                id: btn_sw_mode_toggle
+                width: 260
+                height: 48
+                align: TOP_MID
+                y: 65
+                bg_color: 0x224488
+                border_width: 2
+                border_color: 0x4477BB
+                radius: 10
+                widgets:
+                  - label:
+                      id: lbl_sw_mode
+                      text: "Modus: Speed (alt)"
+                      align: CENTER
+                      text_font: font_small
+                      text_color: 0xFFFFFF
+                on_click:
+                  - lambda: |-
+                      id(sw_mode) = (id(sw_mode) == 0) ? 1 : 0;
+                      lv_label_set_text(id(lbl_sw_mode),
+                        id(sw_mode) == 1 ? "Modus: Lookahead (neu)" : "Modus: Speed (alt)");
+                      lv_obj_set_style_bg_color(id(btn_sw_mode_toggle),
+                        id(sw_mode) == 1 ? lv_color_hex(0x226622) : lv_color_hex(0x224488), 0);
+
             # ── Arc 1: Schwenkzeit ─────────────────────────────────
             - obj:
                 id: arc_area_zeit

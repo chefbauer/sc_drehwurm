@@ -292,6 +292,11 @@ lvgl:
                               lv_label_set_text(id(lbl_arc_zeit_val), b1);
                               char b2[6]; snprintf(b2,sizeof(b2),"%d", r);
                               lv_label_set_text(id(lbl_arc_rpm_val), b2);
+                              // Modus-Button synchronisieren
+                              lv_label_set_text(id(lbl_sw_mode),
+                                id(sw_mode)==1 ? "Modus: Lookahead (neu)" : "Modus: Speed (alt)");
+                              lv_obj_set_style_bg_color(id(btn_sw_mode_toggle),
+                                id(sw_mode)==1 ? lv_color_hex(0x226622) : lv_color_hex(0x224488), 0);
                           - lvgl.widget.show: overlay_schwenker_settings
                         widgets:
                           - label:
@@ -1395,6 +1400,11 @@ lvgl:
                                   lv_label_set_text(id(lbl_arc_zeit_val), b1);
                                   char b2[6]; snprintf(b2,sizeof(b2),"%d", r);
                                   lv_label_set_text(id(lbl_arc_rpm_val), b2);
+                                  // Modus-Button synchronisieren
+                                  lv_label_set_text(id(lbl_sw_mode),
+                                    id(sw_mode)==1 ? "Modus: Lookahead (neu)" : "Modus: Speed (alt)");
+                                  lv_obj_set_style_bg_color(id(btn_sw_mode_toggle),
+                                    id(sw_mode)==1 ? lv_color_hex(0x226622) : lv_color_hex(0x224488), 0);
                               - lvgl.widget.show: overlay_schwenker_settings
 
                         # Zeile: Motor-Steuerung
