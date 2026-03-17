@@ -56,7 +56,7 @@ globals:
   - id: sw_max_speed_rpm
     type: int
     restore_value: yes
-    initial_value: '10'         # RPM am Sinus-Scheitel
+    initial_value: '15'         # RPM am Sinus-Scheitel
 
   - id: sw_acc
     type: int
@@ -87,12 +87,15 @@ script:
       - lambda: |-
           id(sw_aktiv) = false;
           ESP_LOGI("schwenker", "STOP");
-      # F6 Speed=0 → sanft abbremsen (nutzt bestehenden Speed-Script)
-      - script.execute:
-          id: script_motor_set_speed_dir
-          speed_rpm: 0
-          accel: 5
-          dir: 0
+          // F5 speed=0 an aktuellem Ziel → Motor bremst und stoppt
+          uint8_t acc   = (uint8_t)id(sw_acc);
+          int32_t target = (int32_t)(id(sw_richtung)) * 8000000;
+          uint32_t val  = (uint32_t)(target) & 0x00FFFFFFU;
+          uint8_t p_hh  = (uint8_t)((val >> 16) & 0xFF);
+          uint8_t p_h   = (uint8_t)((val >>  8) & 0xFF);
+          uint8_t p_l   = (uint8_t)( val         & 0xFF);
+          id(can_bus)->send_data(${motor_can_id}, false,
+              add_crc(${motor_can_id}, { 0xF5, 0x00, 0x00, acc, p_hh, p_h, p_l }));
 
 # ============================================================
 # 50 ms Takt – Sinus-Regelschleife
