@@ -1,0 +1,20 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "YAML validieren",
+      "type": "shell",
+      "command": "for f in /workspaces/display_drehwurm/*.yaml; do python3 -c \"import yaml, sys; yaml.safe_load(open('$f'))\" 2>&1 && echo \"✓ $(basename $f)\" || echo \"✗ FEHLER: $(basename $f)\"; done",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared",
+        "clear": true
+      },
+      "problemMatcher": []
+    }
+  ]
+}

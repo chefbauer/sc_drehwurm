@@ -195,7 +195,7 @@ lvgl:
               # Titel oben mittig
               - label:
                   id: main_title
-                  text: "SC Schwippschwenker"
+                  text: "SCK Schwippschwenker"
                   align: TOP_MID
                   y: 20
                   text_font: font_title
@@ -280,117 +280,117 @@ lvgl:
                     # ── Slot-Marker: Kreise mit Slot-Farben, rotieren mit Motor-Winkel ──
                     - obj:
                         id: ring_slot1_marker
-                        width: 50
-                        height: 50
-                        radius: 25
+                        width: 75
+                        height: 75
+                        radius: 37
                         bg_color: 0x882222
                         bg_opa: COVER
-                        border_width: 4
+                        border_width: 6
                         border_color: 0xFF0000
                         pad_all: 0
                         align: TOP_LEFT
-                        x: 155
-                        y: 285
+                        x: 143
+                        y: 283
                         widgets:
                           - label:
                               text: "1"
                               align: CENTER
-                              text_font: font_normal
+                              text_font: font_temp
                               text_color: 0xFFFFFF
                     - obj:
                         id: ring_slot2_marker
-                        width: 50
-                        height: 50
-                        radius: 25
+                        width: 75
+                        height: 75
+                        radius: 37
                         bg_color: 0x887700
                         bg_opa: COVER
-                        border_width: 4
+                        border_width: 6
                         border_color: 0xFFFF00
                         pad_all: 0
                         align: TOP_LEFT
-                        x: 42
-                        y: 220
+                        x: 21
+                        y: 213
                         widgets:
                           - label:
                               text: "2"
                               align: CENTER
-                              text_font: font_normal
+                              text_font: font_temp
                               text_color: 0x000000
                     - obj:
                         id: ring_slot3_marker
-                        width: 50
-                        height: 50
-                        radius: 25
+                        width: 75
+                        height: 75
+                        radius: 37
                         bg_color: 0x228822
                         bg_opa: COVER
-                        border_width: 4
+                        border_width: 6
                         border_color: 0x00FF00
                         pad_all: 0
                         align: TOP_LEFT
-                        x: 42
-                        y: 90
+                        x: 21
+                        y: 73
                         widgets:
                           - label:
                               text: "3"
                               align: CENTER
-                              text_font: font_normal
+                              text_font: font_temp
                               text_color: 0x000000
                     - obj:
                         id: ring_slot4_marker
-                        width: 50
-                        height: 50
-                        radius: 25
+                        width: 75
+                        height: 75
+                        radius: 37
                         bg_color: 0x228888
                         bg_opa: COVER
-                        border_width: 4
+                        border_width: 6
                         border_color: 0x00FFFF
                         pad_all: 0
                         align: TOP_LEFT
-                        x: 155
-                        y: 25
+                        x: 143
+                        y: 3
                         widgets:
                           - label:
                               text: "4"
                               align: CENTER
-                              text_font: font_normal
+                              text_font: font_temp
                               text_color: 0x000000
                     - obj:
                         id: ring_slot5_marker
-                        width: 50
-                        height: 50
-                        radius: 25
+                        width: 75
+                        height: 75
+                        radius: 37
                         bg_color: 0x222288
                         bg_opa: COVER
-                        border_width: 4
+                        border_width: 6
                         border_color: 0x0000FF
                         pad_all: 0
                         align: TOP_LEFT
-                        x: 268
-                        y: 90
+                        x: 264
+                        y: 73
                         widgets:
                           - label:
                               text: "5"
                               align: CENTER
-                              text_font: font_normal
+                              text_font: font_temp
                               text_color: 0xFFFFFF
                     - obj:
                         id: ring_slot6_marker
-                        width: 50
-                        height: 50
-                        radius: 25
+                        width: 75
+                        height: 75
+                        radius: 37
                         bg_color: 0x882288
                         bg_opa: COVER
-                        border_width: 4
+                        border_width: 6
                         border_color: 0xFF00FF
                         pad_all: 0
                         align: TOP_LEFT
-                        x: 268
-                        y: 220
+                        x: 264
+                        y: 213
                         widgets:
                           - label:
                               text: "6"
                               align: CENTER
-                              text_font: font_normal
+                              text_font: font_temp
                               text_color: 0xFFFFFF
 
               # ---- Slot-Container links: Slot 1 (R), 2 (Y), 3 (G) ----

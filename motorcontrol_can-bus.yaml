@@ -790,11 +790,10 @@ sensor:
             // sensor_motor_position = raw 0-16383 (0-360°)
             // Slot 1 startet bei 6-Uhr (180°-Offset), je Slot 60° Abstand
             float motor_deg = x / 16384.0f * 360.0f;
-            const float R    = 130.0f;   // Radius der Marker im Ring (px)
-            const float CX   = 180.0f;   // Ringmitte X
-            const float CY   = 180.0f;   // Ringmitte Y
-            const float HS_x = 25.0f;    // halbe Label-Breite (~50px/2)
-            const float HS_y = 32.0f;    // Baseline-Korrektur: Noto-Font Ascender ~75%
+            const float R  = 140.0f;   // Radius der Marker-Mittelpunkte im Ring (px)
+            const float CX = 180.0f;   // Ringmitte X
+            const float CY = 180.0f;   // Ringmitte Y
+            const float HS = 37.0f;    // halbe Widget-Breite (75px / 2 = 37.5 → 37)
             lv_obj_t* markers[6] = {
               id(ring_slot1_marker), id(ring_slot2_marker), id(ring_slot3_marker),
               id(ring_slot4_marker), id(ring_slot5_marker), id(ring_slot6_marker)
@@ -803,8 +802,8 @@ sensor:
               // -motor_deg: Marker drehen entgegen Motorrichtung (physische Karussell-Logik)
               float a = (-motor_deg + (float)(i * 60) + 180.0f) * (float)M_PI / 180.0f;
               lv_obj_set_pos(markers[i],
-                (lv_coord_t)(CX + R * sinf(a) - 25.0f),
-                (lv_coord_t)(CY - R * cosf(a) - 25.0f));
+                (lv_coord_t)(CX + R * sinf(a) - HS),
+                (lv_coord_t)(CY - R * cosf(a) - HS));
             }
 
   - platform: template
