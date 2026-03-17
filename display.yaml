@@ -19,6 +19,7 @@ substitutions:
 
   master_can_id: 1
   motor_can_id: "3"
+  c_motor_direction: "1"    # 0 = links, 1 = rechts motor => welle
 
   
   c_pumpe_umwaelzung_ein_perc: 30
