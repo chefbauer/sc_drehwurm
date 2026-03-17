@@ -782,10 +782,28 @@ sensor:
     name: sensor_motor_position
     internal: true
     accuracy_decimals: 0
-    on_value: 
+    on_value:
       then:
         - lambda: |-
             id(sensor_motor_winkel).publish_state(x);
+            // ── Slot-Marker im Schwenker-Ring aktualisieren ──
+            // sensor_motor_position = raw 0-16383 (0-360°)
+            // Slot 1 startet bei 6-Uhr (180°-Offset), je Slot 60° Abstand
+            float motor_deg = x / 16384.0f * 360.0f;
+            const float R  = 130.0f;   // Radius der Marker im Ring (px)
+            const float CX = 180.0f;   // Ringmitte X
+            const float CY = 180.0f;   // Ringmitte Y
+            const float HS = 25.0f;    // halbe Labelbreite (~50px/2)
+            lv_obj_t* markers[6] = {
+              id(lbl_ring_slot1), id(lbl_ring_slot2), id(lbl_ring_slot3),
+              id(lbl_ring_slot4), id(lbl_ring_slot5), id(lbl_ring_slot6)
+            };
+            for (int i = 0; i < 6; i++) {
+              float a = (motor_deg + (float)(i * 60) + 180.0f) * (float)M_PI / 180.0f;
+              lv_obj_set_pos(markers[i],
+                (lv_coord_t)(CX + R * sinf(a) - HS),
+                (lv_coord_t)(CY - R * cosf(a) - HS));
+            }
 
   - platform: template
     id: sensor_motor_position_error

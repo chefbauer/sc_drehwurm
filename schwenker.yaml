@@ -187,6 +187,9 @@ interval:
   - interval: 50ms
     then:
       - lambda: |-
+          // Winkelabfrage 20x/s – immer, auch wenn Schwenker inaktiv
+          id(can_bus)->send_data(${motor_can_id}, false, add_crc(${motor_can_id}, { 0x30 }));
+
           if (!id(sw_aktiv)) return;
 
           // ── Phase vorwärts ────────────────────────────────────
