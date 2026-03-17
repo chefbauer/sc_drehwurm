@@ -23,13 +23,13 @@ external_components:
 i2c_device:
   - id: i2c_mlx90632
     address: 0x3A
-    i2c_id: i2c_mux_ch0
+    i2c_id: i2c_bus
 
 sensor:
   - platform: vl53l4cd
     id: distance_sensor
     name: vlx53l4cd Distanz
-    i2c_id: i2c_mux_ch0
+    i2c_id: i2c_bus
     address: 0x29              # optional, Standard: 0x29
     timing_budget_ms: 200       # optional, Standard: 50 (10–200 ms)
     inter_measurement_ms: 0    # optional, Standard: 0 (Continuous-Mode)
@@ -61,7 +61,7 @@ sensor:
 
   # ── SHT4x – Temperatur und Luftfeuchtigkeit ───────────────
   - platform: sht4x
-    i2c_id: i2c_mux_ch0
+    i2c_id: i2c_bus
     update_interval: 1s
     temperature:
       id: sensor_sht4x_temp
@@ -79,7 +79,7 @@ sensor:
 
   # ── BMP581 – Barometrischer Druck und Temperatur ──────────
   - platform: bmp581_i2c
-    i2c_id: i2c_mux_ch0
+    i2c_id: i2c_bus
     update_interval: 1s
     temperature:
       name: "Indoor Temperature"
@@ -131,7 +131,7 @@ sensor:
   # ── VEML7700 – Umgebungslichtsensor ───────────────────────
   - platform: veml7700
     id: sensor_veml7700
-    i2c_id: i2c_mux_ch0
+    i2c_id: i2c_bus
     address: 0x10
     update_interval: 2s
     ambient_light:

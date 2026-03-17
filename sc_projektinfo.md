@@ -67,10 +67,10 @@ Ausgelegt für **Dosen und Flaschen** — durch das Drehen wird die Kühlleistun
 **Sensor-ID:** `sensor_temp_becken` in `ble.yaml`  
 **ROM-Code:** `28:B2:FE:B9:0F:00:00:2E`
 
-**Multiplexer:** TCA9548A (`0x70`) – alle sensorphalanx-Sensoren auf Kanal 0 (`i2c_mux_ch0`):
+**Alle sensorphalanx-Sensoren direkt am Haupt-Bus** (`i2c_bus`):
 - MLX90632 (`i2c_device`, `0x3A`)
 - VL53L4CD (`0x29`)
-- SHT4x (`0x44`) ← kein Konflikt mehr, da hinter Mux
+- SHT4x (`0x44`)
 - BMP581 (`0x46`)
 - VEML7700 (`0x10`)
 
@@ -555,3 +555,4 @@ Anordnung im Uhrzeigersinn nach Farbrad:
 | 2026-03-15 | `ble.yaml` neu: `esp32_ble_tracker` (passiv); `esp32_hosted` extern, nicht in dieser Datei | `ble.yaml` |
 | 2026-03-15 | BLE MAC ermittelt (`dc:da:0c:a1:89:8e`); `sensor_temp_becken` via BTHome v2 aktiviert | `ble.yaml` |
 | 2026-03-15 | I²C-Bridge `temp_bridge` (0x48) + Template-Sensor aus `hardware.yaml` entfernt | `hardware.yaml` |
+| 2026-03-17 | TCA9548A-Mux entfernt; alle sensorphalanx-Sensoren direkt auf `i2c_bus` umgestellt | `sensorphalanx.yaml` |
