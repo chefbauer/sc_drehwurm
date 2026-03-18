@@ -69,6 +69,32 @@ globals:
     restore_value: no
     initial_value: 'false'
 
+  # ── F4-Testmodus ──────────────────────────────────────────
+  - id: sw_test_aktiv
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+
+  - id: sw_test_richtung       # +1 = CW, -1 = CCW
+    type: int
+    restore_value: no
+    initial_value: '1'
+
+  - id: sw_test_winkel         # Winkel pro Richtung in Grad
+    type: float
+    restore_value: yes
+    initial_value: '20.0'
+
+  - id: sw_test_speed          # Geschwindigkeit in RPM
+    type: int
+    restore_value: yes
+    initial_value: '5'
+
+  - id: sw_test_acc            # Beschleunigung 1–254
+    type: int
+    restore_value: yes
+    initial_value: '50'
+
   # ── Schwenker-Presets ─────────────────────────────────────
   - id: preset1_hp_ms
     type: uint32_t
@@ -316,6 +342,85 @@ script:
           lv_obj_set_style_bg_color(id(btn_beckenfuellung), lv_color_hex(0x555555), 0);
           id(output_pumpe_dacB).turn_off();
           ESP_LOGI("system", "AUS");
+
+  # ── F4-Testmodus Start / Loop ────────────────────────────
+  #   Fährt sw_test_winkel° CW, wartet auf Stopp (F1/F4-Response),
+  #   dreht CCW, etc. – solange sw_test_aktiv == true.
+  - id: script_schwenker_test_start
+    mode: single
+    then:
+      - lambda: |-
+          if (id(sw_aktiv)) {
+            ESP_LOGW("sw_test", "Sinus-Modus aktiv – bitte zuerst stoppen");
+            return;
+          }
+          // Closed Loop für präzise Winkelfahrten
+          id(can_bus)->send_data(${motor_can_id}, false,
+              add_crc(${motor_can_id}, { 0x82, 0x04 }));
+          id(sw_test_aktiv)    = true;
+          id(sw_test_richtung) = 1;
+          lv_obj_set_style_bg_color(id(btn_sw_test_toggle), lv_color_hex(0x22AA55), 0);
+          lv_label_set_text(id(lbl_sw_test_toggle), "STOP");
+          ESP_LOGI("sw_test", "Start: %.1f deg  %d RPM  acc=%d",
+                   id(sw_test_winkel), id(sw_test_speed), id(sw_test_acc));
+      - delay: 150ms   # Motor-Init settle
+      # ── Pendelschleife ──────────────────────────────────
+      - while:
+          condition:
+            lambda: return id(sw_test_aktiv);
+          then:
+            # F4-Befehl in aktueller Richtung senden
+            - lambda: |-
+                id(sensor_motor_status).publish_state(99);  // sentinel: Fahrt läuft
+                float deg   = (float)id(sw_test_richtung) * id(sw_test_winkel);
+                int   spd   = id(sw_test_speed);
+                int   acc   = id(sw_test_acc);
+                if (acc <= 0 || acc >= 255) acc = 50;
+                int32_t  steps = lround((16384.0 / 360.0) * (double)deg);
+                uint32_t val   = static_cast<uint32_t>(steps) & 0xFFFFFF;
+                uint8_t sh = (uint8_t)(spd >> 8);
+                uint8_t sl = (uint8_t)(spd & 0xFF);
+                uint8_t ah = (uint8_t)acc;
+                uint8_t hh = (uint8_t)((val >> 16) & 0xFF);
+                uint8_t hm = (uint8_t)((val >>  8) & 0xFF);
+                uint8_t hl = (uint8_t)( val         & 0xFF);
+                id(can_bus)->send_data(${motor_can_id}, false,
+                    add_crc(${motor_can_id}, { 0xF4, sh, sl, ah, hh, hm, hl }));
+                ESP_LOGI("sw_test", "F4  dir=%+d  %.1f deg  %d RPM  acc=%d",
+                         id(sw_test_richtung), id(sw_test_winkel), spd, acc);
+            # Alle 100 ms F1 abfragen bis Motor stoppt (status==1) oder F4-Completion (status==2)
+            - while:
+                condition:
+                  lambda: |-
+                    float s = id(sensor_motor_status).state;
+                    return s != 1.0f && s != 2.0f && id(sw_test_aktiv);
+                then:
+                  - delay: 100ms
+                  - lambda: |-
+                      id(can_bus)->send_data(${motor_can_id}, false,
+                          add_crc(${motor_can_id}, { 0xF1 }));
+            # Richtung umkehren
+            - lambda: |-
+                if (id(sw_test_aktiv)) {
+                  id(sw_test_richtung) = -id(sw_test_richtung);
+                  ESP_LOGI("sw_test", "Richtungswechsel -> %+d", id(sw_test_richtung));
+                }
+
+  # ── F4-Testmodus Stop ────────────────────────────────────
+  - id: script_schwenker_test_stop
+    mode: single
+    then:
+      - lambda: |-
+          id(sw_test_aktiv) = false;
+          lv_obj_set_style_bg_color(id(btn_sw_test_toggle), lv_color_hex(0x444444), 0);
+          lv_label_set_text(id(lbl_sw_test_toggle), "TEST");
+          // Weckt den inner-while auf: status=1 → Schleife endet sauber
+          id(sensor_motor_status).publish_state(1);
+          // Sanfter Halt: F5 speed=0
+          uint8_t acc = (uint8_t)std::max(1, std::min(254, id(sw_test_acc)));
+          id(can_bus)->send_data(${motor_can_id}, false,
+              add_crc(${motor_can_id}, { 0xF5, 0x00, 0x00, acc, 0x7F, 0xFF, 0xFF }));
+          ESP_LOGI("sw_test", "Testmodus gestoppt");
 
 # ============================================================
 # 50 ms Takt – Sinus-Regelschleife

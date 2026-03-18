@@ -140,6 +140,27 @@ lvgl:
                       lv_obj_set_style_bg_color(id(btn_sw_motor_mode_toggle),
                         id(sw_motor_mode) == 1 ? lv_color_hex(0x885522) : lv_color_hex(0x226644), 0);
 
+            # ── F4-Test-Button ─────────────────────────────────────
+            - button:
+                id: btn_open_sw_test
+                width: 260
+                height: 48
+                align: TOP_MID
+                x: 0
+                y: 120
+                bg_color: 0x553388
+                border_width: 2
+                border_color: 0x9966CC
+                radius: 10
+                widgets:
+                  - label:
+                      text: "F4-Test (Winkel/Speed/Acc)"
+                      align: CENTER
+                      text_font: font_small
+                      text_color: 0xFFFFFF
+                on_click:
+                  - lvgl.widget.show: overlay_schwenker_test
+
             # ── Arc 1: Schwenkzeit ─────────────────────────────────
             - obj:
                 id: arc_area_zeit
@@ -433,6 +454,245 @@ lvgl:
                                      id(preset3_hp_ms)/1000.0f, id(preset3_rpm));
                             lv_label_set_text(id(lbl_preset3_vals), buf);
                             ESP_LOGI("preset","P3 gespeichert: %u ms, %d RPM",id(preset3_hp_ms),id(preset3_rpm));
+
+      # ================================
+      - obj:
+          id: overlay_schwenker_test
+          width: 100%
+          height: 100%
+          bg_color: 0x1A0A2E
+          bg_opa: 97%
+          hidden: true
+          clickable: true
+          pad_all: 0
+          scrollable: false
+          widgets:
+            # Titel
+            - label:
+                text: "Schwenker Test  \xE2\x80\x93  F4 Winkel-Modus"
+                align: TOP_MID
+                y: 14
+                text_font: font_title
+                text_color: 0xCC99FF
+                text_align: CENTER
+
+            # Exit-Button
+            - button:
+                id: btn_sw_test_exit
+                width: 80
+                height: 55
+                align: TOP_RIGHT
+                x: -10
+                y: 10
+                bg_color: 0xCC3333
+                widgets:
+                  - label:
+                      text: "X"
+                      align: CENTER
+                      text_font: font_normal
+                      text_color: 0xFFFFFF
+                on_click:
+                  - lambda: |-
+                      id(script_schwenker_test_stop).execute();
+                  - lvgl.widget.hide: overlay_schwenker_test
+
+            # ── Arc-Reihe ──────────────────────────────────────────
+            # Arc 1: Winkel (0–90°)
+            - obj:
+                id: arc_area_test_winkel
+                width: 300
+                height: 310
+                align: TOP_LEFT
+                x: 30
+                y: 80
+                bg_opa: TRANSP
+                border_width: 0
+                scrollable: false
+                clickable: false
+                pad_all: 0
+                widgets:
+                  - label:
+                      text: "Winkel"
+                      align: TOP_MID
+                      y: 0
+                      text_font: font_normal
+                      text_color: 0xAA88FF
+                  - arc:
+                      id: arc_test_winkel
+                      width: 230
+                      height: 230
+                      align: TOP_MID
+                      y: 32
+                      min_value: 1
+                      max_value: 90
+                      value: 20
+                      adjustable: true
+                      arc_color: 0x442288
+                      arc_width: 18
+                      indicator:
+                        arc_color: 0xCC99FF
+                        arc_width: 18
+                      knob:
+                        bg_color: 0xCC99FF
+                        width: 26
+                        height: 26
+                        radius: 13
+                      on_value:
+                        - lambda: |-
+                            id(sw_test_winkel) = (float)x;
+                            char buf[8];
+                            snprintf(buf, sizeof(buf), "%d\xc2\xb0", (int)x);
+                            lv_label_set_text(id(lbl_test_winkel_val), buf);
+                  - label:
+                      id: lbl_test_winkel_val
+                      text: "20\xc2\xb0"
+                      align: TOP_MID
+                      y: 118
+                      text_font: font_arc_val
+                      text_color: 0xCC99FF
+                      text_align: CENTER
+
+            # Arc 2: Speed (1–20 RPM)
+            - obj:
+                id: arc_area_test_speed
+                width: 300
+                height: 310
+                align: TOP_MID
+                x: 0
+                y: 80
+                bg_opa: TRANSP
+                border_width: 0
+                scrollable: false
+                clickable: false
+                pad_all: 0
+                widgets:
+                  - label:
+                      text: "Speed"
+                      align: TOP_MID
+                      y: 0
+                      text_font: font_normal
+                      text_color: 0x88DDFF
+                  - arc:
+                      id: arc_test_speed
+                      width: 230
+                      height: 230
+                      align: TOP_MID
+                      y: 32
+                      min_value: 1
+                      max_value: 20
+                      value: 5
+                      adjustable: true
+                      arc_color: 0x113355
+                      arc_width: 18
+                      indicator:
+                        arc_color: 0x55CCFF
+                        arc_width: 18
+                      knob:
+                        bg_color: 0x55CCFF
+                        width: 26
+                        height: 26
+                        radius: 13
+                      on_value:
+                        - lambda: |-
+                            id(sw_test_speed) = (int)x;
+                            char buf[8];
+                            snprintf(buf, sizeof(buf), "%d", (int)x);
+                            lv_label_set_text(id(lbl_test_speed_val), buf);
+                  - label:
+                      id: lbl_test_speed_val
+                      text: "5"
+                      align: TOP_MID
+                      y: 118
+                      text_font: font_arc_val
+                      text_color: 0x55CCFF
+                      text_align: CENTER
+                  - label:
+                      text: "Upm"
+                      align: TOP_MID
+                      y: 172
+                      text_font: font_small
+                      text_color: 0x5588AA
+
+            # Arc 3: Acc (10–250 in 10er-Schritten → arc 1–25)
+            - obj:
+                id: arc_area_test_acc
+                width: 300
+                height: 310
+                align: TOP_RIGHT
+                x: -30
+                y: 80
+                bg_opa: TRANSP
+                border_width: 0
+                scrollable: false
+                clickable: false
+                pad_all: 0
+                widgets:
+                  - label:
+                      text: "Acc"
+                      align: TOP_MID
+                      y: 0
+                      text_font: font_normal
+                      text_color: 0xFFCC55
+                  - arc:
+                      id: arc_test_acc
+                      width: 230
+                      height: 230
+                      align: TOP_MID
+                      y: 32
+                      min_value: 1       # × 10 = 10
+                      max_value: 25      # × 10 = 250
+                      value: 5           # × 10 = 50
+                      adjustable: true
+                      arc_color: 0x332200
+                      arc_width: 18
+                      indicator:
+                        arc_color: 0xFFAA22
+                        arc_width: 18
+                      knob:
+                        bg_color: 0xFFAA22
+                        width: 26
+                        height: 26
+                        radius: 13
+                      on_value:
+                        - lambda: |-
+                            id(sw_test_acc) = (int)x * 10;
+                            char buf[8];
+                            snprintf(buf, sizeof(buf), "%d", (int)x * 10);
+                            lv_label_set_text(id(lbl_test_acc_val), buf);
+                  - label:
+                      id: lbl_test_acc_val
+                      text: "50"
+                      align: TOP_MID
+                      y: 118
+                      text_font: font_arc_val
+                      text_color: 0xFFAA22
+                      text_align: CENTER
+
+            # ── Start/Stop-Button (mittig unten) ──────────────────
+            - button:
+                id: btn_sw_test_toggle
+                width: 280
+                height: 80
+                align: BOTTOM_MID
+                y: -20
+                radius: 15
+                bg_color: 0x444444
+                border_width: 2
+                border_color: 0x888888
+                widgets:
+                  - label:
+                      id: lbl_sw_test_toggle
+                      text: "TEST"
+                      align: CENTER
+                      text_font: font_normal
+                      text_color: 0xFFFFFF
+                on_click:
+                  - lambda: |-
+                      if (id(sw_test_aktiv)) {
+                        id(script_schwenker_test_stop).execute();
+                      } else {
+                        id(script_schwenker_test_start).execute();
+                      }
 
       # ================================
       - obj:
