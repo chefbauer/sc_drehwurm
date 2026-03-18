@@ -256,7 +256,9 @@ script:
       - delay: 300ms
       - lambda: |-
           id(output_pumpe_dacA).set_level(0.15f);  // 15% Dauer
-          lv_slider_set_value(id(slider_turmpumpe), 15, LV_ANIM_OFF); (25% → 15% → 100% → 15% Dauer) ───
+          lv_slider_set_value(id(slider_turmpumpe), 15, LV_ANIM_OFF);
+
+  # ── Beckenfüllung Lang (25% → 15% → 100% → 15% Dauer) ───
   - id: script_pumpe_a_lang
     mode: restart
     then:

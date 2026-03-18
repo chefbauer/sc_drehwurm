@@ -222,8 +222,8 @@ climate:
     min_cooling_run_time: 90s
     min_idle_time: 30s
     startup_delay: true
-    cool_deadband: 1.5 °C
-    cool_overrun: 0.0 °C
+    cool_deadband: 0.9 °C
+    cool_overrun: 0.1 °C
     cool_action:
       - output.turn_on: output_kompressor_relais
       - output.set_level:
