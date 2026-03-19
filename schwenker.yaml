@@ -279,7 +279,7 @@ script:
           id(output_pumpe_dacA).set_level(0.25f);  // 25% Anlauf
           lv_obj_set_style_bg_color(id(btn_beckenfuellung), lv_color_hex(0x2255CC), 0);
           ESP_LOGI("pumpe", "Beckenfüllung KURZ start");
-      - delay: 100ms
+      - delay: 200ms
       - lambda: |-
           id(output_pumpe_dacA).set_level(0.04f);  // 5% Dauer
           lv_slider_set_value(id(slider_turmpumpe), 5, LV_ANIM_OFF);
@@ -293,7 +293,7 @@ script:
           id(output_pumpe_dacA).set_level(0.25f);  // 25% Anlauf
           lv_obj_set_style_bg_color(id(btn_beckenfuellung), lv_color_hex(0x2255CC), 0);
           ESP_LOGI("pumpe", "Beckenfüllung LANG start");
-      - delay: 100ms
+      - delay: 200ms
       - lambda: |-
           id(output_pumpe_dacA).set_level(0.04f);  // 15% Zwischenphase
       - delay: 5000ms
