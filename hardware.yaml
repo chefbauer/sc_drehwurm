@@ -8,6 +8,12 @@ esphome:
         - lambda: |-
             id(brightness_auto_mode) = true;
             lv_obj_add_state(id(sw_brightness_auto), LV_STATE_CHECKED);
+            // Motor-Strom-Slider + Label aus NVS synchronisieren
+            int cur = std::max(500, std::min(2000, id(sw_work_current_mA)));
+            lv_slider_set_value(id(slider_motor_strom), cur, LV_ANIM_OFF);
+            char mbuf[12];
+            snprintf(mbuf, sizeof(mbuf), "%d mA", cur);
+            lv_label_set_text(id(lbl_motor_strom_wert), mbuf);
     - priority: -200        # nach allem anderen – Motor in Nullstellung
       then:
         - script.execute: script_motor_set_zero

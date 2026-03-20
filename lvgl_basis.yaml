@@ -1559,6 +1559,15 @@ lvgl:
                                         int new_val = x;
                                         int delta = new_val - id(slider_trim_last);
                                         if (delta != 0) {
+                                          id(sw_motor_busy) = true;
+                                          // Closed Loop + Work current vor jedem F4
+                                          id(can_bus)->send_data(${motor_can_id}, false,
+                                              add_crc(${motor_can_id}, { 0x82, 0x04 }));
+                                          int trim_cur = std::max(500, std::min(2000, id(sw_work_current_mA)));
+                                          uint8_t tc_h = (uint8_t)(trim_cur >> 8);
+                                          uint8_t tc_l = (uint8_t)(trim_cur & 0xFF);
+                                          id(can_bus)->send_data(${motor_can_id}, false,
+                                              add_crc(${motor_can_id}, { 0x83, tc_h, tc_l }));
                                           uint8_t speed_h = 0;       // 60 RPM
                                           uint8_t speed_l = 60;
                                           uint8_t accel   = 80;
@@ -1574,6 +1583,8 @@ lvgl:
                                   on_release:
                                     - lambda: |-
                                         id(slider_trim_last) = 0;
+                                        id(sw_motor_busy) = false;
+                                        id(sw_motor_last_move_ms) = millis();
                                     - script.execute: script_motor_set_zero
                                     - lvgl.slider.update:
                                         id: slider_trim_motor
@@ -1621,6 +1632,7 @@ lvgl:
                                   step: 50
                                   on_release:
                                     - lambda: |-
+                                        id(sw_work_current_mA) = (int)x;  // in NVS speichern
                                         id(script_motor_set_work_current_mA).execute(x);
                                         char buf[12];
                                         snprintf(buf, sizeof(buf), "%d mA", (int)x);

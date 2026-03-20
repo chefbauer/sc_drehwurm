@@ -54,6 +54,21 @@ globals:
     initial_value: '200'        # 1–254: Motor interpoliert intern (glättet 50ms-Stufen)
                                 # 0 oder 255: kein internes Ramping → Ruck bei Stufen!
 
+  - id: sw_work_current_mA    # Arbeitsstrom in mA – aus Einstellungs-Slider gespeichert
+    type: int
+    restore_value: yes
+    initial_value: '1000'       # 500–2000 mA
+
+  - id: sw_motor_last_move_ms  # millis() beim letzten Motorstop – 0 = Timeout inaktiv
+    type: uint32_t
+    restore_value: no
+    initial_value: '0'
+
+  - id: sw_motor_busy          # true = Motor läuft aktiv (Idle-Timeout gesperrt)
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+
   - id: sw_motor_mode          # 0 = Closed Loop (Mode 4)  |  1 = FOC (Mode 5)
     type: int
     restore_value: yes
@@ -131,8 +146,9 @@ script:
   - id: script_schwenker_start
     mode: single              # mehrfaches Aufrufen ignoriert
     then:
-      # Motor-Init: konfigurierbarer Modus, 64 Subdivisions, 1000 mA, 5% Standby
+      # Motor-Init: konfigurierbarer Modus, 64 Subdivisions, gespeicherter Strom, 5% Standby
       - lambda: |-
+          id(sw_motor_busy) = true;
           std::vector<unsigned char> data;
           uint8_t mode_byte = (id(sw_motor_mode) == 1) ? 0x05 : 0x04;
           data = add_crc(${motor_can_id}, { 0x82, mode_byte });    // MODE: Closed Loop (4) oder FOC (5)
@@ -140,7 +156,11 @@ script:
           ESP_LOGI("schwenker", "Motor-Modus: %s", id(sw_motor_mode)==1 ? "FOC (5)" : "Closed Loop (4)");
           data = add_crc(${motor_can_id}, { 0x84, 0x40 });        // MSTEP: 64 subdivisions
           id(can_bus)->send_data(${motor_can_id}, false, data);
-          data = add_crc(${motor_can_id}, { 0x83, 0x03, 0xE8 });  // Work current: 1000 mA
+          int cur_ma = std::max(500, std::min(2000, id(sw_work_current_mA)));
+          uint8_t cur_h = (uint8_t)(cur_ma >> 8);
+          uint8_t cur_l = (uint8_t)(cur_ma & 0xFF);
+          data = add_crc(${motor_can_id}, { 0x83, cur_h, cur_l });  // Work current aus NVS
+          ESP_LOGI("schwenker", "Motor-Init: Work current = %d mA", cur_ma);
           id(can_bus)->send_data(${motor_can_id}, false, data);
           data = add_crc(${motor_can_id}, { 0x9B, 0x00 });        // Idle current: param 0 = min (~10%)
           id(can_bus)->send_data(${motor_can_id}, false, data);
@@ -179,9 +199,7 @@ script:
           lv_obj_set_style_bg_color(id(btn_schwenker_main), lv_color_hex(0x666666), 0);
           lv_obj_set_style_bg_color(id(btn_schwenker_overlay_toggle), lv_color_hex(0x666666), 0);
           ESP_LOGI("schwenker", "STOP");
-          // Mode 5 = FOC → kein Haltestrom im Stillstand
-          id(can_bus)->send_data(${motor_can_id}, false, add_crc(${motor_can_id}, { 0x82, 0x05 }));
-          // F5 speed=0 an aktuellem Ziel → Motor bremst und stoppt
+          // F5 speed=0 an aktuellem Ziel → Motor bremst und stoppt (FOC via Idle-Timeout nach 10 s)
           uint8_t acc   = (uint8_t)id(sw_acc);
           int32_t target = (int32_t)(id(sw_richtung)) * 8000000;
           uint32_t val  = (uint32_t)(target) & 0x00FFFFFFU;
@@ -191,12 +209,10 @@ script:
           id(can_bus)->send_data(${motor_can_id}, false,
               add_crc(${motor_can_id}, { 0xF5, 0x00, 0x00, acc, p_hh, p_h, p_l }));
       - delay: 300ms
-      - script.execute:
-          id: script_motor_set_work_current_mA
-          current_mA: 500   # nach Stopp: geringer Haltestrom → Motor drehbar, aber nicht frei
-      - script.execute:
-          id: script_motor_set_idle_current_perc
-          current_perc: 10
+      - lambda: |-
+          id(sw_motor_busy) = false;
+          id(sw_motor_last_move_ms) = millis();
+          ESP_LOGI("schwenker", "STOP fertig – Idle-Timeout aktiv");
 
   # ── Schwenker fährt zu einem der 6 Slot-Positionen ───────
   #   Slot 1 = 0°, Slot 2 = 60°, Slot 3 = 120°,
@@ -206,6 +222,8 @@ script:
     parameters:
       slot: int
     then:
+      - lambda: |-
+          id(sw_motor_busy) = true;
       # ── Schwenker geordnet stoppen falls er läuft ───────────
       - if:
           condition:
@@ -224,10 +242,12 @@ script:
                     add_crc(${motor_can_id}, { 0xF5, 0x00, 0x00, acc,
                         (uint8_t)((val>>16)&0xFF), (uint8_t)((val>>8)&0xFF), (uint8_t)(val&0xFF) }));
             - delay: 800ms   # Motor abbremsen lassen (bei max. 15 RPM mit acc ausreichend)
-      # Closed Loop für präzise Fahrt (fix, unabhängig von sw_motor_mode)
+      # Closed Loop + Work current aus NVS laden
       - lambda: |-
           id(can_bus)->send_data(${motor_can_id}, false, add_crc(${motor_can_id}, { 0x82, 0x04 }));
           ESP_LOGI("schwenker", "goto_slot: Closed Loop (fix)");
+          id(script_motor_set_work_current_mA)->execute(id(sw_work_current_mA));
+          ESP_LOGI("schwenker", "goto_slot: Work current = %d mA", id(sw_work_current_mA));
       # Relative Fahrt zur Zielposition
       - lambda: |-
           float current_raw = id(sensor_motor_position).state;
@@ -261,9 +281,9 @@ script:
                   (uint8_t)((val>>16)&0xFF), (uint8_t)((val>>8)&0xFF), (uint8_t)(val&0xFF) }));
       - delay: 500ms
       - lambda: |-
-          // Nach sanftem Bremsen: FOC-Modus (kein Haltestrom)
-          id(can_bus)->send_data(${motor_can_id}, false,
-              add_crc(${motor_can_id}, { 0x82, 0x05 }));
+          id(sw_motor_busy) = false;
+          id(sw_motor_last_move_ms) = millis();
+          ESP_LOGI("schwenker", "goto_slot fertig – Idle-Timeout aktiv");
 
   # ── Motor Soft-Reboot (Soll = Ist, manuell aus Einstellungen) ──────────
   - id: script_motor_reboot
@@ -471,6 +491,18 @@ interval:
       - lambda: |-
           // Winkelabfrage 20x/s – immer, auch wenn Schwenker inaktiv
           id(can_bus)->send_data(${motor_can_id}, false, add_crc(${motor_can_id}, { 0x30 }));
+
+          // ── Motor-Idle-Timeout: 10 s nach letzter Bewegung → FOC + 500 mA ──────
+          if (!id(sw_aktiv) && !id(sw_test_aktiv) && !id(sw_motor_busy)) {
+            if (id(sw_motor_last_move_ms) != 0 &&
+                (millis() - id(sw_motor_last_move_ms) > 10000)) {
+              id(sw_motor_last_move_ms) = 0;
+              id(can_bus)->send_data(${motor_can_id}, false,
+                  add_crc(${motor_can_id}, { 0x82, 0x05 }));
+              id(script_motor_set_work_current_mA)->execute(500);
+              ESP_LOGI("motor", "Idle-Timeout: FOC + 500 mA");
+            }
+          }
 
           if (!id(sw_aktiv)) return;
 
