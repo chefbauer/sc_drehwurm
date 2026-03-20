@@ -113,62 +113,44 @@ lvgl:
                 on_click:
                   - lvgl.widget.hide: overlay_schwenker_settings
 
-            # ── Motor-Modus: Closed Loop / FOC ────────────────────────
+            # ── Start/Stop Button (links oben, gleiche Größe wie X) ──────
             - button:
-                id: btn_sw_motor_mode_toggle
-                width: 260
-                height: 48
-                align: TOP_MID
-                x: 0
-                y: 65
-                bg_color: 0x226644
-                border_width: 2
-                border_color: 0x44AA77
+                id: btn_schwenker_overlay_toggle
+                width: 80
+                height: 55
+                align: TOP_LEFT
+                x: 10
+                y: 10
                 radius: 10
-                widgets:
-                  - label:
-                      id: lbl_sw_motor_mode
-                      text: "Motor: Closed Loop"
-                      align: CENTER
-                      text_font: font_small
-                      text_color: 0xFFFFFF
-                on_click:
+                bg_color: 0x666666
+                bg_opa: COVER
+                border_width: 0
+                shadow_width: 0
+                outline_width: 0
+                pad_all: 0
+                on_press:
                   - lambda: |-
-                      id(sw_motor_mode) = (id(sw_motor_mode) == 0) ? 1 : 0;
-                      lv_label_set_text(id(lbl_sw_motor_mode),
-                        id(sw_motor_mode) == 1 ? "Motor: FOC" : "Motor: Closed Loop");
-                      lv_obj_set_style_bg_color(id(btn_sw_motor_mode_toggle),
-                        id(sw_motor_mode) == 1 ? lv_color_hex(0x885522) : lv_color_hex(0x226644), 0);
-
-            # ── F4-Test-Button ─────────────────────────────────────
-            - button:
-                id: btn_open_sw_test
-                width: 260
-                height: 48
-                align: TOP_MID
-                x: 0
-                y: 120
-                bg_color: 0x553388
-                border_width: 2
-                border_color: 0x9966CC
-                radius: 10
+                      if (id(sw_aktiv)) {
+                        id(script_schwenker_stop).execute();
+                      } else {
+                        id(script_schwenker_start).execute();
+                      }
                 widgets:
                   - label:
-                      text: "F4-Test (Winkel/Speed/Acc)"
+                      id: lbl_overlay_schwenker_icon
                       align: CENTER
-                      text_font: font_small
+                      text: "\uF021"
+                      text_font: font_icons
                       text_color: 0xFFFFFF
-                on_click:
-                  - lvgl.widget.show: overlay_schwenker_test
 
             # ── Arc 1: Schwenkzeit ─────────────────────────────────
             - obj:
                 id: arc_area_zeit
-                width: 420
+                width: 320
                 height: 340
                 align: TOP_LEFT
-                x: 60
-                y: 100
+                x: 20
+                y: 65
                 bg_opa: TRANSP
                 border_width: 0
                 scrollable: false
@@ -223,7 +205,7 @@ lvgl:
                 height: 340
                 align: TOP_MID
                 x: 0
-                y: 100
+                y: 65
                 bg_opa: TRANSP
                 border_width: 0
                 scrollable: false
@@ -262,6 +244,12 @@ lvgl:
                             char buf[8];
                             snprintf(buf, sizeof(buf), "%d%%", (int)x);
                             lv_label_set_text(id(lbl_arc_acc_val), buf);
+                            const char* shape;
+                            if (x >= 80)      shape = "\xe2\x95\xb1\xe2\x95\xb2";
+                            else if (x >= 55) shape = "\xe2\x95\xb1\xe2\x80\xbe\xe2\x95\xb2";
+                            else if (x >= 35) shape = "\xe2\x95\xb1\xe2\x80\xbe\xe2\x80\xbe\xe2\x80\xbe\xe2\x95\xb2";
+                            else              shape = "\xe2\x95\xb1\xe2\x80\xbe\xe2\x80\xbe\xe2\x80\xbe\xe2\x80\xbe\xe2\x80\xbe\xe2\x95\xb2";
+                            lv_label_set_text(id(lbl_trapez_shape), shape);
                   - label:
                       id: lbl_arc_acc_val
                       text: "100%"
@@ -271,11 +259,13 @@ lvgl:
                       text_color: 0xCC7700
                       text_align: CENTER
                   - label:
-                      text: "Rampe"
+                      id: lbl_trapez_shape
+                      text: "\xe2\x95\xb1\xe2\x95\xb2"
                       align: TOP_MID
-                      y: 203
-                      text_font: font_small
-                      text_color: 0x556677
+                      y: 210
+                      text_font: font_normal
+                      text_color: 0xFF9933
+                      text_align: CENTER
 
             # ── Arc 3: Max RPM ─────────────────────────────────────
             - obj:
@@ -284,7 +274,7 @@ lvgl:
                 height: 340
                 align: TOP_RIGHT
                 x: -20
-                y: 100
+                y: 65
                 bg_opa: TRANSP
                 border_width: 0
                 scrollable: false
@@ -337,53 +327,25 @@ lvgl:
                       y: 198
                       text_font: font_small
                       text_color: 0x556677
-            # ── Start/Stop Button (mittig zwischen den Arcs) ─────────────
-            - button:
-                id: btn_schwenker_overlay_toggle
-                width: 150
-                height: 150
-                align: CENTER
-                y: -20
-                radius: 75
-                bg_color: 0x666666
-                bg_opa: COVER
-                border_width: 0
-                shadow_width: 0
-                outline_width: 0
-                pad_all: 0
-                on_press:
-                  - lambda: |-
-                      if (id(sw_aktiv)) {
-                        id(script_schwenker_stop).execute();
-                      } else {
-                        id(script_schwenker_start).execute();
-                      }
-                widgets:
-                  - label:
-                      id: lbl_overlay_schwenker_icon
-                      align: CENTER
-                      text: "\uF021"
-                      text_font: font_icon_xl
-                      text_color: 0xFFFFFF
-            # ── Preset-Buttons ──────────────────────────────────────
-            # Short Click: Preset laden  |  Long Click: aktuellen Wert speichern
+            # ── Preset-Buttons (Short Click: laden, Long Press: speichern) ──
             - obj:
                 id: row_presets
                 width: 960
-                height: 100
+                height: 90
                 align: BOTTOM_MID
-                y: -20
+                y: -10
                 bg_opa: TRANSP
                 border_width: 0
                 scrollable: false
                 pad_all: 0
                 widgets:
+                  # P1
                   - button:
                       id: btn_preset1
-                      width: 300
-                      height: 88
+                      width: 178
+                      height: 80
                       align: LEFT_MID
-                      x: 10
+                      x: 11
                       bg_color: 0x223355
                       border_width: 2
                       border_color: 0x4477AA
@@ -393,42 +355,55 @@ lvgl:
                             id: lbl_preset1_name
                             text: "P1"
                             align: TOP_LEFT
-                            x: 14
-                            y: 10
+                            x: 12
+                            y: 8
                             text_font: font_normal
                             text_color: 0xFFFFFF
                         - label:
                             id: lbl_preset1_vals
-                            text: "3.2s · 4 Upm"
+                            text: "3.2s \xc2\xb7 4 Upm \xc2\xb7 100%"
                             align: BOTTOM_MID
-                            y: -10
+                            y: -8
                             text_font: font_small
                             text_color: 0xAABBFF
                       on_short_click:
                         - lambda: |-
-                            id(sw_halbperiode_ms)  = id(preset1_hp_ms);
-                            id(sw_max_speed_rpm)   = id(preset1_rpm);
-                            lv_arc_set_value(id(arc_schwenkzeit), (int)(id(preset1_hp_ms) / 100));
-                            lv_arc_set_value(id(arc_rpm), id(preset1_rpm));
+                            id(sw_halbperiode_ms) = id(preset1_hp_ms);
+                            id(sw_max_speed_rpm)  = id(preset1_rpm);
+                            id(sw_acc)            = id(preset1_acc);
+                            lv_arc_set_value(id(arc_schwenkzeit), (int)(id(preset1_hp_ms)/100));
+                            lv_arc_set_value(id(arc_rpm),  id(preset1_rpm));
+                            lv_arc_set_value(id(arc_acc),  id(preset1_acc));
                             char b1[8]; snprintf(b1,sizeof(b1),"%.1fs",id(preset1_hp_ms)/1000.0f);
                             lv_label_set_text(id(lbl_arc_zeit_val), b1);
                             char b2[6]; snprintf(b2,sizeof(b2),"%d",id(preset1_rpm));
                             lv_label_set_text(id(lbl_arc_rpm_val), b2);
-                            ESP_LOGI("preset","P1 geladen: %u ms, %d RPM",id(preset1_hp_ms),id(preset1_rpm));
+                            char b3[8]; snprintf(b3,sizeof(b3),"%d%%",id(preset1_acc));
+                            lv_label_set_text(id(lbl_arc_acc_val), b3);
+                            int a=id(preset1_acc); const char* sh;
+                            if(a>=80) sh="\xe2\x95\xb1\xe2\x95\xb2";
+                            else if(a>=55) sh="\xe2\x95\xb1\xe2\x80\xbe\xe2\x95\xb2";
+                            else if(a>=35) sh="\xe2\x95\xb1\xe2\x80\xbe\xe2\x80\xbe\xe2\x80\xbe\xe2\x95\xb2";
+                            else sh="\xe2\x95\xb1\xe2\x80\xbe\xe2\x80\xbe\xe2\x80\xbe\xe2\x80\xbe\xe2\x80\xbe\xe2\x95\xb2";
+                            lv_label_set_text(id(lbl_trapez_shape), sh);
+                            ESP_LOGI("preset","P1 geladen: %ums %dRPM %d%%",id(preset1_hp_ms),id(preset1_rpm),id(preset1_acc));
                       on_long_press:
                         - lambda: |-
                             id(preset1_hp_ms) = id(sw_halbperiode_ms);
                             id(preset1_rpm)   = id(sw_max_speed_rpm);
-                            char buf[20];
-                            snprintf(buf,sizeof(buf),"%.1fs \xc2\xb7 %d Upm",
-                                     id(preset1_hp_ms)/1000.0f, id(preset1_rpm));
+                            id(preset1_acc)   = id(sw_acc);
+                            char buf[28];
+                            snprintf(buf,sizeof(buf),"%.1fs \xc2\xb7 %d Upm \xc2\xb7 %d%%",
+                                     id(preset1_hp_ms)/1000.0f,id(preset1_rpm),id(preset1_acc));
                             lv_label_set_text(id(lbl_preset1_vals), buf);
-                            ESP_LOGI("preset","P1 gespeichert: %u ms, %d RPM",id(preset1_hp_ms),id(preset1_rpm));
+                            ESP_LOGI("preset","P1 gespeichert: %ums %dRPM %d%%",id(preset1_hp_ms),id(preset1_rpm),id(preset1_acc));
+                  # P2
                   - button:
                       id: btn_preset2
-                      width: 300
-                      height: 88
-                      align: CENTER
+                      width: 178
+                      height: 80
+                      align: LEFT_MID
+                      x: 201
                       bg_color: 0x223355
                       border_width: 2
                       border_color: 0x4477AA
@@ -438,43 +413,55 @@ lvgl:
                             id: lbl_preset2_name
                             text: "P2"
                             align: TOP_LEFT
-                            x: 14
-                            y: 10
+                            x: 12
+                            y: 8
                             text_font: font_normal
                             text_color: 0xFFFFFF
                         - label:
                             id: lbl_preset2_vals
-                            text: "2.0s · 8 Upm"
+                            text: "2.0s \xc2\xb7 8 Upm \xc2\xb7 100%"
                             align: BOTTOM_MID
-                            y: -10
+                            y: -8
                             text_font: font_small
                             text_color: 0xAABBFF
                       on_short_click:
                         - lambda: |-
-                            id(sw_halbperiode_ms)  = id(preset2_hp_ms);
-                            id(sw_max_speed_rpm)   = id(preset2_rpm);
-                            lv_arc_set_value(id(arc_schwenkzeit), (int)(id(preset2_hp_ms) / 100));
-                            lv_arc_set_value(id(arc_rpm), id(preset2_rpm));
+                            id(sw_halbperiode_ms) = id(preset2_hp_ms);
+                            id(sw_max_speed_rpm)  = id(preset2_rpm);
+                            id(sw_acc)            = id(preset2_acc);
+                            lv_arc_set_value(id(arc_schwenkzeit), (int)(id(preset2_hp_ms)/100));
+                            lv_arc_set_value(id(arc_rpm),  id(preset2_rpm));
+                            lv_arc_set_value(id(arc_acc),  id(preset2_acc));
                             char b1[8]; snprintf(b1,sizeof(b1),"%.1fs",id(preset2_hp_ms)/1000.0f);
                             lv_label_set_text(id(lbl_arc_zeit_val), b1);
                             char b2[6]; snprintf(b2,sizeof(b2),"%d",id(preset2_rpm));
                             lv_label_set_text(id(lbl_arc_rpm_val), b2);
-                            ESP_LOGI("preset","P2 geladen: %u ms, %d RPM",id(preset2_hp_ms),id(preset2_rpm));
+                            char b3[8]; snprintf(b3,sizeof(b3),"%d%%",id(preset2_acc));
+                            lv_label_set_text(id(lbl_arc_acc_val), b3);
+                            int a=id(preset2_acc); const char* sh;
+                            if(a>=80) sh="\xe2\x95\xb1\xe2\x95\xb2";
+                            else if(a>=55) sh="\xe2\x95\xb1\xe2\x80\xbe\xe2\x95\xb2";
+                            else if(a>=35) sh="\xe2\x95\xb1\xe2\x80\xbe\xe2\x80\xbe\xe2\x80\xbe\xe2\x95\xb2";
+                            else sh="\xe2\x95\xb1\xe2\x80\xbe\xe2\x80\xbe\xe2\x80\xbe\xe2\x80\xbe\xe2\x80\xbe\xe2\x95\xb2";
+                            lv_label_set_text(id(lbl_trapez_shape), sh);
+                            ESP_LOGI("preset","P2 geladen: %ums %dRPM %d%%",id(preset2_hp_ms),id(preset2_rpm),id(preset2_acc));
                       on_long_press:
                         - lambda: |-
                             id(preset2_hp_ms) = id(sw_halbperiode_ms);
                             id(preset2_rpm)   = id(sw_max_speed_rpm);
-                            char buf[20];
-                            snprintf(buf,sizeof(buf),"%.1fs \xc2\xb7 %d Upm",
-                                     id(preset2_hp_ms)/1000.0f, id(preset2_rpm));
+                            id(preset2_acc)   = id(sw_acc);
+                            char buf[28];
+                            snprintf(buf,sizeof(buf),"%.1fs \xc2\xb7 %d Upm \xc2\xb7 %d%%",
+                                     id(preset2_hp_ms)/1000.0f,id(preset2_rpm),id(preset2_acc));
                             lv_label_set_text(id(lbl_preset2_vals), buf);
-                            ESP_LOGI("preset","P2 gespeichert: %u ms, %d RPM",id(preset2_hp_ms),id(preset2_rpm));
+                            ESP_LOGI("preset","P2 gespeichert: %ums %dRPM %d%%",id(preset2_hp_ms),id(preset2_rpm),id(preset2_acc));
+                  # P3
                   - button:
                       id: btn_preset3
-                      width: 300
-                      height: 88
-                      align: RIGHT_MID
-                      x: -10
+                      width: 178
+                      height: 80
+                      align: LEFT_MID
+                      x: 391
                       bg_color: 0x223355
                       border_width: 2
                       border_color: 0x4477AA
@@ -484,276 +471,164 @@ lvgl:
                             id: lbl_preset3_name
                             text: "P3"
                             align: TOP_LEFT
-                            x: 14
-                            y: 10
+                            x: 12
+                            y: 8
                             text_font: font_normal
                             text_color: 0xFFFFFF
                         - label:
                             id: lbl_preset3_vals
-                            text: "5.0s · 12 Upm"
+                            text: "5.0s \xc2\xb7 12 Upm \xc2\xb7 100%"
                             align: BOTTOM_MID
-                            y: -10
+                            y: -8
                             text_font: font_small
                             text_color: 0xAABBFF
                       on_short_click:
                         - lambda: |-
-                            id(sw_halbperiode_ms)  = id(preset3_hp_ms);
-                            id(sw_max_speed_rpm)   = id(preset3_rpm);
-                            lv_arc_set_value(id(arc_schwenkzeit), (int)(id(preset3_hp_ms) / 100));
-                            lv_arc_set_value(id(arc_rpm), id(preset3_rpm));
+                            id(sw_halbperiode_ms) = id(preset3_hp_ms);
+                            id(sw_max_speed_rpm)  = id(preset3_rpm);
+                            id(sw_acc)            = id(preset3_acc);
+                            lv_arc_set_value(id(arc_schwenkzeit), (int)(id(preset3_hp_ms)/100));
+                            lv_arc_set_value(id(arc_rpm),  id(preset3_rpm));
+                            lv_arc_set_value(id(arc_acc),  id(preset3_acc));
                             char b1[8]; snprintf(b1,sizeof(b1),"%.1fs",id(preset3_hp_ms)/1000.0f);
                             lv_label_set_text(id(lbl_arc_zeit_val), b1);
                             char b2[6]; snprintf(b2,sizeof(b2),"%d",id(preset3_rpm));
                             lv_label_set_text(id(lbl_arc_rpm_val), b2);
-                            ESP_LOGI("preset","P3 geladen: %u ms, %d RPM",id(preset3_hp_ms),id(preset3_rpm));
+                            char b3[8]; snprintf(b3,sizeof(b3),"%d%%",id(preset3_acc));
+                            lv_label_set_text(id(lbl_arc_acc_val), b3);
+                            int a=id(preset3_acc); const char* sh;
+                            if(a>=80) sh="\xe2\x95\xb1\xe2\x95\xb2";
+                            else if(a>=55) sh="\xe2\x95\xb1\xe2\x80\xbe\xe2\x95\xb2";
+                            else if(a>=35) sh="\xe2\x95\xb1\xe2\x80\xbe\xe2\x80\xbe\xe2\x80\xbe\xe2\x95\xb2";
+                            else sh="\xe2\x95\xb1\xe2\x80\xbe\xe2\x80\xbe\xe2\x80\xbe\xe2\x80\xbe\xe2\x80\xbe\xe2\x95\xb2";
+                            lv_label_set_text(id(lbl_trapez_shape), sh);
+                            ESP_LOGI("preset","P3 geladen: %ums %dRPM %d%%",id(preset3_hp_ms),id(preset3_rpm),id(preset3_acc));
                       on_long_press:
                         - lambda: |-
                             id(preset3_hp_ms) = id(sw_halbperiode_ms);
                             id(preset3_rpm)   = id(sw_max_speed_rpm);
-                            char buf[20];
-                            snprintf(buf,sizeof(buf),"%.1fs \xc2\xb7 %d Upm",
-                                     id(preset3_hp_ms)/1000.0f, id(preset3_rpm));
+                            id(preset3_acc)   = id(sw_acc);
+                            char buf[28];
+                            snprintf(buf,sizeof(buf),"%.1fs \xc2\xb7 %d Upm \xc2\xb7 %d%%",
+                                     id(preset3_hp_ms)/1000.0f,id(preset3_rpm),id(preset3_acc));
                             lv_label_set_text(id(lbl_preset3_vals), buf);
-                            ESP_LOGI("preset","P3 gespeichert: %u ms, %d RPM",id(preset3_hp_ms),id(preset3_rpm));
-
-      # ================================
-      - obj:
-          id: overlay_schwenker_test
-          width: 100%
-          height: 100%
-          bg_color: 0x1A0A2E
-          bg_opa: 97%
-          hidden: true
-          clickable: true
-          pad_all: 0
-          scrollable: false
-          widgets:
-            # Titel
-            - label:
-                text: "Schwenker Test  \xE2\x80\x93  F4 Winkel-Modus"
-                align: TOP_MID
-                y: 14
-                text_font: font_title
-                text_color: 0xCC99FF
-                text_align: CENTER
-
-            # Exit-Button
-            - button:
-                id: btn_sw_test_exit
-                width: 80
-                height: 55
-                align: TOP_RIGHT
-                x: -10
-                y: 10
-                bg_color: 0xCC3333
-                widgets:
-                  - label:
-                      text: "X"
-                      align: CENTER
-                      text_font: font_normal
-                      text_color: 0xFFFFFF
-                on_click:
-                  - lambda: |-
-                      id(script_schwenker_test_stop).execute();
-                  - lvgl.widget.hide: overlay_schwenker_test
-
-            # ── Arc-Reihe ──────────────────────────────────────────
-            # Arc 1: Winkel (0–90°)
-            - obj:
-                id: arc_area_test_winkel
-                width: 300
-                height: 310
-                align: TOP_LEFT
-                x: 30
-                y: 80
-                bg_opa: TRANSP
-                border_width: 0
-                scrollable: false
-                clickable: false
-                pad_all: 0
-                widgets:
-                  - label:
-                      text: "Winkel"
-                      align: TOP_MID
-                      y: 0
-                      text_font: font_normal
-                      text_color: 0xAA88FF
-                  - arc:
-                      id: arc_test_winkel
-                      width: 230
-                      height: 230
-                      align: TOP_MID
-                      y: 32
-                      min_value: 1
-                      max_value: 180
-                      value: 20
-                      adjustable: true
-                      arc_color: 0x442288
-                      arc_width: 18
-                      indicator:
-                        arc_color: 0xCC99FF
-                        arc_width: 18
-                      knob:
-                        bg_color: 0xCC99FF
-                        width: 26
-                        height: 26
-                        radius: 13
-                      on_value:
+                            ESP_LOGI("preset","P3 gespeichert: %ums %dRPM %d%%",id(preset3_hp_ms),id(preset3_rpm),id(preset3_acc));
+                  # P4
+                  - button:
+                      id: btn_preset4
+                      width: 178
+                      height: 80
+                      align: LEFT_MID
+                      x: 581
+                      bg_color: 0x223355
+                      border_width: 2
+                      border_color: 0x4477AA
+                      radius: 12
+                      widgets:
+                        - label:
+                            id: lbl_preset4_name
+                            text: "P4"
+                            align: TOP_LEFT
+                            x: 12
+                            y: 8
+                            text_font: font_normal
+                            text_color: 0xFFFFFF
+                        - label:
+                            id: lbl_preset4_vals
+                            text: "3.0s \xc2\xb7 6 Upm \xc2\xb7 75%"
+                            align: BOTTOM_MID
+                            y: -8
+                            text_font: font_small
+                            text_color: 0xAABBFF
+                      on_short_click:
                         - lambda: |-
-                            id(sw_test_winkel) = (float)x;
-                            char buf[8];
-                            snprintf(buf, sizeof(buf), "%d\xc2\xb0", (int)x);
-                            lv_label_set_text(id(lbl_test_winkel_val), buf);
-                  - label:
-                      id: lbl_test_winkel_val
-                      text: "20\xc2\xb0"
-                      align: TOP_MID
-                      y: 118
-                      text_font: font_arc_val
-                      text_color: 0xCC99FF
-                      text_align: CENTER
-
-            # Arc 2: Speed (1–20 RPM)
-            - obj:
-                id: arc_area_test_speed
-                width: 300
-                height: 310
-                align: TOP_MID
-                x: 0
-                y: 80
-                bg_opa: TRANSP
-                border_width: 0
-                scrollable: false
-                clickable: false
-                pad_all: 0
-                widgets:
-                  - label:
-                      text: "Speed"
-                      align: TOP_MID
-                      y: 0
-                      text_font: font_normal
-                      text_color: 0x88DDFF
-                  - arc:
-                      id: arc_test_speed
-                      width: 230
-                      height: 230
-                      align: TOP_MID
-                      y: 32
-                      min_value: 1
-                      max_value: 240
-                      value: 5
-                      adjustable: true
-                      arc_color: 0x113355
-                      arc_width: 18
-                      indicator:
-                        arc_color: 0x55CCFF
-                        arc_width: 18
-                      knob:
-                        bg_color: 0x55CCFF
-                        width: 26
-                        height: 26
-                        radius: 13
-                      on_value:
+                            id(sw_halbperiode_ms) = id(preset4_hp_ms);
+                            id(sw_max_speed_rpm)  = id(preset4_rpm);
+                            id(sw_acc)            = id(preset4_acc);
+                            lv_arc_set_value(id(arc_schwenkzeit), (int)(id(preset4_hp_ms)/100));
+                            lv_arc_set_value(id(arc_rpm),  id(preset4_rpm));
+                            lv_arc_set_value(id(arc_acc),  id(preset4_acc));
+                            char b1[8]; snprintf(b1,sizeof(b1),"%.1fs",id(preset4_hp_ms)/1000.0f);
+                            lv_label_set_text(id(lbl_arc_zeit_val), b1);
+                            char b2[6]; snprintf(b2,sizeof(b2),"%d",id(preset4_rpm));
+                            lv_label_set_text(id(lbl_arc_rpm_val), b2);
+                            char b3[8]; snprintf(b3,sizeof(b3),"%d%%",id(preset4_acc));
+                            lv_label_set_text(id(lbl_arc_acc_val), b3);
+                            int a=id(preset4_acc); const char* sh;
+                            if(a>=80) sh="\xe2\x95\xb1\xe2\x95\xb2";
+                            else if(a>=55) sh="\xe2\x95\xb1\xe2\x80\xbe\xe2\x95\xb2";
+                            else if(a>=35) sh="\xe2\x95\xb1\xe2\x80\xbe\xe2\x80\xbe\xe2\x80\xbe\xe2\x95\xb2";
+                            else sh="\xe2\x95\xb1\xe2\x80\xbe\xe2\x80\xbe\xe2\x80\xbe\xe2\x80\xbe\xe2\x80\xbe\xe2\x95\xb2";
+                            lv_label_set_text(id(lbl_trapez_shape), sh);
+                            ESP_LOGI("preset","P4 geladen: %ums %dRPM %d%%",id(preset4_hp_ms),id(preset4_rpm),id(preset4_acc));
+                      on_long_press:
                         - lambda: |-
-                            id(sw_test_speed) = (int)x;
-                            char buf[8];
-                            snprintf(buf, sizeof(buf), "%d", (int)x);
-                            lv_label_set_text(id(lbl_test_speed_val), buf);
-                  - label:
-                      id: lbl_test_speed_val
-                      text: "5"
-                      align: TOP_MID
-                      y: 118
-                      text_font: font_arc_val
-                      text_color: 0x55CCFF
-                      text_align: CENTER
-                  - label:
-                      text: "Upm"
-                      align: TOP_MID
-                      y: 172
-                      text_font: font_small
-                      text_color: 0x5588AA
-
-            # Arc 3: Acc (10–250 in 10er-Schritten → arc 1–25)
-            - obj:
-                id: arc_area_test_acc
-                width: 300
-                height: 310
-                align: TOP_RIGHT
-                x: -30
-                y: 80
-                bg_opa: TRANSP
-                border_width: 0
-                scrollable: false
-                clickable: false
-                pad_all: 0
-                widgets:
-                  - label:
-                      text: "Acc"
-                      align: TOP_MID
-                      y: 0
-                      text_font: font_normal
-                      text_color: 0xFFCC55
-                  - arc:
-                      id: arc_test_acc
-                      width: 230
-                      height: 230
-                      align: TOP_MID
-                      y: 32
-                      min_value: 1       # × 5 = 5
-                      max_value: 50      # × 5 = 250
-                      value: 10          # × 5 = 50 (default)
-                      adjustable: true
-                      arc_color: 0x332200
-                      arc_width: 18
-                      indicator:
-                        arc_color: 0xFFAA22
-                        arc_width: 18
-                      knob:
-                        bg_color: 0xFFAA22
-                        width: 26
-                        height: 26
-                        radius: 13
-                      on_value:
+                            id(preset4_hp_ms) = id(sw_halbperiode_ms);
+                            id(preset4_rpm)   = id(sw_max_speed_rpm);
+                            id(preset4_acc)   = id(sw_acc);
+                            char buf[28];
+                            snprintf(buf,sizeof(buf),"%.1fs \xc2\xb7 %d Upm \xc2\xb7 %d%%",
+                                     id(preset4_hp_ms)/1000.0f,id(preset4_rpm),id(preset4_acc));
+                            lv_label_set_text(id(lbl_preset4_vals), buf);
+                            ESP_LOGI("preset","P4 gespeichert: %ums %dRPM %d%%",id(preset4_hp_ms),id(preset4_rpm),id(preset4_acc));
+                  # P5
+                  - button:
+                      id: btn_preset5
+                      width: 178
+                      height: 80
+                      align: LEFT_MID
+                      x: 771
+                      bg_color: 0x223355
+                      border_width: 2
+                      border_color: 0x4477AA
+                      radius: 12
+                      widgets:
+                        - label:
+                            id: lbl_preset5_name
+                            text: "P5"
+                            align: TOP_LEFT
+                            x: 12
+                            y: 8
+                            text_font: font_normal
+                            text_color: 0xFFFFFF
+                        - label:
+                            id: lbl_preset5_vals
+                            text: "5.0s \xc2\xb7 20 Upm \xc2\xb7 50%"
+                            align: BOTTOM_MID
+                            y: -8
+                            text_font: font_small
+                            text_color: 0xAABBFF
+                      on_short_click:
                         - lambda: |-
-                            id(sw_test_acc) = (int)x * 5;
-                            char buf[8];
-                            snprintf(buf, sizeof(buf), "%d", (int)x * 5);
-                            lv_label_set_text(id(lbl_test_acc_val), buf);
-                  - label:
-                      id: lbl_test_acc_val
-                      text: "50"
-                      align: TOP_MID
-                      y: 118
-                      text_font: font_arc_val
-                      text_color: 0xFFAA22
-                      text_align: CENTER
-
-            # ── Start/Stop-Button (mittig unten) ──────────────────
-            - button:
-                id: btn_sw_test_toggle
-                width: 280
-                height: 80
-                align: BOTTOM_MID
-                y: -20
-                radius: 15
-                bg_color: 0x444444
-                border_width: 2
-                border_color: 0x888888
-                widgets:
-                  - label:
-                      id: lbl_sw_test_toggle
-                      text: "TEST"
-                      align: CENTER
-                      text_font: font_normal
-                      text_color: 0xFFFFFF
-                on_click:
-                  - lambda: |-
-                      if (id(sw_test_aktiv)) {
-                        id(script_schwenker_test_stop).execute();
-                      } else {
-                        id(script_schwenker_test_start).execute();
-                      }
+                            id(sw_halbperiode_ms) = id(preset5_hp_ms);
+                            id(sw_max_speed_rpm)  = id(preset5_rpm);
+                            id(sw_acc)            = id(preset5_acc);
+                            lv_arc_set_value(id(arc_schwenkzeit), (int)(id(preset5_hp_ms)/100));
+                            lv_arc_set_value(id(arc_rpm),  id(preset5_rpm));
+                            lv_arc_set_value(id(arc_acc),  id(preset5_acc));
+                            char b1[8]; snprintf(b1,sizeof(b1),"%.1fs",id(preset5_hp_ms)/1000.0f);
+                            lv_label_set_text(id(lbl_arc_zeit_val), b1);
+                            char b2[6]; snprintf(b2,sizeof(b2),"%d",id(preset5_rpm));
+                            lv_label_set_text(id(lbl_arc_rpm_val), b2);
+                            char b3[8]; snprintf(b3,sizeof(b3),"%d%%",id(preset5_acc));
+                            lv_label_set_text(id(lbl_arc_acc_val), b3);
+                            int a=id(preset5_acc); const char* sh;
+                            if(a>=80) sh="\xe2\x95\xb1\xe2\x95\xb2";
+                            else if(a>=55) sh="\xe2\x95\xb1\xe2\x80\xbe\xe2\x95\xb2";
+                            else if(a>=35) sh="\xe2\x95\xb1\xe2\x80\xbe\xe2\x80\xbe\xe2\x80\xbe\xe2\x95\xb2";
+                            else sh="\xe2\x95\xb1\xe2\x80\xbe\xe2\x80\xbe\xe2\x80\xbe\xe2\x80\xbe\xe2\x80\xbe\xe2\x95\xb2";
+                            lv_label_set_text(id(lbl_trapez_shape), sh);
+                            ESP_LOGI("preset","P5 geladen: %ums %dRPM %d%%",id(preset5_hp_ms),id(preset5_rpm),id(preset5_acc));
+                      on_long_press:
+                        - lambda: |-
+                            id(preset5_hp_ms) = id(sw_halbperiode_ms);
+                            id(preset5_rpm)   = id(sw_max_speed_rpm);
+                            id(preset5_acc)   = id(sw_acc);
+                            char buf[28];
+                            snprintf(buf,sizeof(buf),"%.1fs \xc2\xb7 %d Upm \xc2\xb7 %d%%",
+                                     id(preset5_hp_ms)/1000.0f,id(preset5_rpm),id(preset5_acc));
+                            lv_label_set_text(id(lbl_preset5_vals), buf);
+                            ESP_LOGI("preset","P5 gespeichert: %ums %dRPM %d%%",id(preset5_hp_ms),id(preset5_rpm),id(preset5_acc));
 
       # ================================
       - obj:

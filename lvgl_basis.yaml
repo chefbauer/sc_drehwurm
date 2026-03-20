@@ -311,7 +311,7 @@ lvgl:
                         shadow_width: 0
                         outline_width: 0
                         pad_all: 0
-                        on_press:
+                        on_short_click:
                           - lambda: |-
                               if (id(sw_aktiv)) {
                                 id(script_schwenker_stop).execute();
@@ -319,24 +319,7 @@ lvgl:
                                 id(script_schwenker_start).execute();
                               }
                         on_long_press:
-                          - lambda: |-
-                              lv_arc_set_value(id(arc_schwenkzeit), (int)(id(sw_halbperiode_ms) / 100));
-                              lv_arc_set_value(id(arc_rpm), id(sw_max_speed_rpm));
-                              // lv_arc_get_value liest den geclamten Arc-Wert → korrigiert auch zu hohe NVS-Werte
-                              int z = lv_arc_get_value(id(arc_schwenkzeit));
-                              int r = lv_arc_get_value(id(arc_rpm));
-                              id(sw_halbperiode_ms) = (uint32_t)(z * 100);
-                              id(sw_max_speed_rpm)  = r;
-                              char b1[8]; snprintf(b1,sizeof(b1),"%.1fs", z / 10.0f);
-                              lv_label_set_text(id(lbl_arc_zeit_val), b1);
-                              char b2[6]; snprintf(b2,sizeof(b2),"%d", r);
-                              lv_label_set_text(id(lbl_arc_rpm_val), b2);
-                              // Motor-Modus-Button synchronisieren
-                              lv_obj_set_style_bg_color(id(btn_sw_motor_mode_toggle),
-                                id(sw_motor_mode)==1 ? lv_color_hex(0x885522) : lv_color_hex(0x226644), 0);
-                              lv_label_set_text(id(lbl_sw_motor_mode),
-                                id(sw_motor_mode)==1 ? "Motor: FOC" : "Motor: Closed Loop");
-                          - lvgl.widget.show: overlay_schwenker_settings
+                          - script.execute: script_schwenker_settings_open
                         widgets:
                           - label:
                               id: lbl_schwenker_icon
@@ -1445,29 +1428,7 @@ lvgl:
                                   text_font: font_icons
                                   text_color: 0x99AACC
                             on_click:
-                              - lambda: |-
-                                  // Arcs auf aktuelle Werte setzen beim Öffnen
-                                  lv_arc_set_value(id(arc_schwenkzeit), (int)(id(sw_halbperiode_ms) / 100));
-                                  lv_arc_set_value(id(arc_rpm), id(sw_max_speed_rpm));
-                                  lv_arc_set_value(id(arc_acc), id(sw_acc));
-                                  int z = lv_arc_get_value(id(arc_schwenkzeit));
-                                  int r = lv_arc_get_value(id(arc_rpm));
-                                  int a = lv_arc_get_value(id(arc_acc));
-                                  id(sw_halbperiode_ms) = (uint32_t)(z * 100);
-                                  id(sw_max_speed_rpm)  = r;
-                                  id(sw_acc)            = a;
-                                  char b1[8]; snprintf(b1,sizeof(b1),"%.1fs", z / 10.0f);
-                                  lv_label_set_text(id(lbl_arc_zeit_val), b1);
-                                  char b2[6]; snprintf(b2,sizeof(b2),"%d", r);
-                                  lv_label_set_text(id(lbl_arc_rpm_val), b2);
-                                  char b3[6]; snprintf(b3,sizeof(b3),"%d%%", a);
-                                  lv_label_set_text(id(lbl_arc_acc_val), b3);
-                                  // Motor-Modus-Button synchronisieren
-                                  lv_obj_set_style_bg_color(id(btn_sw_motor_mode_toggle),
-                                    id(sw_motor_mode)==1 ? lv_color_hex(0x885522) : lv_color_hex(0x226644), 0);
-                                  lv_label_set_text(id(lbl_sw_motor_mode),
-                                    id(sw_motor_mode)==1 ? "Motor: FOC" : "Motor: Closed Loop");
-                              - lvgl.widget.show: overlay_schwenker_settings
+                              - script.execute: script_schwenker_settings_open
 
                         # Zeile: Motor-Steuerung
                         - obj:

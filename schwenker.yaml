@@ -82,11 +82,6 @@ globals:
     restore_value: no
     initial_value: 'false'
 
-  - id: sw_motor_mode          # 0 = Closed Loop (Mode 4)  |  1 = FOC (Mode 5)
-    type: int
-    restore_value: yes
-    initial_value: '0'          # Standard: Closed Loop – besser bei langsamen Bewegungen
-
   - id: slider_trim_last       # merkt sich den letzten Slider-Wert für Delta-Berechnung
     type: int
     restore_value: no
@@ -151,10 +146,77 @@ globals:
     restore_value: yes
     initial_value: '12'
 
+  - id: preset1_acc
+    type: int
+    restore_value: yes
+    initial_value: '100'
+  - id: preset2_acc
+    type: int
+    restore_value: yes
+    initial_value: '100'
+  - id: preset3_acc
+    type: int
+    restore_value: yes
+    initial_value: '100'
+
+  - id: preset4_hp_ms
+    type: uint32_t
+    restore_value: yes
+    initial_value: '3000'   # 3.0 s
+  - id: preset4_rpm
+    type: int
+    restore_value: yes
+    initial_value: '6'
+  - id: preset4_acc
+    type: int
+    restore_value: yes
+    initial_value: '75'
+
+  - id: preset5_hp_ms
+    type: uint32_t
+    restore_value: yes
+    initial_value: '5000'   # 5.0 s
+  - id: preset5_rpm
+    type: int
+    restore_value: yes
+    initial_value: '20'
+  - id: preset5_acc
+    type: int
+    restore_value: yes
+    initial_value: '50'
+
 # ============================================================
 # Scripts
 # ============================================================
 script:
+  # ── Schwenker-Overlay öffnen (Arcs + Labels + Trapez sync) ──
+  - id: script_schwenker_settings_open
+    mode: restart
+    then:
+      - lambda: |-
+          lv_arc_set_value(id(arc_schwenkzeit), (int)(id(sw_halbperiode_ms) / 100));
+          lv_arc_set_value(id(arc_rpm), id(sw_max_speed_rpm));
+          lv_arc_set_value(id(arc_acc), id(sw_acc));
+          int z = lv_arc_get_value(id(arc_schwenkzeit));
+          int r = lv_arc_get_value(id(arc_rpm));
+          int a = lv_arc_get_value(id(arc_acc));
+          id(sw_halbperiode_ms) = (uint32_t)(z * 100);
+          id(sw_max_speed_rpm)  = r;
+          id(sw_acc)            = a;
+          char b1[8]; snprintf(b1,sizeof(b1),"%.1fs", z / 10.0f);
+          lv_label_set_text(id(lbl_arc_zeit_val), b1);
+          char b2[6]; snprintf(b2,sizeof(b2),"%d", r);
+          lv_label_set_text(id(lbl_arc_rpm_val), b2);
+          char b3[6]; snprintf(b3,sizeof(b3),"%d%%", a);
+          lv_label_set_text(id(lbl_arc_acc_val), b3);
+          const char* sh;
+          if(a>=80)      sh="\xe2\x95\xb1\xe2\x95\xb2";
+          else if(a>=55) sh="\xe2\x95\xb1\xe2\x80\xbe\xe2\x95\xb2";
+          else if(a>=35) sh="\xe2\x95\xb1\xe2\x80\xbe\xe2\x80\xbe\xe2\x80\xbe\xe2\x95\xb2";
+          else           sh="\xe2\x95\xb1\xe2\x80\xbe\xe2\x80\xbe\xe2\x80\xbe\xe2\x80\xbe\xe2\x80\xbe\xe2\x95\xb2";
+          lv_label_set_text(id(lbl_trapez_shape), sh);
+      - lvgl.widget.show: overlay_schwenker_settings
+
   # ── Starten ──────────────────────────────────────────────
   - id: script_schwenker_start
     mode: single              # mehrfaches Aufrufen ignoriert
@@ -163,10 +225,9 @@ script:
       - lambda: |-
           id(sw_motor_busy) = true;
           std::vector<unsigned char> data;
-          uint8_t mode_byte = (id(sw_motor_mode) == 1) ? 0x05 : 0x04;
-          data = add_crc(${motor_can_id}, { 0x82, mode_byte });    // MODE: Closed Loop (4) oder FOC (5)
+          data = add_crc(${motor_can_id}, { 0x82, 0x04 });         // MODE: Closed Loop (4)
           id(can_bus)->send_data(${motor_can_id}, false, data);
-          ESP_LOGI("schwenker", "Motor-Modus: %s", id(sw_motor_mode)==1 ? "FOC (5)" : "Closed Loop (4)");
+          ESP_LOGI("schwenker", "Motor-Modus: Closed Loop (4)");
           data = add_crc(${motor_can_id}, { 0x84, 0x40 });        // MSTEP: 64 subdivisions
           id(can_bus)->send_data(${motor_can_id}, false, data);
           int cur_ma = std::max(500, std::min(2000, id(sw_work_current_mA)));
@@ -492,7 +553,7 @@ interval:
           id(can_bus)->send_data(${motor_can_id}, false, add_crc(${motor_can_id}, { 0x30 }));
 
           // ── Motor-Idle-Timeout: 10 s nach letzter Bewegung → FOC + 500 mA ──────
-          if (!id(sw_aktiv) && !id(sw_test_aktiv) && !id(sw_motor_busy)) {
+          if (!id(sw_aktiv) && !id(sw_motor_busy)) {
             if (id(sw_motor_last_move_ms) != 0 &&
                 (millis() - id(sw_motor_last_move_ms) > 10000)) {
               id(sw_motor_last_move_ms) = 0;
