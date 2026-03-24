@@ -43,7 +43,7 @@ light:
     name: "Slot LEDs Außen"
     id: light_slots_outer
     default_transition_length: 0ms
-    restore_mode: ALWAYS_OFF
+    restore_mode: RESTORE_DEFAULT_ON
     effects:
       - addressable_lambda:
           name: "Slot Colors"
