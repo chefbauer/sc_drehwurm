@@ -30,7 +30,7 @@ substitutions:
   c_led_strip_outer_led_num:       "172"
   c_led_strip_outer_led_0deg:      "86"
   c_led_strip_leds_per_slot:       "9"
-  c_led_strip_outer_direction:     "1"   # 0 = CW, 1 = CCW
+  c_led_strip_outer_direction:     "0"   # 0 = CW, 1 = CCW
 
 light:
   - platform: esp32_rmt_led_strip
