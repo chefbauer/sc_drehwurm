@@ -36,7 +36,7 @@ light:
   - platform: esp32_rmt_led_strip
     rgb_order: GRB
     chipset: WS2812
-    pin: ${pin_led_h1}
+    pin: ${pin_led_h2}
     num_leds: ${c_led_strip_outer_led_num}
     rmt_symbols: 96     # ESP32-P4: max 192, kein weiterer Strip → 96
     use_psram: true
