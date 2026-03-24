@@ -150,4 +150,8 @@ light:
                 int idx = ((center + d) % total + total) % total;
                 it[idx] = slot_colors[s];
               }
+              // Nachbar-LEDs ±(half+1): 50% Helligkeit
+              Color dim(slot_colors[s].r / 2, slot_colors[s].g / 2, slot_colors[s].b / 2);
+              it[((center - half - 1) % total + total) % total] = dim;
+              it[((center + half + 1) % total + total) % total] = dim;
             }
