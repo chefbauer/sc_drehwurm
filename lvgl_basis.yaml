@@ -1678,6 +1678,195 @@ lvgl:
                                   x: -75
                                   text_font: font_normal
                                   text_color: 0x664400
+
+                    # Tab 3: Licht
+                    - name: "Licht"
+                      id: tab_licht
+                      scrollable: true
+                      widgets:
+                        # Zeile: Becken LED Ein / Aus
+                        - obj:
+                            id: row_led_strip_onoff
+                            width: 960
+                            height: 70
+                            align: TOP_MID
+                            y: 20
+                            bg_opa: TRANSP
+                            border_width: 0
+                            scrollable: false
+                            scrollbar_mode: "off"
+                            widgets:
+                              - label:
+                                  text: "Becken LED:"
+                                  align: LEFT_MID
+                                  x: 10
+                                  text_font: font_normal
+                                  text_color: 0x000000
+                              - button:
+                                  id: btn_led_strip_ein
+                                  width: 160
+                                  height: 58
+                                  align: LEFT_MID
+                                  x: 240
+                                  bg_color: 0x227722
+                                  on_click:
+                                    - lambda: |-
+                                        auto call = id(light_slots_outer).turn_on();
+                                        call.set_brightness(1.0f);
+                                        call.perform();
+                                  widgets:
+                                    - label:
+                                        text: "Ein"
+                                        align: CENTER
+                                        text_font: font_normal
+                                        text_color: 0xFFFFFF
+                              - button:
+                                  id: btn_led_strip_aus
+                                  width: 160
+                                  height: 58
+                                  align: LEFT_MID
+                                  x: 420
+                                  bg_color: 0x772222
+                                  on_click:
+                                    - lambda: |-
+                                        id(light_slots_outer).turn_off().perform();
+                                  widgets:
+                                    - label:
+                                        text: "Aus"
+                                        align: CENTER
+                                        text_font: font_normal
+                                        text_color: 0xFFFFFF
+
+                        # Zeile: Effekt-Auswahl
+                        - obj:
+                            id: row_led_effekt
+                            width: 960
+                            height: 70
+                            align: TOP_MID
+                            y: 110
+                            bg_opa: TRANSP
+                            border_width: 0
+                            scrollable: false
+                            scrollbar_mode: "off"
+                            widgets:
+                              - label:
+                                  text: "Effekt:"
+                                  align: LEFT_MID
+                                  x: 10
+                                  text_font: font_normal
+                                  text_color: 0x000000
+                              - button:
+                                  id: btn_led_effekt_aus
+                                  width: 160
+                                  height: 58
+                                  align: LEFT_MID
+                                  x: 240
+                                  bg_color: 0x555555
+                                  on_click:
+                                    - lambda: |-
+                                        auto call = id(light_slots_outer).turn_on();
+                                        call.set_effect("None");
+                                        call.perform();
+                                  widgets:
+                                    - label:
+                                        text: "Aus"
+                                        align: CENTER
+                                        text_font: font_normal
+                                        text_color: 0xFFFFFF
+                              - button:
+                                  id: btn_led_effekt_slot
+                                  width: 160
+                                  height: 58
+                                  align: LEFT_MID
+                                  x: 420
+                                  bg_color: 0x224488
+                                  on_click:
+                                    - lambda: |-
+                                        auto call = id(light_slots_outer).turn_on();
+                                        call.set_effect("Slot Colors");
+                                        call.perform();
+                                  widgets:
+                                    - label:
+                                        text: "Slot"
+                                        align: CENTER
+                                        text_font: font_normal
+                                        text_color: 0xFFFFFF
+                              - button:
+                                  id: btn_led_effekt_slot_plus
+                                  width: 160
+                                  height: 58
+                                  align: LEFT_MID
+                                  x: 600
+                                  bg_color: 0x335599
+                                  on_click:
+                                    - lambda: |-
+                                        auto call = id(light_slots_outer).turn_on();
+                                        call.set_effect("Slot Colors on White");
+                                        call.perform();
+                                  widgets:
+                                    - label:
+                                        text: "Slot+"
+                                        align: CENTER
+                                        text_font: font_normal
+                                        text_color: 0xFFFFFF
+
+                        # Zeile: Hintergrundfarbe (für Effekt "Slot Colors on White")
+                        - obj:
+                            id: row_led_hintergrund
+                            width: 960
+                            height: 70
+                            align: TOP_MID
+                            y: 200
+                            bg_opa: TRANSP
+                            border_width: 0
+                            scrollable: false
+                            scrollbar_mode: "off"
+                            widgets:
+                              - label:
+                                  text: "Hintergrund:"
+                                  align: LEFT_MID
+                                  x: 10
+                                  text_font: font_normal
+                                  text_color: 0x000000
+                              - button:
+                                  id: btn_led_bg_weiss
+                                  width: 160
+                                  height: 58
+                                  align: LEFT_MID
+                                  x: 240
+                                  bg_color: 0xDDDDDD
+                                  border_width: 2
+                                  border_color: 0x888888
+                                  on_click:
+                                    - lambda: |-
+                                        auto call = id(light_slots_outer).turn_on();
+                                        call.set_rgb(1.0f, 1.0f, 1.0f);
+                                        call.perform();
+                                  widgets:
+                                    - label:
+                                        text: "Weiß"
+                                        align: CENTER
+                                        text_font: font_normal
+                                        text_color: 0x000000
+                              - button:
+                                  id: btn_led_bg_blau
+                                  width: 160
+                                  height: 58
+                                  align: LEFT_MID
+                                  x: 420
+                                  bg_color: 0x0044CC
+                                  on_click:
+                                    - lambda: |-
+                                        auto call = id(light_slots_outer).turn_on();
+                                        call.set_rgb(0.0f, 0.27f, 0.8f);
+                                        call.perform();
+                                  widgets:
+                                    - label:
+                                        text: "Blau"
+                                        align: CENTER
+                                        text_font: font_normal
+                                        text_color: 0xFFFFFF
+
                     - name: "Bildschirm"
                       id: tab_bildschirm
                       scrollable: true

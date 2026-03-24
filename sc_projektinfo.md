@@ -241,7 +241,7 @@ Anordnung im Uhrzeigersinn nach Farbrad:
 
 ### TabView (4 Tabs, `font_tab`, Hintergrund `#E0E0E0`)
 
-Tab-Reihenfolge: **System · Bildschirm · Kühler · Test**
+Tab-Reihenfolge: **System · Schwenker · Licht · Bildschirm · Kühler · Test**
 
 ---
 
@@ -569,6 +569,7 @@ Alle Sensoren auf `i2c_id: i2c_bus` (fremdkonfiguriert in main_config).
 | 2026-03-20 (session) | — | Alle 9 YAML-Dateien: `# ── Komponenten ──` Übersicht am Anfang jeder Datei eingefügt |
 | 2026-03-24 (session) | — | `display.yaml` → `display_7z_settings.yaml` umbenannt (Hardware-Substitutions: Pins, CAN, Konstanten) |
 | 2026-03-24 (session) | — | `lights.yaml` neu: WS2812-Ring (`pin_led_h1`, 80 LEDs) mit `Slot Colors`-Effekt (6 Farben, motorpositionsbasiert) |
+| 2026-03-24 (session) | — | `lvgl_basis.yaml`: Tab "Licht" (Pos. 3): Becken LED Ein/Aus, Effekt-Auswahl (Aus/Slot/Slot+), Hintergrundfarbe (Weiß/Blau) |
 
 
 ---
