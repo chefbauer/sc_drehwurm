@@ -4,7 +4,7 @@
 #  light:          light_slots_outer
 #
 #  Abhängigkeiten (extern, nicht in dieser Datei):
-#    pin_led_h1           → display_7z_settings.yaml
+#    pin_led_h2           → display_7z_settings.yaml
 #    c_motor_direction    → display_7z_settings.yaml
 #    sensor_motor_position → motorcontrol_can-bus.yaml  (0–16383 = 0–360°)
 # ─────────────────────────────────────────────────────────────────────────────────
