@@ -16,8 +16,8 @@ substitutions:
   pin_pwm2: GPIO2
   pin_pwm3: GPIO3
   pin_pwm4: GPIO4
-  pin_led_h1: GPIO5
-  pin_led_h2: GPIO20
+  pin_led_h1: GPIO5   # Board 5 ACHTUNG MIPI RESET
+  pin_led_h2: GPIO20  # Board 6
   pin_led_v1: GPIO47
   pin_led_v2: GPIO46
   pin_1w: GPIO45
