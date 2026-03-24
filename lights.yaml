@@ -1,0 +1,149 @@
+# ── Komponenten ──────────────────────────────────────────────────────────────────
+#  substitutions:  c_led_strip_outer_led_num, c_led_strip_outer_led_0deg,
+#                  c_led_strip_leds_per_slot, c_led_strip_outer_direction
+#  light:          light_slots_outer
+#
+#  Abhängigkeiten (extern, nicht in dieser Datei):
+#    pin_led_h1           → display_7z_settings.yaml
+#    c_motor_direction    → display_7z_settings.yaml
+#    sensor_motor_position → motorcontrol_can-bus.yaml  (0–16383 = 0–360°)
+# ─────────────────────────────────────────────────────────────────────────────────
+#
+# WS2812-LED-Ring außen um das Becken
+#
+# Anordnung:
+#   c_led_strip_outer_led_0deg  = LED-Index, der physisch auf Motor-0° zeigt
+#                                 (= Slot 1 „Rot" wenn Motor bei 0°)
+#   Die 6 Slot-Farben verteilen sich gleichmäßig alle 60° auf dem Ring.
+#   Wenn der Motor dreht, wandert jede Farb-LED mit.
+#
+# c_led_strip_leds_per_slot:
+#   1 = eine LED exakt auf der Slot-Position
+#   3 = symmetrisch: Slot-LED + je 1 links/rechts (usw., immer ungerade)
+#
+# c_led_strip_outer_direction (physische Montagerichtung des Strips):
+#   0 = CW  (LED-Index steigt im Uhrzeigersinn)
+#   1 = CCW (LED-Index steigt gegen den Uhrzeigersinn)
+# ─────────────────────────────────────────────────────────────────────────────────
+
+substitutions:
+  c_led_strip_outer_led_num:       "174"
+  c_led_strip_outer_led_0deg:      "87"
+  c_led_strip_leds_per_slot:       "1"
+  c_led_strip_outer_direction:     "1"   # 0 = CW, 1 = CCW
+
+light:
+  - platform: esp32_rmt_led_strip
+    rgb_order: GRB
+    chipset: WS2812
+    pin: ${pin_led_h1}
+    num_leds: ${c_led_strip_outer_led_num}
+    rmt_symbols: 96     # ESP32-P4: max 192, kein weiterer Strip → 96
+    use_psram: true
+    name: "Slot LEDs Außen"
+    id: light_slots_outer
+    default_transition_length: 0ms
+    restore_mode: ALWAYS_OFF
+    effects:
+      - addressable_lambda:
+          name: "Slot Colors"
+          update_interval: 50ms
+          lambda: |-
+            // ── Slot-Farben (Reihenfolge: 1=Rot, 2=Gelb, 3=Grün, 4=Cyan, 5=Blau, 6=Magenta) ──
+            const Color slot_colors[6] = {
+              Color(255,   0,   0),   // Slot 1: Rot
+              Color(255, 255,   0),   // Slot 2: Gelb
+              Color(  0, 255,   0),   // Slot 3: Grün
+              Color(  0, 255, 255),   // Slot 4: Cyan
+              Color(  0,   0, 255),   // Slot 5: Blau
+              Color(255,   0, 255),   // Slot 6: Magenta
+            };
+
+            const int total   = ${c_led_strip_outer_led_num};
+            const int led0deg = ${c_led_strip_outer_led_0deg};
+            const int half    = ${c_led_strip_leds_per_slot} / 2;  // 1→0  3→1  5→2 ...
+            const int dir     = ${c_led_strip_outer_direction};   // 0=CW, 1=CCW
+
+            // Motor-Position: 0–16383 = 0–360°
+            float raw = id(sensor_motor_position).state;
+            if (isnan(raw) || raw < 0.0f) raw = 0.0f;
+            float motor_deg = raw * 360.0f / 16384.0f;
+
+            // Drehrichtung berücksichtigen (c_motor_direction: 1=rechts=CW, 0=links=CCW)
+            if (${c_motor_direction} == 0) {
+              motor_deg = 360.0f - motor_deg;
+            }
+
+            // Alles dunkel
+            for (int i = 0; i < it.size(); i++) {
+              it[i] = Color::BLACK;
+            }
+
+            // Jede der 6 Slot-Farben an berechneter LED-Position einzeichnen
+            for (int s = 0; s < 6; s++) {
+              // Physische Winkelposition des Slots auf dem LED-Ring
+              float slot_deg = fmod(motor_deg + s * 60.0f, 360.0f);
+              if (slot_deg < 0.0f) slot_deg += 360.0f;
+
+              // LED-Index: CW = +Offset, CCW = -Offset
+              float offset = slot_deg * total / 360.0f;
+              int center = (int)(led0deg + (dir == 0 ? offset : -offset) + 0.5f);
+              center = ((center % total) + total) % total;
+
+              // Symmetrisch ±half LEDs drumherum
+              for (int d = -half; d <= half; d++) {
+                int idx = ((center + d) % total + total) % total;
+                it[idx] = slot_colors[s];
+              }
+            }
+
+      - addressable_lambda:
+          name: "Slot Colors on White"
+          update_interval: 50ms
+          lambda: |-
+            // ── Slot-Farben (Reihenfolge: 1=Rot, 2=Gelb, 3=Grün, 4=Cyan, 5=Blau, 6=Magenta) ──
+            const Color slot_colors[6] = {
+              Color(255,   0,   0),   // Slot 1: Rot
+              Color(255, 255,   0),   // Slot 2: Gelb
+              Color(  0, 255,   0),   // Slot 3: Grün
+              Color(  0, 255, 255),   // Slot 4: Cyan
+              Color(  0,   0, 255),   // Slot 5: Blau
+              Color(255,   0, 255),   // Slot 6: Magenta
+            };
+
+            const int total   = ${c_led_strip_outer_led_num};
+            const int led0deg = ${c_led_strip_outer_led_0deg};
+            const int half    = ${c_led_strip_leds_per_slot} / 2;  // 1→0  3→1  5→2 ...
+            const int dir     = ${c_led_strip_outer_direction};   // 0=CW, 1=CCW
+
+            // Motor-Position: 0–16383 = 0–360°
+            float raw = id(sensor_motor_position).state;
+            if (isnan(raw) || raw < 0.0f) raw = 0.0f;
+            float motor_deg = raw * 360.0f / 16384.0f;
+
+            // Drehrichtung berücksichtigen (c_motor_direction: 1=rechts=CW, 0=links=CCW)
+            if (${c_motor_direction} == 0) {
+              motor_deg = 360.0f - motor_deg;
+            }
+
+            // Hintergrund: eingestellte Farbe des Light-Objekts (weiß per Default)
+            Color bg = current_color;
+            for (int i = 0; i < it.size(); i++) {
+              it[i] = bg;
+            }
+
+            // Slot-Farben überlagern
+            for (int s = 0; s < 6; s++) {
+              float slot_deg = fmod(motor_deg + s * 60.0f, 360.0f);
+              if (slot_deg < 0.0f) slot_deg += 360.0f;
+
+              // LED-Index: CW = +Offset, CCW = -Offset
+              float offset = slot_deg * total / 360.0f;
+              int center = (int)(led0deg + (dir == 0 ? offset : -offset) + 0.5f);
+              center = ((center % total) + total) % total;
+
+              for (int d = -half; d <= half; d++) {
+                int idx = ((center + d) % total + total) % total;
+                it[idx] = slot_colors[s];
+              }
+            }

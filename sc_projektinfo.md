@@ -42,6 +42,8 @@ Ausgelegt für **Dosen und Flaschen** — durch das Drehen wird die Kühlleistun
 `hardware.yaml` enthält Sensoren, Outputs, MCP4728, Climate, AMG8833.  
 `sensorphalanx.yaml` enthält die externe Sensor-Gruppe (MLX90632, VL53L1X, SHT4x, BMP581, VEML7700).  
 `schwenker.yaml` enthält Sinus-Pendel-Steuerung via F5 (MKS Servo42D CAN-Bus).  
+`lights.yaml` enthält WS2812-LED-Ring außen um das Becken (Slot-Farb-Effekt, motorpositionsbasiert).  
+`display_7z_settings.yaml` (umbenannt von `display.yaml`) enthält Hardware-Substitutions (Pins, CAN-IDs, Konstanten).  
 **Nur in lvgl_basis/overlay generieren:** `font:`, `globals:`, `interval:`, `lvgl:`  
 **Nicht generieren:** sonstiger ESPHome-Code (sensors, lights, etc.)
 
@@ -565,6 +567,8 @@ Alle Sensoren auf `i2c_id: i2c_bus` (fremdkonfiguriert in main_config).
 | 2026-03-20 (session) | — | `font_arc_val` Glyphs: `%` ergänzt; `font_icons` Glyphs: U+F021 ergänzt |
 | 2026-03-20 (session) | — | `font_preset_num` neu: Noto+Sans+Symbols size=28, nur ①②③④⑤ (Roboto hat diese Zeichen nicht) |
 | 2026-03-20 (session) | — | Alle 9 YAML-Dateien: `# ── Komponenten ──` Übersicht am Anfang jeder Datei eingefügt |
+| 2026-03-24 (session) | — | `display.yaml` → `display_7z_settings.yaml` umbenannt (Hardware-Substitutions: Pins, CAN, Konstanten) |
+| 2026-03-24 (session) | — | `lights.yaml` neu: WS2812-Ring (`pin_led_h1`, 80 LEDs) mit `Slot Colors`-Effekt (6 Farben, motorpositionsbasiert) |
 
 
 ---
