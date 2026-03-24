@@ -53,9 +53,9 @@ light:
             const Color slot_colors[6] = {
               Color(255,   0,   0),   // Slot 1: Rot
               Color(255,   0, 255),   // Slot 2: Magenta
-              Color(  0, 255,   0),   // Slot 3: Grün
+              Color(  0,   0, 255),   // Slot 3: Blau
               Color(  0, 255, 255),   // Slot 4: Cyan
-              Color(  0,   0, 255),   // Slot 5: Blau
+              Color(  0, 255,   0),   // Slot 5: Grün
               Color(255, 255,   0),   // Slot 6: Gelb
             };
 
@@ -109,9 +109,9 @@ light:
             const Color slot_colors[6] = {
               Color(255,   0,   0),   // Slot 1: Rot
               Color(255,   0, 255),   // Slot 2: Magenta
-              Color(  0, 255,   0),   // Slot 3: Grün
+              Color(  0,   0, 255),   // Slot 3: Blau
               Color(  0, 255, 255),   // Slot 4: Cyan
-              Color(  0,   0, 255),   // Slot 5: Blau
+              Color(  0, 255,   0),   // Slot 5: Grün
               Color(255, 255,   0),   // Slot 6: Gelb
             };
 
