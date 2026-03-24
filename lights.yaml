@@ -30,7 +30,7 @@ substitutions:
   c_led_strip_outer_led_num:       "172"
   c_led_strip_outer_led_0deg:      "86"
   c_led_strip_leds_per_slot:       "9"
-  c_led_strip_outer_direction:     "0"   # 0 = CW, 1 = CCW
+  c_led_strip_outer_direction:     "1"   # 0 = CW, 1 = CCW
 
 light:
   - platform: esp32_rmt_led_strip
@@ -52,11 +52,11 @@ light:
             // ── Slot-Farben (Reihenfolge: 1=Rot, 2=Gelb, 3=Grün, 4=Cyan, 5=Blau, 6=Magenta) ──
             const Color slot_colors[6] = {
               Color(255,   0,   0),   // Slot 1: Rot
-              Color(255, 255,   0),   // Slot 2: Gelb
+              Color(255,   0, 255),   // Slot 2: Magenta
               Color(  0, 255,   0),   // Slot 3: Grün
               Color(  0, 255, 255),   // Slot 4: Cyan
               Color(  0,   0, 255),   // Slot 5: Blau
-              Color(255,   0, 255),   // Slot 6: Magenta
+              Color(255, 255,   0),   // Slot 6: Gelb
             };
 
             const int total   = ${c_led_strip_outer_led_num};
@@ -108,11 +108,11 @@ light:
             // ── Slot-Farben (Reihenfolge: 1=Rot, 2=Gelb, 3=Grün, 4=Cyan, 5=Blau, 6=Magenta) ──
             const Color slot_colors[6] = {
               Color(255,   0,   0),   // Slot 1: Rot
-              Color(255, 255,   0),   // Slot 2: Gelb
+              Color(255,   0, 255),   // Slot 2: Magenta
               Color(  0, 255,   0),   // Slot 3: Grün
               Color(  0, 255, 255),   // Slot 4: Cyan
               Color(  0,   0, 255),   // Slot 5: Blau
-              Color(255,   0, 255),   // Slot 6: Magenta
+              Color(255, 255,   0),   // Slot 6: Gelb
             };
 
             const int total   = ${c_led_strip_outer_led_num};
