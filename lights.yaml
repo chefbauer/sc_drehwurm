@@ -32,6 +32,12 @@ substitutions:
   c_led_strip_leds_per_slot:       "9"
   c_led_strip_outer_direction:     "1"   # 0 = CW, 1 = CCW
 
+globals:
+  - id: global_leds_per_slot
+    type: int
+    restore_value: true
+    initial_value: "${c_led_strip_leds_per_slot}"
+
 light:
   - platform: esp32_rmt_led_strip
     rgb_order: GRB
@@ -61,7 +67,7 @@ light:
 
             const int total   = ${c_led_strip_outer_led_num};
             const int led0deg = ${c_led_strip_outer_led_0deg};
-            const int half    = ${c_led_strip_leds_per_slot} / 2;  // 1→0  3→1  5→2 ...
+            const int half    = id(global_leds_per_slot) / 2;
             const int dir     = ${c_led_strip_outer_direction};   // 0=CW, 1=CCW
 
             // Motor-Position: 0–16383 = 0–360°
@@ -117,7 +123,7 @@ light:
 
             const int total   = ${c_led_strip_outer_led_num};
             const int led0deg = ${c_led_strip_outer_led_0deg};
-            const int half    = ${c_led_strip_leds_per_slot} / 2;  // 1→0  3→1  5→2 ...
+            const int half    = id(global_leds_per_slot) / 2;
             const int dir     = ${c_led_strip_outer_direction};   // 0=CW, 1=CCW
 
             // Motor-Position: 0–16383 = 0–360°
