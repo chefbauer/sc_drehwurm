@@ -1129,7 +1129,7 @@ lvgl:
                       bg_color: 0x00FF88
                       radius: 0
                       border_width: 0
-                  # Dynamische Bar (inverted: näher = mehr Füllung = oben)
+                  # Dynamische Bar (nah = oben: Wert wird in Lambda gespiegelt)
                   - bar:
                       id: bar_distanz
                       width: 60
@@ -1137,9 +1137,8 @@ lvgl:
                       align: CENTER
                       min_value: 10
                       max_value: 100
-                      value: 50
+                      value: 60
                       mode: NORMAL
-                      inverted: true
                       indicator:
                         bg_color: 0x2299FF
                       bg_color: 0x333333
@@ -1166,9 +1165,12 @@ lvgl:
                   - label:
                       id: lbl_ts_temp
                       text: !lambda |-
-                        if (isnan(id(sensor_Temp_OBJECT).state)) return std::string("--.-°C");
+                        if (isnan(id(sensor_Temp_OBJECT).state)) return std::string("--,- °C");
+                        float t = id(sensor_Temp_OBJECT).state;
+                        int vor = (int)t;
+                        int nach = (int)(fabs(t - vor) * 10 + 0.5f);
                         char b[16];
-                        snprintf(b, sizeof(b), "%.1f°C", id(sensor_Temp_OBJECT).state);
+                        snprintf(b, sizeof(b), "%d,%d °C", vor, nach);
                         return std::string(b);
                       text_font: font_ts_xl
                       text_color: 0xFFFFFF

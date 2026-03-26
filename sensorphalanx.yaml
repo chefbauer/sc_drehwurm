@@ -51,11 +51,11 @@ sensor:
       then:
         - lvgl.widget.refresh: distance_value_label
         - lambda: |-
-            // Bar-Wert klemmen und setzen
+            // Bar-Wert klemmen und gespiegelt setzen (nah=10mm → Wert=100 oben)
             float d = x;
             if (d < 10.0f) d = 10.0f;
             if (d > 100.0f) d = 100.0f;
-            lv_bar_set_value(id(bar_distanz), (int)d, LV_ANIM_ON);
+            lv_bar_set_value(id(bar_distanz), (int)(110.0f - d), LV_ANIM_ON);
             lv_label_set_text_fmt(id(lbl_dist_messung), "%.0fmm", x);
 
   # ── VL53L1X – Time-of-Flight Distanzsensor ────────────────
