@@ -1,0 +1,316 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  LVGL Layout Export
+  Overlay:  overlay_temp_messung
+  Source:   lvgl_overlay.yaml
+  Display:  1024 × 600 px  (Guition JC1060P470, 7")
+  LVGL:     8.x  (ESPHome)
+  Fonts:    font_small=Roboto-Bold 18px | font_normal=Roboto 28px
+            font_ts_xl=Roboto-Bold 120px | (font_icon_ts=FA 80px – nicht im Viewer)
+
+  SYNC-REGEL:
+    Nur Layout-Properties werden zurück ins YAML übernommen:
+      x, y, width, height, align, bg_color, bg_opa, border_color,
+      border_width, radius, text_color, text (sofern kein lambda)
+    NICHT übernommen (ESPHome-only):
+      on_click, lambda, lvgl.widget.show, component.resume, script.execute
+-->
+
+<screen id="overlay_temp_messung"
+        width="1024" height="600"
+        bg_color="#111111" bg_opa="88%"
+        hidden="true" clickable="true"
+        pad_all="0" scrollable="false">
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- EXIT-BUTTON rechts oben                                 -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <button id="btn_temp_messung_exit"
+          width="80" height="60"
+          align="TOP_RIGHT" x="-10" y="10"
+          bg_color="#CC3333" radius="0">
+    <label text="X"
+           align="CENTER"
+           font="font_normal" text_color="#FFFFFF"/>
+    <!-- on_click: script.execute: script_close_temp_overlay -->
+  </button>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- DISTANZ-BAR links                                       -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <obj id="obj_dist_bar_container"
+       width="120" height="440"
+       align="LEFT_MID" x="40"
+       bg_color="#222222" radius="12"
+       border_width="0" pad_all="0" scrollable="false">
+
+    <label text="100mm"
+           font="font_small" text_color="#888888"
+           align="TOP_MID" y="8"/>
+
+    <label text="45mm"
+           font="font_small" text_color="#00FF88"
+           align="CENTER" y="-56"/>
+
+    <label id="lbl_dist_messung"
+           text="---"
+           font="font_normal" text_color="#FFFFFF"
+           align="BOTTOM_MID" y="-4"/>
+    <!-- text wird per Lambda gesetzt: lv_label_set_text_fmt "%.0fmm" -->
+
+    <label text="10mm"
+           font="font_small" text_color="#888888"
+           align="BOTTOM_MID" y="-28"/>
+
+    <!-- Optimal-Linie bei 45mm -->
+    <obj id="obj_dist_optimal_line"
+         width="120" height="3"
+         align="CENTER" y="-44"
+         bg_color="#00FF88" radius="0" border_width="0"/>
+
+    <bar id="bar_distanz"
+         width="60" height="400"
+         align="CENTER"
+         min_value="10" max_value="100" value="60"
+         mode="NORMAL"
+         bg_color="#333333" radius="6">
+      <!-- indicator bg_color: #2299FF -->
+      <!-- value wird per Lambda gesetzt (gespiegelt: 110 - dist_mm) -->
+    </bar>
+
+  </obj>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- IR-FOV-KREIS (Hintergrund, Z-Order = unten)            -->
+  <!-- Durchmesser live berechnet: 2 * dist * tan(25°) * 6.674 px/mm -->
+  <!-- Initialgröße Sweetspot 45mm ≈ 280px                    -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <obj id="obj_ir_circle"
+       width="280" height="280"
+       align="CENTER" x="0" y="0"
+       bg_opa="TRANSP"
+       border_color="#FF4444" border_width="5"
+       radius="140"
+       pad_all="0" scrollable="false">
+
+    <!-- Horizontale Kreuzlinie -->
+    <obj id="obj_cross_h"
+         width="280" height="5"
+         align="CENTER"
+         bg_color="#FF4444" bg_opa="COVER"
+         border_width="0" radius="0"/>
+
+    <!-- Vertikale Kreuzlinie -->
+    <obj id="obj_cross_v"
+         width="5" height="280"
+         align="CENTER"
+         bg_color="#FF4444" bg_opa="COVER"
+         border_width="0" radius="0"/>
+
+  </obj>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- TEMPERATUR-LABEL (Z-Order = vorne, über Kreis)         -->
+  <!-- Touch-Close: on_click → script_close_temp_overlay      -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <label id="lbl_ts_temp"
+         text="23,5 °C"
+         font="font_ts_xl" text_color="#FFFFFF"
+         align="CENTER" x="0" y="0"
+         clickable="true"/>
+  <!-- text wird per Lambda gesetzt (Komma-formatiert) -->
+  <!-- on_click: script.execute: script_close_temp_overlay -->
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- EMISSIVITÄTS-CONTAINER rechts                          -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <obj id="obj_emissivity_container"
+       width="200" height="440"
+       align="RIGHT_MID" x="-20"
+       bg_color="#1A1E2C" bg_opa="90%"
+       radius="12" border_width="0"
+       pad_all="0" scrollable="false">
+
+    <label text="Emissiv."
+           font="font_small" text_color="#AAAAAA"
+           align="TOP_MID" y="4"/>
+
+    <label id="lbl_emissivity_val"
+           text="0.90"
+           font="font_normal" text_color="#FFFF88"
+           align="TOP_MID" y="24"/>
+
+    <!-- Range-Balken Glas (0.88–0.94): grün -->
+    <obj id="obj_range_glas"
+         width="6" height="28"
+         align="LEFT_MID" x="4" y="-132"
+         bg_color="#22CC66" bg_opa="80%"
+         border_width="0" radius="2"/>
+
+    <!-- Range-Balken Dose matt (0.75–0.94): orange -->
+    <obj id="obj_range_dose_matt"
+         width="6" height="65"
+         align="LEFT_MID" x="12" y="-117"
+         bg_color="#FF8833" bg_opa="80%"
+         border_width="0" radius="2"/>
+
+    <!-- Range-Balken Alu glänzend (0.04–0.10): blau -->
+    <obj id="obj_range_alu_glaenzend"
+         width="6" height="22"
+         align="LEFT_MID" x="4" y="150"
+         bg_color="#6699FF" bg_opa="80%"
+         border_width="0" radius="2"/>
+
+    <!-- Tick: Glas -->
+    <obj id="obj_tick_glas"
+         width="32" height="2"
+         align="LEFT_MID" x="52" y="-139"
+         bg_color="#22CC66" border_width="0" radius="0"/>
+    <label text="Glas"
+           font="font_small" text_color="#22CC66"
+           align="LEFT_MID" x="88" y="-148"/>
+    <label text="0.88-0.94"
+           font="font_small" text_color="#22CC66"
+           align="LEFT_MID" x="88" y="-132"/>
+
+    <!-- Tick: Dose matt -->
+    <obj id="obj_tick_dose_matt"
+         width="32" height="2"
+         align="LEFT_MID" x="52" y="-108"
+         bg_color="#FF8833" border_width="0" radius="0"/>
+    <label text="Dose m."
+           font="font_small" text_color="#FF8833"
+           align="LEFT_MID" x="88" y="-117"/>
+    <label text="0.75-0.94"
+           font="font_small" text_color="#FF8833"
+           align="LEFT_MID" x="88" y="-101"/>
+
+    <!-- Tick: Alu glänzend -->
+    <obj id="obj_tick_alu"
+         width="32" height="2"
+         align="LEFT_MID" x="52" y="153"
+         bg_color="#6699FF" border_width="0" radius="0"/>
+    <label text="Alu gl."
+           font="font_small" text_color="#6699FF"
+           align="LEFT_MID" x="88" y="144"/>
+    <label text="0.04-0.10"
+           font="font_small" text_color="#6699FF"
+           align="LEFT_MID" x="88" y="160"/>
+
+    <!-- Vertikaler Slider (height > width → LVGL rendert vertikal) -->
+    <slider id="slider_emissivity"
+            width="28" height="340"
+            align="LEFT_MID" x="22"
+            min_value="1" max_value="100" value="90"/>
+    <!-- on_value: global_emissivity = x/100, lbl_emissivity_val aktualisieren -->
+
+  </obj>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- MATERIAL & FARB-AUSWAHL (unten)                        -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <obj id="obj_material_selector"
+       width="860" height="64"
+       align="BOTTOM_MID" y="-6"
+       bg_color="#12162A" bg_opa="92%"
+       radius="10" border_color="#334466" border_width="1"
+       pad_all="0" scrollable="false">
+
+    <label text="Typ:"
+           font="font_small" text_color="#888888"
+           align="LEFT_MID" x="8"/>
+
+    <!-- Material: Glas (initial aktiv = dunkelgrün) -->
+    <button id="btn_mat_glas"
+            width="86" height="54"
+            align="LEFT_MID" x="44"
+            bg_color="#226644" radius="8" border_width="0">
+      <label text="Glas"
+             font="font_small" text_color="#FFFFFF"
+             align="CENTER" y="-8"/>
+      <label text="0.88-0.94"
+             font="font_small" text_color="#CCFFCC"
+             align="CENTER" y="10"/>
+      <!-- on_click: global_mat_type=0, Emissivität aus Tabelle setzen -->
+    </button>
+
+    <!-- Material: Dose matt -->
+    <button id="btn_mat_dose_matt"
+            width="86" height="54"
+            align="LEFT_MID" x="138"
+            bg_color="#333333" radius="8" border_width="0">
+      <label text="Dose matt"
+             font="font_small" text_color="#FFFFFF"
+             align="CENTER" y="-8"/>
+      <label text="0.75-0.94"
+             font="font_small" text_color="#FFCCAA"
+             align="CENTER" y="10"/>
+      <!-- on_click: global_mat_type=1 -->
+    </button>
+
+    <!-- Material: Dose glänzend -->
+    <button id="btn_mat_dose_glaenzend"
+            width="86" height="54"
+            align="LEFT_MID" x="232"
+            bg_color="#333333" radius="8" border_width="0">
+      <label text="Dose gl."
+             font="font_small" text_color="#FFFFFF"
+             align="CENTER" y="-8"/>
+      <label text="0.04-0.10"
+             font="font_small" text_color="#AABBFF"
+             align="CENTER" y="10"/>
+      <!-- on_click: global_mat_type=2 -->
+    </button>
+
+    <!-- Trennlinie -->
+    <obj id="obj_mat_separator"
+         width="2" height="50"
+         align="LEFT_MID" x="325"
+         bg_color="#445566" border_width="0" radius="0"/>
+
+    <label text="Farbe:"
+           font="font_small" text_color="#888888"
+           align="LEFT_MID" x="334"/>
+
+    <!-- Farb-Swatches (Kreise, mat_color 0–5) -->
+    <button id="btn_col_0"
+            width="50" height="50"
+            align="LEFT_MID" x="383"
+            bg_color="#111111" radius="25"
+            border_color="#666666" border_width="2"/>
+    <!-- schwarz -->
+
+    <button id="btn_col_1"
+            width="50" height="50"
+            align="LEFT_MID" x="441"
+            bg_color="#1A5C2A" radius="25" border_width="0"/>
+    <!-- dunkelgrün -->
+
+    <button id="btn_col_2"
+            width="50" height="50"
+            align="LEFT_MID" x="499"
+            bg_color="#1A3A99" radius="25" border_width="0"/>
+    <!-- dunkelblau -->
+
+    <button id="btn_col_3"
+            width="50" height="50"
+            align="LEFT_MID" x="557"
+            bg_color="#CC4400" radius="25" border_width="0"/>
+    <!-- rot/orange -->
+
+    <button id="btn_col_4"
+            width="50" height="50"
+            align="LEFT_MID" x="615"
+            bg_color="#DDDDDD" radius="25" border_width="0"/>
+    <!-- weiß/hell -->
+
+    <button id="btn_col_5"
+            width="50" height="50"
+            align="LEFT_MID" x="673"
+            bg_color="#AAAAAA" radius="25"
+            border_color="#888888" border_width="2"/>
+    <!-- silber -->
+
+  </obj>
+
+</screen>
