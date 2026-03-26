@@ -133,6 +133,10 @@ globals:
     type: bool
     restore_value: true
     initial_value: 'false'
+  - id: global_leds_per_slot
+    type: int
+    restore_value: true
+    initial_value: '9'
 interval:
   - interval: 500ms
     then:

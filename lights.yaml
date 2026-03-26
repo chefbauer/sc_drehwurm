@@ -1,8 +1,10 @@
 # ── Komponenten ──────────────────────────────────────────────────────────────────
 #  substitutions:  c_led_strip_outer_led_num, c_led_strip_outer_led_0deg,
 #                  c_led_strip_leds_per_slot, c_led_strip_outer_direction
-#  globals:        global_leds_per_slot (int, NVS, default: c_led_strip_leds_per_slot)
 #  light:          light_slots_outer
+#
+#  globals (extern, definiert in lvgl_basis.yaml):
+#    global_leds_per_slot  → Slot-Breite zur Laufzeit (1 … led_num/6)
 #
 #  Abhängigkeiten (extern, nicht in dieser Datei):
 #    pin_led_h2           → display_7z_settings.yaml
@@ -33,12 +35,6 @@ substitutions:
   c_led_strip_leds_per_slot:       "9"
   c_led_strip_outer_direction:     "1"   # 0 = CW, 1 = CCW
 
-globals:
-  - id: global_leds_per_slot
-    type: int
-    restore_value: true
-    initial_value: "${c_led_strip_leds_per_slot}"
-
 light:
   - platform: esp32_rmt_led_strip
     rgb_order: GRB
@@ -68,7 +64,9 @@ light:
 
             const int total   = ${c_led_strip_outer_led_num};
             const int led0deg = ${c_led_strip_outer_led_0deg};
-            const int lps     = max(1, min(id(global_leds_per_slot), total / 6 - 1));
+            int lps = id(global_leds_per_slot);
+            if (lps < 1) lps = 1;
+            if (lps > total / 6) lps = total / 6;
             const int half    = lps / 2;
             const int dir     = ${c_led_strip_outer_direction};   // 0=CW, 1=CCW
 
@@ -125,7 +123,9 @@ light:
 
             const int total   = ${c_led_strip_outer_led_num};
             const int led0deg = ${c_led_strip_outer_led_0deg};
-            const int lps     = max(1, min(id(global_leds_per_slot), total / 6 - 1));
+            int lps = id(global_leds_per_slot);
+            if (lps < 1) lps = 1;
+            if (lps > total / 6) lps = total / 6;
             const int half    = lps / 2;
             const int dir     = ${c_led_strip_outer_direction};   // 0=CW, 1=CCW
 
