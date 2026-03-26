@@ -395,6 +395,8 @@ binary_sensor:
       // AUS: Objekt weg (Hysterese)
       if (id(bin_objekt_vor_sensor).state && d > 150.0f) return false;
       return {};
+    filters:
+      - delayed_off: 3s
     on_press:
       - lvgl.widget.show: overlay_temp_messung
       - component.resume:
@@ -404,13 +406,13 @@ binary_sensor:
           id: sensor_Temp_OBJECT
           update_interval: ${c_ir_update_interval_fast}
     on_release:
-      # 3s warten, dann nur schließen wenn Abstand > 250mm
-      - delay: 3s
-      - if:
-          condition:
-            lambda: return isnan(id(distance_sensor).state) || id(distance_sensor).state > 250.0f;
-          then:
-            - script.execute: script_close_temp_overlay
+      - lvgl.widget.hide: overlay_temp_messung
+      - component.resume:
+          id: distance_sensor
+          update_interval: ${c_tof_update_interval}
+      - component.resume:
+          id: sensor_Temp_OBJECT
+          update_interval: ${c_ir_update_interval}
 
   # ── Standby-Erkennung ──────────────────────────────────────────────────────────
   # EIN wenn: TOF frei (>800mm oder NaN) UND LVGL idle (${c_standby_lvgl_idle})
