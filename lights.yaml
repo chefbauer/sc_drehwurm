@@ -68,7 +68,8 @@ light:
 
             const int total   = ${c_led_strip_outer_led_num};
             const int led0deg = ${c_led_strip_outer_led_0deg};
-            const int half    = id(global_leds_per_slot) / 2;
+            const int lps     = max(1, min(id(global_leds_per_slot), total / 6 - 1));
+            const int half    = lps / 2;
             const int dir     = ${c_led_strip_outer_direction};   // 0=CW, 1=CCW
 
             // Motor-Position: 0–16383 = 0–360°
@@ -124,7 +125,8 @@ light:
 
             const int total   = ${c_led_strip_outer_led_num};
             const int led0deg = ${c_led_strip_outer_led_0deg};
-            const int half    = id(global_leds_per_slot) / 2;
+            const int lps     = max(1, min(id(global_leds_per_slot), total / 6 - 1));
+            const int half    = lps / 2;
             const int dir     = ${c_led_strip_outer_direction};   // 0=CW, 1=CCW
 
             // Motor-Position: 0–16383 = 0–360°
