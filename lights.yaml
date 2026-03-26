@@ -53,6 +53,8 @@ light:
           name: "Slot Colors"
           update_interval: 25ms
           lambda: |-
+            int lps = id(global_leds_per_slot);
+            if (lps < 1 || lps > 28) return;
             // ── Slot-Farben (Reihenfolge: 1=Rot, 2=Gelb, 3=Grün, 4=Cyan, 5=Blau, 6=Magenta) ──
             const Color slot_colors[6] = {
               Color(255,   0,   0),   // Slot 1: Rot
@@ -64,8 +66,6 @@ light:
             };
             const int total   = ${c_led_strip_outer_led_num};
             const int led0deg = ${c_led_strip_outer_led_0deg};
-            int lps = id(global_leds_per_slot);
-            if (lps < 1) lps = 1;
             if (lps > total / 6) lps = total / 6;
             const int half    = lps / 2;
             const int dir     = ${c_led_strip_outer_direction};
