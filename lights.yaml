@@ -41,8 +41,9 @@ light:
     chipset: WS2812
     pin: ${pin_led_h2}
     num_leds: ${c_led_strip_outer_led_num}
-    rmt_symbols: 96     # ESP32-P4: max 192, kein weiterer Strip → 96
-    use_psram: true
+    rmt_symbols: 144     # ESP32-P4: max 192, kein weiterer Strip → 96
+    use_psram: false
+    use_dma: false
     name: "Slot LEDs Außen"
     id: light_slots_outer
     default_transition_length: 0ms
