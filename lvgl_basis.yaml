@@ -105,6 +105,21 @@ font:
     glyphs:
       - "\uF021"  # arrows-rotate (Drehsymbol)
 
+  # IR-Temperatur-Overlay: Laser-Icon 120px
+  - file: "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/webfonts/fa-solid-900.ttf"
+    id: font_icon_ts
+    size: 120
+    bpp: 4
+    glyphs:
+      - "\uF05B"  # Crosshairs / Laser (IR)
+
+  # IR-Temperatur-Overlay: Temperaturwert 120px
+  - file: "gfonts://Roboto@700"
+    id: font_ts_xl
+    size: 120
+    bpp: 4
+    glyphs: "0123456789.-\xc2\xb0C "
+
 # Timer-Globals für alle 6 Slots
 # Status: 0=gestoppt  1=läuft  2=pausiert
 globals:

@@ -32,3 +32,9 @@ substitutions:
   
   c_pumpe_umwaelzung_ein_perc: 30
   #c_pumpe_standby_perc: 30
+
+  # Sensor-Phalanx Update-Intervalle
+  c_tof_update_interval: 500ms
+  c_ir_update_interval: 1s
+  c_tof_update_interval_fast: 200ms
+  c_ir_update_interval_fast: 200ms

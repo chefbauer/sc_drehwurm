@@ -42,7 +42,7 @@ sensor:
     timing_budget_ms: 200       # optional, Standard: 50 (10–200 ms)
     inter_measurement_ms: 0    # optional, Standard: 0 (Continuous-Mode)
     timeout_ms: 500            # optional, Standard: 500 ms
-    update_interval: 500ms     # optional, Standard: 60s
+    update_interval: ${c_tof_update_interval}
     unit_of_measurement: "mm"
     filters:
       - lambda: |-
@@ -179,7 +179,7 @@ sensor:
     name: sensor_Temp_OBJECT
     unit_of_measurement: "°C"
     accuracy_decimals: 1
-    update_interval: 1s
+    update_interval: ${c_ir_update_interval}
     on_value:
       then:
         - lvgl.widget.refresh: mlx_value_label
@@ -336,8 +336,20 @@ binary_sensor:
       return {};
     on_press:
       - lvgl.widget.show: overlay_temp_messung
+      - component.resume:
+          id: distance_sensor
+          update_interval: ${c_tof_update_interval_fast}
+      - component.resume:
+          id: sensor_Temp_OBJECT
+          update_interval: ${c_ir_update_interval_fast}
     on_release:
       - lvgl.widget.hide: overlay_temp_messung
+      - component.resume:
+          id: distance_sensor
+          update_interval: ${c_tof_update_interval}
+      - component.resume:
+          id: sensor_Temp_OBJECT
+          update_interval: ${c_ir_update_interval}
 
 script:
     - id: script_mlx90632_set_mode_continous_extended_16hz
