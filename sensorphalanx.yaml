@@ -20,6 +20,24 @@ globals:
     restore_value: false
     initial_value: 'false'
 
+  # IR-Emissivität: Laufzeitwert, kein NVS (immer 0.9 bei Neustart)
+  - id: global_emissivity
+    type: float
+    restore_value: false
+    initial_value: '0.9'
+
+  # Materialtyp: 0=Glas, 1=Dose matt, 2=Dose glänzend
+  - id: global_mat_type
+    type: int
+    restore_value: false
+    initial_value: '0'
+
+  # Farbindex: 0=schwarz, 1=dunkel, 2=mitte, 3=hell, 4=weiß, 5=silber
+  - id: global_mat_color
+    type: int
+    restore_value: false
+    initial_value: '3'
+
 interval:
   # Prüft alle 10s ob LVGL idle ist → setzt global_lvgl_is_idle
   - interval: 10s
@@ -258,7 +276,7 @@ sensor:
         delay(500);
       }
 
-      double emissivity = 0.90;
+      double emissivity = id(global_emissivity);  // Laufzeitwert, Default 0.9
 
       static bool coeffs_read = false;
       static int32_t P_R_raw = 0, P_G_raw = 0, P_T_raw = 0, P_O_raw = 0;
@@ -358,7 +376,7 @@ sensor:
 # MLX
 button:
   - platform: template
-    name: "MLX90632 Set 8Hz, Extended + Continuous"
+    name: "MLX90632 Set 16Hz, Extended + Continuous"
     id: mlx_set_extended
     on_press:
       then:
@@ -386,6 +404,7 @@ binary_sensor:
           id: sensor_Temp_OBJECT
           update_interval: ${c_ir_update_interval_fast}
     on_release:
+      - delay: 1500ms
       - lvgl.widget.hide: overlay_temp_messung
       - component.resume:
           id: distance_sensor
