@@ -434,23 +434,11 @@ binary_sensor:
       - lvgl.widget.hide: lbl_standby_icon
 
 script:
-    # Schließt overlay_temp_messung mit 600ms Fade-Animation
+    # Schließt overlay_temp_messung (X-Button / Touch auf Temp-Label)
     - id: script_close_temp_overlay
       mode: single
       then:
-        - lambda: |-
-            lv_obj_fade_out(id(overlay_temp_messung), 600, 0);
-        - delay: 650ms
         - lvgl.widget.hide: overlay_temp_messung
-        - lambda: |-
-            // Opacity zurücksetzen für nächstes Öffnen
-            lv_obj_set_style_opa(id(overlay_temp_messung), LV_OPA_COVER, LV_PART_MAIN | LV_STATE_DEFAULT);
-        - component.resume:
-            id: distance_sensor
-            update_interval: ${c_tof_update_interval}
-        - component.resume:
-            id: sensor_Temp_OBJECT
-            update_interval: ${c_ir_update_interval}
 
     - id: script_mlx90632_set_mode_continous_extended_16hz
       then:
