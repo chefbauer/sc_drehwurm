@@ -3,8 +3,8 @@
 #                  c_led_strip_leds_per_slot, c_led_strip_outer_direction
 #  light:          light_slots_outer
 #
-#  globals (extern, definiert in lvgl_basis.yaml):
-#    global_leds_per_slot  → Slot-Breite zur Laufzeit (1 … led_num/6)
+#  sensor (extern, definiert in lvgl_basis.yaml):
+#    sensor_leds_per_slot  → Slot-Breite zur Laufzeit (1 … led_num/6)
 #
 #  Abhängigkeiten (extern, nicht in dieser Datei):
 #    pin_led_h2           → display_7z_settings.yaml
@@ -66,17 +66,9 @@ light:
             const int led0deg = ${c_led_strip_outer_led_0deg};
             const int dir     = ${c_led_strip_outer_direction};
 
-            float lps_f = (float)${c_led_strip_leds_per_slot};
-            float lps_runtime_f = 0.0f;
-
-            if (isfinite(id(global_leds_per_slot)))
-            {
-
-              if (lps_runtime_f > 1.0f || lps_runtime_f < (float)(total / 6)) 
-              {
-                lps_f = lps_runtime_f;
-              }
-            }
+            float lps_f = id(sensor_leds_per_slot).state;
+            if (isnan(lps_f)) lps_f = ${c_led_strip_leds_per_slot};
+            if (lps_f < 1.0f || lps_f > (float)(total / 6)) lps_f = ${c_led_strip_leds_per_slot};
             int half = (int)(lps_f / 2.0f);
 
             float raw = id(sensor_motor_position).state;
@@ -108,8 +100,8 @@ light:
             };
             const int total   = ${c_led_strip_outer_led_num};
             const int led0deg = ${c_led_strip_outer_led_0deg};
-            float lps_f = id(global_leds_per_slot);
-            if (!isfinite(lps_f)) lps_f = ${c_led_strip_leds_per_slot};
+            float lps_f = id(sensor_leds_per_slot).state;
+            if (isnan(lps_f)) lps_f = ${c_led_strip_leds_per_slot};
             if (lps_f < 1.0f || lps_f > (float)(total / 6)) lps_f = ${c_led_strip_leds_per_slot};
             int half = (int)(lps_f / 2.0f);
             const int dir     = ${c_led_strip_outer_direction};
