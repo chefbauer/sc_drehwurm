@@ -70,7 +70,7 @@ light:
             if (id(global_leds_per_slot) >=1 && id(global_leds_per_slot) <= total/6) 
             {
               // Slot-Breite zur Laufzeit anpassen (1 … led_num/6)
-              half = (int)(id(global_leds_per_slot) / 2);
+              # half = (int)(id(global_leds_per_slot) / 2);
             }
 
 
