@@ -1746,13 +1746,54 @@ lvgl:
                                         text_font: font_normal
                                         text_color: 0xFFFFFF
 
+                        # Zeile: LED-Helligkeit
+                        - obj:
+                            id: row_led_helligkeit
+                            width: 960
+                            height: 70
+                            align: TOP_MID
+                            y: 110
+                            bg_opa: TRANSP
+                            border_width: 0
+                            scrollable: false
+                            scrollbar_mode: "off"
+                            widgets:
+                              - label:
+                                  text: "Helligkeit:"
+                                  align: LEFT_MID
+                                  x: 10
+                                  text_font: font_normal
+                                  text_color: 0x000000
+                              - slider:
+                                  id: slider_led_helligkeit
+                                  width: 590
+                                  height: 20
+                                  align: LEFT_MID
+                                  x: 240
+                                  min_value: 1
+                                  max_value: 100
+                                  value: 100
+                                  on_value:
+                                    - lambda: |-
+                                        auto call = id(light_slots_outer).make_call();
+                                        call.set_brightness((float)x / 100.0f);
+                                        call.perform();
+                                        lv_label_set_text_fmt(id(lbl_led_helligkeit_val), "%d%%", x);
+                              - label:
+                                  id: lbl_led_helligkeit_val
+                                  text: "100%"
+                                  align: LEFT_MID
+                                  x: 850
+                                  text_font: font_normal
+                                  text_color: 0x003366
+
                         # Zeile: Effekt-Auswahl
                         - obj:
                             id: row_led_effekt
                             width: 960
                             height: 70
                             align: TOP_MID
-                            y: 110
+                            y: 200
                             bg_opa: TRANSP
                             border_width: 0
                             scrollable: false
@@ -1825,7 +1866,7 @@ lvgl:
                             width: 960
                             height: 70
                             align: TOP_MID
-                            y: 200
+                            y: 290
                             bg_opa: TRANSP
                             border_width: 0
                             scrollable: false
@@ -1882,7 +1923,7 @@ lvgl:
                             width: 960
                             height: 70
                             align: TOP_MID
-                            y: 290
+                            y: 380
                             bg_opa: TRANSP
                             border_width: 0
                             scrollable: false

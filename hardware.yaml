@@ -34,6 +34,13 @@ esphome:
             id(sensor_leds_per_slot).publish_state(lps);
             lv_slider_set_value(id(slider_slot_breite), (int)lps, LV_ANIM_OFF);
             lv_label_set_text_fmt(id(lbl_slot_breite_val), "%d", (int)lps);
+            // Helligkeit-Slider aus wiederhergestelltem Light-State laden
+            float bri = id(light_slots_outer).remote_values.get_brightness();
+            int bri_pct = (int)(bri * 100.0f + 0.5f);
+            if (bri_pct < 1) bri_pct = 1;
+            if (bri_pct > 100) bri_pct = 100;
+            lv_slider_set_value(id(slider_led_helligkeit), bri_pct, LV_ANIM_OFF);
+            lv_label_set_text_fmt(id(lbl_led_helligkeit_val), "%d%%", bri_pct);
     - priority: -200        # nach allem anderen – Motor in Nullstellung
       then:
         - script.execute: script_motor_set_zero
