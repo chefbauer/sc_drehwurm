@@ -1055,3 +1055,135 @@ lvgl:
                       x: -15
                       text_font: font_normal
                       text_color: 0x003366
+
+      # ================================
+      # OVERLAY: Temperatur-Messung (ToF-getriggert)
+      # ================================
+      - obj:
+          id: overlay_temp_messung
+          width: 100%
+          height: 100%
+          bg_color: 0x111111
+          bg_opa: 88%
+          hidden: true
+          clickable: true
+          pad_all: 0
+          scrollable: false
+          widgets:
+            # Exit-Button rechts oben
+            - button:
+                id: btn_temp_messung_exit
+                width: 80
+                height: 60
+                align: TOP_RIGHT
+                x: -10
+                y: 10
+                bg_color: 0xCC3333
+                widgets:
+                  - label:
+                      text: "X"
+                      align: CENTER
+                      text_font: font_normal
+                      text_color: 0xFFFFFF
+                on_click:
+                  - lvgl.widget.hide: overlay_temp_messung
+
+            # Distanz-Bar links (10mm unten = nah, 100mm oben = weit)
+            - obj:
+                id: obj_dist_bar_container
+                width: 120
+                height: 440
+                align: LEFT_MID
+                x: 40
+                bg_color: 0x222222
+                radius: 12
+                border_width: 0
+                pad_all: 0
+                scrollable: false
+                widgets:
+                  # Min/Max/Optimal Beschriftungen
+                  - label:
+                      text: "100mm"
+                      text_font: font_small
+                      text_color: 0x888888
+                      align: TOP_MID
+                      y: 8
+                  - label:
+                      text: "50mm"
+                      text_font: font_small
+                      text_color: 0x00FF88
+                      align: CENTER
+                      y: -8
+                  - label:
+                      text: "10mm"
+                      text_font: font_small
+                      text_color: 0x888888
+                      align: BOTTOM_MID
+                      y: -8
+                  # Optimal-Linie bei 50mm
+                  - obj:
+                      width: 120
+                      height: 3
+                      align: CENTER
+                      y: 0
+                      bg_color: 0x00FF88
+                      radius: 0
+                      border_width: 0
+                  # Dynamische Bar
+                  - bar:
+                      id: bar_distanz
+                      width: 60
+                      height: 400
+                      align: CENTER
+                      min_value: 10
+                      max_value: 100
+                      value: 50
+                      mode: NORMAL
+                      indicator:
+                        bg_color: 0x2299FF
+                      bg_color: 0x333333
+                      radius: 6
+
+            # IR-Temperatur groß in der Mitte
+            - obj:
+                id: obj_ts_container
+                width: 700
+                height: 300
+                align: CENTER
+                x: 60
+                bg_opa: TRANSP
+                border_width: 0
+                pad_all: 0
+                scrollable: false
+                widgets:
+                  - label:
+                      text: "\uF05B"
+                      text_font: font_icons
+                      text_color: 0xFF4444
+                      align: LEFT_MID
+                      x: 60
+                  - label:
+                      id: lbl_ts_temp
+                      text: !lambda |-
+                        if (isnan(id(sensor_Temp_OBJECT).state)) return std::string("--.-°C");
+                        char b[16];
+                        snprintf(b, sizeof(b), "%.1f°C", id(sensor_Temp_OBJECT).state);
+                        return std::string(b);
+                      text_font: font_title
+                      text_color: 0xFFFFFF
+                      align: CENTER
+                      x: 40
+
+            # Distanzwert numerisch unter der Bar
+            - label:
+                id: lbl_dist_messung
+                text: !lambda |-
+                  if (isnan(id(distance_sensor).state)) return std::string("---");
+                  char b[12];
+                  snprintf(b, sizeof(b), "%.0fmm", id(distance_sensor).state);
+                  return std::string(b);
+                text_font: font_normal
+                text_color: 0xFFFFFF
+                align: BOTTOM_LEFT
+                x: 40
+                y: -30

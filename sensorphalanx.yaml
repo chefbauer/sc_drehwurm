@@ -50,6 +50,13 @@ sensor:
     on_value:
       then:
         - lvgl.widget.refresh: distance_value_label
+        - lambda: |-
+            // Bar-Wert klemmen und setzen
+            float d = x;
+            if (d < 10.0f) d = 10.0f;
+            if (d > 100.0f) d = 100.0f;
+            lv_bar_set_value(id(bar_distanz), (int)d, LV_ANIM_ON);
+            lv_label_set_text_fmt(id(lbl_dist_messung), "%.0fmm", x);
 
   # ── VL53L1X – Time-of-Flight Distanzsensor ────────────────
 #  - platform: vl53l1x
@@ -176,6 +183,7 @@ sensor:
     on_value:
       then:
         - lvgl.widget.refresh: mlx_value_label
+        - lvgl.widget.refresh: lbl_ts_temp
     lambda: |-
       static bool setup_mode = true;
       uint8_t buf[2];
@@ -312,6 +320,24 @@ button:
     on_press:
       then:
         script.execute: script_mlx90632_set_mode_continous_extended_16hz
+
+binary_sensor:
+  - platform: template
+    id: bin_objekt_vor_sensor
+    name: "Objekt vor Sensor"
+    internal: true
+    lambda: |-
+      float d = id(distance_sensor).state;
+      if (isnan(d)) return {};
+      // EIN: Objekt erkannt
+      if (d > 1.0f && d < 100.0f) return true;
+      // AUS: Objekt weg (Hysterese)
+      if (id(bin_objekt_vor_sensor).state && d > 150.0f) return false;
+      return {};
+    on_press:
+      - lvgl.widget.show: overlay_temp_messung
+    on_release:
+      - lvgl.widget.hide: overlay_temp_messung
 
 script:
     - id: script_mlx90632_set_mode_continous_extended_16hz
