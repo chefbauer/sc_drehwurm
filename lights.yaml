@@ -64,8 +64,16 @@ light:
             };
             const int total   = ${c_led_strip_outer_led_num};
             const int led0deg = ${c_led_strip_outer_led_0deg};
-            const int half    = ${c_led_strip_leds_per_slot} / 2;
+            const int half    = ${c_led_strip_leds_per_slot} / 2;         
             const int dir     = ${c_led_strip_outer_direction};
+
+            if (id(global_leds_per_slot) >=1 && id(global_leds_per_slot) <= c_led_strip_outer_led_num/6) 
+            {
+              // Slot-Breite zur Laufzeit anpassen (1 … led_num/6)
+              half = id(global_leds_per_slot) / 2;
+            }
+
+
             float raw = id(sensor_motor_position).state;
             if (isnan(raw) || raw < 0.0f) raw = 0.0f;
             float motor_deg = raw * 360.0f / 16384.0f;
