@@ -352,7 +352,7 @@ binary_sensor:
     internal: true
     lambda: |-
       float d = id(distance_sensor).state;
-      if (isnan(d)) return {};
+      if (isnan(d)) return false;  // Initialisierung: sicher AUS
       // EIN: Objekt erkannt
       if (d > 1.0f && d < 100.0f) return true;
       // AUS: Objekt weg (Hysterese)

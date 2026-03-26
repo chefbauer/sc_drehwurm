@@ -1109,23 +1109,30 @@ lvgl:
                       align: TOP_MID
                       y: 8
                   - label:
-                      text: "50mm"
+                      text: "45mm"
                       text_font: font_small
                       text_color: 0x00FF88
                       align: CENTER
-                      y: -8
+                      y: -56
+                  - label:
+                      id: lbl_dist_messung
+                      text: "---"
+                      text_font: font_normal
+                      text_color: 0xFFFFFF
+                      align: BOTTOM_MID
+                      y: -4
                   - label:
                       text: "10mm"
                       text_font: font_small
                       text_color: 0x888888
                       align: BOTTOM_MID
-                      y: -8
-                  # Optimal-Linie bei 50mm
+                      y: -28
+                  # Optimal-Linie bei 45mm
                   - obj:
                       width: 120
                       height: 3
                       align: CENTER
-                      y: 0
+                      y: -44
                       bg_color: 0x00FF88
                       radius: 0
                       border_width: 0
@@ -1177,16 +1184,4 @@ lvgl:
                       align: CENTER
                       x: 40
 
-            # Distanzwert numerisch unter der Bar
-            - label:
-                id: lbl_dist_messung
-                text: !lambda |-
-                  if (isnan(id(distance_sensor).state)) return std::string("---");
-                  char b[12];
-                  snprintf(b, sizeof(b), "%.0fmm", id(distance_sensor).state);
-                  return std::string(b);
-                text_font: font_normal
-                text_color: 0xFFFFFF
-                align: BOTTOM_LEFT
-                x: 40
-                y: -30
+            # (Distanzwert wird jetzt direkt in der Bar angezeigt via lbl_dist_messung)
