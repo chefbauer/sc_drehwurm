@@ -48,120 +48,78 @@ light:
     id: light_slots_outer
     default_transition_length: 0ms
     restore_mode: RESTORE_DEFAULT_ON
-    effects:
-      - addressable_lambda:
-          name: "Slot Colors"
-          update_interval: 25ms
-          lambda: |-
-            // ── Slot-Farben (Reihenfolge: 1=Rot, 2=Gelb, 3=Grün, 4=Cyan, 5=Blau, 6=Magenta) ──
-            const Color slot_colors[6] = {
-              Color(255,   0,   0),   // Slot 1: Rot
-              Color(255,   0, 255),   // Slot 2: Magenta
-              Color(  0,   0, 255),   // Slot 3: Blau
-              Color(  0, 255, 255),   // Slot 4: Cyan
-              Color(  0, 255,   0),   // Slot 5: Grün
-              Color(255, 255,   0),   // Slot 6: Gelb
-            };
-
-            const int total   = ${c_led_strip_outer_led_num};
-            const int led0deg = ${c_led_strip_outer_led_0deg};
-            int lps = id(global_leds_per_slot);
-            if (lps < 1) lps = 1;
-            if (lps > total / 6) lps = total / 6;
-            const int half    = lps / 2;
-            const int dir     = ${c_led_strip_outer_direction};   // 0=CW, 1=CCW
-
-            // Motor-Position: 0–16383 = 0–360°
-            float raw = id(sensor_motor_position).state;
-            if (isnan(raw) || raw < 0.0f) raw = 0.0f;
-            float motor_deg = raw * 360.0f / 16384.0f;
-
-            // Drehrichtung berücksichtigen (c_motor_direction: 1=rechts=CW, 0=links=CCW)
-            if (${c_motor_direction} == 0) {
-              motor_deg = 360.0f - motor_deg;
-            }
-
-            // Alles dunkel
-            for (int i = 0; i < it.size(); i++) {
-              it[i] = Color::BLACK;
-            }
-
-            // Jede der 6 Slot-Farben an berechneter LED-Position einzeichnen
-            for (int s = 0; s < 6; s++) {
-              // Physische Winkelposition des Slots auf dem LED-Ring
-              float slot_deg = fmod(motor_deg + s * 60.0f, 360.0f);
-              if (slot_deg < 0.0f) slot_deg += 360.0f;
-
-              // LED-Index: CW = +Offset, CCW = -Offset
-              float offset = slot_deg * total / 360.0f;
-              int center = (int)(led0deg + (dir == 0 ? offset : -offset) + 0.5f);
-              center = ((center % total) + total) % total;
-
-              // Symmetrisch ±half LEDs drumherum (volle Helligkeit)
-              for (int d = -half; d <= half; d++) {
-                int idx = ((center + d) % total + total) % total;
-                it[idx] = slot_colors[s];
-              }
-              // Nachbar-LEDs ±(half+1): 50% Helligkeit
-              Color dim(slot_colors[s].r / 2, slot_colors[s].g / 2, slot_colors[s].b / 2);
-              it[((center - half - 1) % total + total) % total] = dim;
-              it[((center + half + 1) % total + total) % total] = dim;
-            }
-
-      - addressable_lambda:
-          name: "Slot Colors on White"
-          update_interval: 50ms
-          lambda: |-
-            // ── Slot-Farben (Reihenfolge: 1=Rot, 2=Gelb, 3=Grün, 4=Cyan, 5=Blau, 6=Magenta) ──
-            const Color slot_colors[6] = {
-              Color(255,   0,   0),   // Slot 1: Rot
-              Color(255,   0, 255),   // Slot 2: Magenta
-              Color(  0,   0, 255),   // Slot 3: Blau
-              Color(  0, 255, 255),   // Slot 4: Cyan
-              Color(  0, 255,   0),   // Slot 5: Grün
-              Color(255, 255,   0),   // Slot 6: Gelb
-            };
-
-            const int total   = ${c_led_strip_outer_led_num};
-            const int led0deg = ${c_led_strip_outer_led_0deg};
-            int lps = id(global_leds_per_slot);
-            if (lps < 1) lps = 1;
-            if (lps > total / 6) lps = total / 6;
-            const int half    = lps / 2;
-            const int dir     = ${c_led_strip_outer_direction};   // 0=CW, 1=CCW
-
-            // Motor-Position: 0–16383 = 0–360°
-            float raw = id(sensor_motor_position).state;
-            if (isnan(raw) || raw < 0.0f) raw = 0.0f;
-            float motor_deg = raw * 360.0f / 16384.0f;
-
-            // Drehrichtung berücksichtigen (c_motor_direction: 1=rechts=CW, 0=links=CCW)
-            if (${c_motor_direction} == 0) {
-              motor_deg = 360.0f - motor_deg;
-            }
-
-            // Hintergrund: eingestellte Farbe des Light-Objekts (weiß per Default)
-            Color bg = current_color;
-            for (int i = 0; i < it.size(); i++) {
-              it[i] = bg;
-            }
-
-            // Slot-Farben überlagern
-            for (int s = 0; s < 6; s++) {
-              float slot_deg = fmod(motor_deg + s * 60.0f, 360.0f);
-              if (slot_deg < 0.0f) slot_deg += 360.0f;
-
-              // LED-Index: CW = +Offset, CCW = -Offset
-              float offset = slot_deg * total / 360.0f;
-              int center = (int)(led0deg + (dir == 0 ? offset : -offset) + 0.5f);
-              center = ((center % total) + total) % total;
-
-              for (int d = -half; d <= half; d++) {
-                int idx = ((center + d) % total + total) % total;
-                it[idx] = slot_colors[s];
-              }
-              // Nachbar-LEDs ±(half+1): 50% Helligkeit
-              Color dim(slot_colors[s].r / 2, slot_colors[s].g / 2, slot_colors[s].b / 2);
-              it[((center - half - 1) % total + total) % total] = dim;
-              it[((center + half + 1) % total + total) % total] = dim;
-            }
+    #effects:
+      #- addressable_lambda:
+      #    name: "Slot Colors"
+      #    update_interval: 25ms
+      #    lambda: |-
+      #      // ── Slot-Farben (Reihenfolge: 1=Rot, 2=Gelb, 3=Grün, 4=Cyan, 5=Blau, 6=Magenta) ──
+      #      const Color slot_colors[6] = {
+      #        Color(255,   0,   0),   // Slot 1: Rot
+      #        Color(255,   0, 255),   // Slot 2: Magenta
+      #        Color(  0,   0, 255),   // Slot 3: Blau
+      #        Color(  0, 255, 255),   // Slot 4: Cyan
+      #        Color(  0, 255,   0),   // Slot 5: Grün
+      #        Color(255, 255,   0),   // Slot 6: Gelb
+      #      };
+      #      const int total   = ${c_led_strip_outer_led_num};
+      #      const int led0deg = ${c_led_strip_outer_led_0deg};
+      #      int lps = id(global_leds_per_slot);
+      #      if (lps < 1) lps = 1;
+      #      if (lps > total / 6) lps = total / 6;
+      #      const int half    = lps / 2;
+      #      const int dir     = ${c_led_strip_outer_direction};
+      #      float raw = id(sensor_motor_position).state;
+      #      if (isnan(raw) || raw < 0.0f) raw = 0.0f;
+      #      float motor_deg = raw * 360.0f / 16384.0f;
+      #      if (${c_motor_direction} == 0) { motor_deg = 360.0f - motor_deg; }
+      #      for (int i = 0; i < it.size(); i++) { it[i] = Color::BLACK; }
+      #      for (int s = 0; s < 6; s++) {
+      #        float slot_deg = fmod(motor_deg + s * 60.0f, 360.0f);
+      #        if (slot_deg < 0.0f) slot_deg += 360.0f;
+      #        float offset = slot_deg * total / 360.0f;
+      #        int center = (int)(led0deg + (dir == 0 ? offset : -offset) + 0.5f);
+      #        center = ((center % total) + total) % total;
+      #        for (int d = -half; d <= half; d++) {
+      #          int idx = ((center + d) % total + total) % total;
+      #          it[idx] = slot_colors[s];
+      #        }
+      #        Color dim(slot_colors[s].r / 2, slot_colors[s].g / 2, slot_colors[s].b / 2);
+      #        it[((center - half - 1) % total + total) % total] = dim;
+      #        it[((center + half + 1) % total + total) % total] = dim;
+      #      }
+      #- addressable_lambda:
+      #    name: "Slot Colors on White"
+      #    update_interval: 50ms
+      #    lambda: |-
+      #      const Color slot_colors[6] = {
+      #        Color(255,   0,   0), Color(255,   0, 255), Color(  0,   0, 255),
+      #        Color(  0, 255, 255), Color(  0, 255,   0), Color(255, 255,   0),
+      #      };
+      #      const int total   = ${c_led_strip_outer_led_num};
+      #      const int led0deg = ${c_led_strip_outer_led_0deg};
+      #      int lps = id(global_leds_per_slot);
+      #      if (lps < 1) lps = 1;
+      #      if (lps > total / 6) lps = total / 6;
+      #      const int half = lps / 2;
+      #      const int dir  = ${c_led_strip_outer_direction};
+      #      float raw = id(sensor_motor_position).state;
+      #      if (isnan(raw) || raw < 0.0f) raw = 0.0f;
+      #      float motor_deg = raw * 360.0f / 16384.0f;
+      #      if (${c_motor_direction} == 0) { motor_deg = 360.0f - motor_deg; }
+      #      Color bg = current_color;
+      #      for (int i = 0; i < it.size(); i++) { it[i] = bg; }
+      #      for (int s = 0; s < 6; s++) {
+      #        float slot_deg = fmod(motor_deg + s * 60.0f, 360.0f);
+      #        if (slot_deg < 0.0f) slot_deg += 360.0f;
+      #        float offset = slot_deg * total / 360.0f;
+      #        int center = (int)(led0deg + (dir == 0 ? offset : -offset) + 0.5f);
+      #        center = ((center % total) + total) % total;
+      #        for (int d = -half; d <= half; d++) {
+      #          int idx = ((center + d) % total + total) % total;
+      #          it[idx] = slot_colors[s];
+      #        }
+      #        Color dim(slot_colors[s].r / 2, slot_colors[s].g / 2, slot_colors[s].b / 2);
+      #        it[((center - half - 1) % total + total) % total] = dim;
+      #        it[((center + half + 1) % total + total) % total] = dim;
+      #      }
