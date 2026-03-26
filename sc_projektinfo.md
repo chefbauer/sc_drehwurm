@@ -132,11 +132,13 @@ Bei Änderungen von Texten mit `font_title` muss die Glyph-Liste manuell aktuali
 | `font_tab` | Roboto 400 (gfonts) | 30 | Tab-Beschriftungen |
 | `font_small` | Roboto 700 (gfonts) | 18 | Beschriftungen, Overlay-Hilfstexte |
 | `font_preset_num` | Noto Sans Symbols 400 (gfonts) | 28 | Eingekreiste Ziffern ①②③④⑤ (Preset-Labels) |
-| `font_icons` | Font Awesome Solid 6.5.0 (CDN) | 40 | Icons: U+F773 (Water), U+F021 (arrows-rotate), U+F011 (Power), U+F013 (Gear), … |
+| `font_icons` | Font Awesome Solid 6.5.0 (CDN) | 40 | Icons: U+F773 (Water), U+F021 (arrows-rotate), U+F011 (Power), U+F013 (Gear), U+F186 (Mond/Standby) … |
 | `font_timer` | 5x7-dot-matrix.ttf (lokal) | 35 | Timer-Anzeige MM:SS |
 | `font_clock` | Roboto 400 (gfonts) | 22 | Uhrzeit HH:MM:SS in Statusleiste |
 | `font_arc_val` | Roboto 400 (gfonts) | 56 | Arc-Wert-Labels (Glyphs: `0–9 . s % `) |
 | `font_icon_xl` | Font Awesome Solid (CDN) | 120 | Nur U+F021 – aktuell nicht mehr in Overlays verwendet |
+| `font_icon_ts` | Font Awesome Solid (CDN) | 80 | IR-Overlay Fadenkreuz-Icon (U+F05B) – aktuell nicht im Overlay angezeigt |
+| `font_ts_xl` | Roboto Bold 700 (gfonts) | 120 | IR-Temperaturwert `overlay_temp_messung` (Glyphs: `0123456789.,-°C `) |
 
 **Sonderzeichen in Glyphs** (Text-Fonts): `äöüÄÖÜß°·–%`  
 `font_preset_num` enthält **nur** `①②③④⑤` (Roboto hat diese Zeichen nicht → Noto Sans Symbols)  
@@ -154,9 +156,29 @@ Für 6 Timer-Slots (Index 0–5):
 | `slot_elapsed_ms` | `std::array<uint32_t, 6>` | akkumulierte Zeit in ms |
 | `slot_status` | `std::array<int, 6>` | 0=gestoppt, 1=läuft, 2=pausiert |
 | `amg_pixel_temps` | `std::array<float, 64>` | AMG8833 8×8 Pixel-Temperaturen |
+| `global_leds_per_slot` | int | Anzahl LEDs pro Slot im WS2812-Ring (Tab Licht) |
+| `global_lvgl_is_idle` | bool | LVGL-Idle-Flag — per `interval: 10s` via `lvgl.is_idle` gesetzt |
+| `global_emissivity` | float (0.9) | IR-Emissivität — Laufzeitwert, kein NVS-Save |
+| `global_mat_type` | int (0) | Materialtyp: 0=Glas, 1=Dose matt, 2=Dose glänzend |
+| `global_mat_color` | int (3) | Farbindex 0–5 (Farb-Swatch im Emissivitäts-Selector) |
 
 **Interval:** 500 ms → aktualisiert alle 6 Timer-Labels wenn Status = 1.  
-Aktualisiert auch das AMG8833-Overlay wenn es sichtbar ist.
+Aktualisiert auch das AMG8833-Overlay wenn es sichtbar ist.  
+**Interval:** 10 s → prüft `lvgl.is_idle: timeout: ${c_standby_lvgl_idle}` → setzt `global_lvgl_is_idle`
+
+---
+
+## Substitutionen (`display_7z_settings.yaml`)
+
+| Substitution | Wert | Bedeutung |
+|---|---|---|
+| `c_tof_update_interval` | 500ms | TOF-Sensor Update-Interval (Normal) |
+| `c_tof_update_interval_fast` | 200ms | TOF-Sensor Update-Interval (Overlay aktiv) |
+| `c_ir_update_interval` | 1s | MLX90632 Update-Interval (Normal) |
+| `c_ir_update_interval_fast` | 200ms | MLX90632 Update-Interval (Overlay aktiv) |
+| `c_standby_delay` | 300s | Verzögerung bis Standby aktiv (bin_standby `delayed_on`) |
+| `c_standby_lvgl_idle` | 120s | LVGL-Idle-Timeout für Standby-Flag |
+| `c_standby_tof_min_mm` | "800" | Mindestdistanz für Standby (kein Objekt vor Sensor) |
 
 ---
 
@@ -226,6 +248,7 @@ Anordnung im Uhrzeigersinn nach Farbrad:
 - **Links:** Uhrzeitanzeige `lbl_status_clock` (`font_clock`, `#333333`) — zeigt `HH:MM:SS` aus SNTP
 - **Mitte:** Schneeflocken-Icon (`lbl_kompressor_icon`): grau = aus, blau = kühlt aktiv
 - **Mitte-Rechts:** Becken-Temperatur (`lbl_temp_becken`, `font_clock`, Farbe `#2299DD` hellblau-cyan), x+80 vom Center, Beispiel: `12.3°C`
+- **Rechts (vor Zahnrad):** `lbl_standby_icon` — Mond-Icon (U+F186, `font_icons`, `#8899BB` blau-grau, x=-72, `hidden: true`) — sichtbar wenn `bin_standby` aktiv
 - **Rechts:** Button `btn_to_settings` (60×54 px, dunkelgrau `#444444`) mit Zahnrad-Icon (`\uF013`) → `lvgl.page.show: page_settings`
 - Farbe des Schneeflocken-Icons wird via `climate.on_state` Lambda gesetzt
 
@@ -246,9 +269,24 @@ Tab-Reihenfolge: **System · Schwenker · Licht · Bildschirm · Kühler · Test
 ---
 
 **Tab "System":**
-- `row_overlays`: Label "Overlays:" + zwei Buttons nebeneinander:
+- `row_overlays`: Label "Overlays:" + drei Buttons nebeneinander:
   - `btn_amg_live` (dunkelblau `#334466`) → öffnet `overlay_amg8833`
   - `btn_sensorphalanx_live` (grün `#336644`) → öffnet `overlay_sensorphalanx`
+  - `btn_temp_messung_live` → öffnet `overlay_temp_messung`
+
+---
+
+**Tab "Schwenker":**
+- Zeile: Label "Motor freigeben" + Button → Motor Mode 3 (aktiv, kein Haltestrom)
+- Zeile: Label "Motor 0° setzen" + Button → `script_motor_set_zero`
+- Zeile: Label "Motorstrom" + Slider `slider_motor_strom` (500–2000) → `sw_work_current_mA` (NVS-persistent)
+- Zeile: Overlay-Button → `overlay_schwenker_settings` öffnen
+
+---
+
+**Tab "Licht":**
+- Zeile: Label "Slot-Breite" + Slider `slider_slot_breite` (1–28 LEDs) + Wert-Label `lbl_slot_breite_val`
+  - `on_value` → `global_leds_per_slot` setzen → WS2812-Ring-Effekt aktualisiert Slot-Breite motorpositionsbasiert
 
 ---
 
@@ -302,21 +340,19 @@ Tab-Reihenfolge: **System · Schwenker · Licht · Bildschirm · Kühler · Test
 - **Öffnen:** `script_schwenker_settings_open` (zentral, von Long-Press Hauptbutton + Einstellungen-Tab)
 - **Start/Stop Hauptseite:** `btn_schwenker_main` → `on_short_click` (Long-Press öffnet nur Overlay, startet/stoppt **nicht**)
 
-### `overlay_amg8833` — AMG8833 Live-Ansicht
-- Vollflächig (100%×100%), weiß, `bg_opa: 90%`, initial `hidden: true`
+### `overlay_amg8833` — AMG8833 Live-Ansicht- Vollflächig (100%×100%), weiß, `bg_opa: 90%`, initial `hidden: true`
 - `amg_grid_container` (496×496 px, leicht links): 8×8 Pixel-Zellen via `amg_create_grid()`
 - Exit-Button `btn_amg_exit` (rot `#CC3333`, 80×80) rechts → `lvgl.widget.hide: overlay_amg8833`
 - Daten werden per 500ms-Interval aus `amg_pixel_temps` aktualisiert
 
-### `overlay_sensorphalanx` — Sensor-Phalanx
-- Vollflächig (100%×100%), weiß, `bg_opa: 93%`, initial `hidden: true`
+### `overlay_sensorphalanx` — Sensor-Phalanx- Vollflächig (100%×100%), weiß, `bg_opa: 93%`, initial `hidden: true`
 - Titel "Sensor-Phalanx" (`font_title`, `#003366`)
 - Exit-Button `btn_sensorphalanx_exit` (rot, oben rechts)
 - 7 Sensor-Zeilen (zebra-gestreift), je 860×65 px mit farbigem Badge + Name + Beschreibung + Live-Wert:
 
 | Badge | Farbe | Sensor | Beschreibung | Wert-Label |
 |---|---|---|---|---|
-| ToF | `#2255CC` | VL53L1X | Time-of-Flight · 50–4000 mm | `distance_value_label` |
+| ToF | `#2255CC` | VL53L4CD | Time-of-Flight · 50–4000 mm | `distance_value_label` |
 | T° | `#CC5500` | SHT4x | Umgebungstemperatur | `temp_value_label` |
 | RH | `#008899` | SHT4x | Relative Luftfeuchte | `hum_value_label` |
 | hPa | `#7744BB` | BMP581 | Barometrischer Druck | `pressure_value_label` |
@@ -326,7 +362,37 @@ Tab-Reihenfolge: **System · Schwenker · Licht · Bildschirm · Kühler · Test
 
 ---
 
-## Hardware (`hardware.yaml`)
+### `overlay_temp_messung` — IR-Temperatur & TOF-Visualisierung
+
+- Vollflächig (1024×600 px), `bg_color: #0D1117`, initial `hidden: true`
+- Öffnet automatisch per `bin_objekt_vor_sensor` (`on_press`) wenn Objekt < Schwellwert erkannt
+- Schließt automatisch: `bin_objekt_vor_sensor` hat `filters: delayed_off: 3s` → `on_release` → `script_close_temp_overlay`
+- **`script_close_temp_overlay`** (mode: single): `lvgl.widget.hide: overlay_temp_messung`
+- **Physik FOV** MLX90632: 50° → Halbwinkel 25° → `tan(25°)=0.46631` → `d_px = 2 × dist_mm × 0.46631 × 6.674`
+
+**Z-Order (Deklarationsreihenfolge):**
+
+1. `btn_temp_messung_exit` (80×60 px, TOP_RIGHT x:-10 y:10, `#CC3333`) → `script_close_temp_overlay`
+2. `obj_dist_bar_container` (120×440 px, LEFT_MID x:40):
+   - Labels: "100mm" oben (TOP_MID y:8), "45mm" CENTER y:-56 (grün = Sweet Spot), `lbl_dist_messung` BOTTOM_MID y:-4, "10mm" BOTTOM_MID y:-28
+   - Optimal-Linie (120×3 px, CENTER y:-44, grün `#44AA44`)
+   - `bar_distanz` (60×400 px, CENTER, min:10 max:100, init value:60) — **gespiegelter Wert**: Lambda `110 - d` (kein `inverted:`!)
+3. `obj_ir_circle` (init 280×280 px, CENTER x:0 y:0, TRANSP bg, roter Rand 5px, radius:140):
+   - `obj_cross_h` (init 280×5 px, CENTER, rot) — Fadenkreuz horizontal
+   - `obj_cross_v` (init 5×280 px, CENTER, rot) — Fadenkreuz vertikal
+   - Skaliert dynamisch per TOF via `lv_obj_set_size` + `lv_obj_set_style_radius` + `lv_obj_align`
+4. `lbl_ts_temp` (CENTER x:0 y:0, `font_ts_xl`, weiß, `clickable: true`) → `script_close_temp_overlay`
+   - Format: `%d,%d °C` mit manueller Vor/Nachkomma-Trennung (Komma statt Punkt)
+5. `obj_emissivity_container` (200×440 px, RIGHT_MID x:-20, `#1A1E2C`):
+   - Titel + `lbl_emissivity_val` (zeigt aktuellen ε-Wert)
+   - 3 farbige Range-Balken: Glas (grün), Dose matt (orange), Alu (blau) mit Wertebereichen als Tick-Labels
+   - `slider_emissivity` (28×340 px, LEFT_MID x:22, Bereich 1–100, init 90) → setzt `global_emissivity`
+6. `obj_material_selector` (860×64 px, BOTTOM_MID y:-6, `#12162A`):
+   - `btn_mat_glas` (x:44, `#226644`), `btn_mat_dose_matt` (x:138), `btn_mat_dose_glaenzend` (x:232)
+   - 6 Farb-Swatches `btn_col_0`–`btn_col_5` (je 50×50 px, radius:25, x:383–673)
+   - Emissivitätstabelle 3×6 in Lambdas → setzt `global_emissivity` + `global_mat_type` + `global_mat_color` + Slider + Label
+
+**XML-Layout-Export:** `ui/overlay_temp_messung.xml` — für viewer.lvgl.io (pixelgenaues Layout-Editing)
 
 ### MCP4728 DAC — Turmpumpe
 - `output_pumpe_dacA`, Kanal A, `vref: vdd`
@@ -362,13 +428,17 @@ Alle Sensoren auf `i2c_id: i2c_bus` (fremdkonfiguriert in main_config).
 
 | Sensor | Platform | Adresse | Beschreibung |
 |---|---|---|---|
-| VL53L1X | `vl53l1x` | 0x29 | Distanz, Short Mode, 500ms |
+| VL53L4CD | `vl53l4cd` | 0x29 | Distanz, Short Mode, `${c_tof_update_interval}` |
 | SHT4x | `sht4x` | auto | Temperatur + Luftfeuchtigkeit, 1s |
 | BMP581 | `bmp581_i2c` | auto | Druck + Temperatur, 1s |
 | `indoor_altitude` | template | — | Höhe aus BMP581, hypsometrisch |
 | VEML7700 | `veml7700` | 0x10 | Umgebungslicht, 2s |
-| `sensor_Temp_OBJECT` | template | — | MLX90632 IR-Berechnung (ε=0.90), 1s |
+| `sensor_Temp_OBJECT` | template | — | MLX90632 IR-Berechnung (ε = `global_emissivity`), `${c_ir_update_interval}` |
 | `i2c_mlx90632` | i2c_device | 0x3A | I²C-Device für MLX90632 |
+| `bin_objekt_vor_sensor` | binary_sensor (template) | — | TOF < Schwellwert → öffnet/schließt `overlay_temp_messung` via `delayed_off: 3s` |
+| `bin_standby` | binary_sensor (template) | — | TOF > `c_standby_tof_min_mm` UND `global_lvgl_is_idle` → zeigt `lbl_standby_icon` |
+| interval 10s | — | — | Setzt `global_lvgl_is_idle` via `lvgl.is_idle: timeout: ${c_standby_lvgl_idle}` |
+| `script_close_temp_overlay` | script (single) | — | `lvgl.widget.hide: overlay_temp_messung` |
 
 ---
 
@@ -403,18 +473,30 @@ Alle Sensoren auf `i2c_id: i2c_bus` (fremdkonfiguriert in main_config).
 - [x] Interval 500ms (alle 6 Slots + AMG-Overlay-Update)
 - [x] Hauptseite Titel + Tank-Widget + 6 Farbslots
 - [x] Statusleiste mit Kompressor-Icon (dynamische Farbe)
-- [x] Einstellungen: Tab-Reihenfolge System · **Schwenker** · Bildschirm · Kühler · Test
-- [x] Tab System: Overlay-Buttons (AMG8833 Live, Sensor-Phalanx)
-- [x] Tab Schwenker: "Motor freigeben" (Mode 3) + "Motor 0° setzen" (script_motor_set_zero)
+- [x] `lbl_standby_icon` (Mond U+F186, `font_icons`, blau-grau) in Statusleiste — sichtbar bei `bin_standby`
+- [x] Einstellungen: Tab-Reihenfolge System · **Schwenker** · **Licht** · Bildschirm · Kühler · Test
+- [x] Tab System: Overlay-Buttons (AMG8833 Live, Sensor-Phalanx, IR-Temp-Messung)
+- [x] Tab Schwenker: "Motor freigeben" (Mode 3) + "Motor 0° setzen" (script_motor_set_zero) + Motorstrom-Slider + Overlay-Button
+- [x] Tab Licht: `slider_slot_breite` (1–28 LEDs) → `global_leds_per_slot`
 - [x] Tab Bildschirm: Helligkeit-Slider + Farbtest-Quadrate
 - [x] Tab Kühler: Kühlung-Switch + Temperatur-Slider + Preset-Buttons
 - [x] Tab Test: Turmpumpe-Slider + Beckenpumpe-Slider
 - [x] Overlay AMG8833 Live (8×8 Grid, Exit-Button)
 - [x] Overlay Sensor-Phalanx (7 Sensoren, Badge-Design)
+- [x] Overlay `overlay_temp_messung`: TOF-Bar, FOV-Kreis, Temperaturanzeige (Komma-Format), Emissivitäts-Slider, Material/Farb-Auswahl
+- [x] `bin_objekt_vor_sensor` + `bin_standby` in `sensorphalanx.yaml`
+- [x] TOF-Bar gespiegelt (`110 - d`) — kein ungültiges `inverted:`
+- [x] FOV-Kreis dynamisch skaliert via TOF (MLX90632 50° FOV, tan(25°)=0.46631, 6.674 px/mm)
+- [x] Emissivitäts-System: `global_emissivity` + Slider + 3×6 Material/Farb-Auswahl
+- [x] `sensor_Temp_OBJECT` liest `global_emissivity` statt hardcoded 0.90
+- [x] XML-Export `ui/overlay_temp_messung.xml`
 - [x] hardware.yaml: MCP4728 DAC, Lüfter, Pumpen, Relais, AMG8833
 - [x] hardware.yaml: Climate Thermostat mit Kühler-Steuerung
 - [x] sensorphalanx.yaml: VL53L1X, SHT4x, BMP581, VEML7700, MLX90632
 - [x] `zero_means_zero: true` für Turmpumpe (kein Nachlaufen)
+- [x] `lights.yaml`: WS2812-Ring (80 LEDs, `pin_led_h1`) mit Slot-Farb-Effekt (motorpositionsbasiert)
+- [x] Standby-System: `bin_standby` (TOF + LVGL-Idle), `global_lvgl_is_idle`, Mond-Icon in Statusleiste
+- [x] Substitutionen c_standby_delay / c_standby_lvgl_idle / c_standby_tof_min_mm / c_tof*/c_ir* in `display_7z_settings.yaml`
 - [ ] Tank-Platzhalter durch echtes PNG ersetzen
 - [x] `sensor_temp_becken` via DS18B20 I²C-Bridge (`1w_i2c_bridge`, ESP-IDF 5.x) aktiv
 - [x] `schwenker.yaml`: Sinus-Pendel via F5 + "fernes Ziel" (MKS Servo42D)
@@ -570,6 +652,19 @@ Alle Sensoren auf `i2c_id: i2c_bus` (fremdkonfiguriert in main_config).
 | 2026-03-24 (session) | — | `display.yaml` → `display_7z_settings.yaml` umbenannt (Hardware-Substitutions: Pins, CAN, Konstanten) |
 | 2026-03-24 (session) | — | `lights.yaml` neu: WS2812-Ring (`pin_led_h1`, 80 LEDs) mit `Slot Colors`-Effekt (6 Farben, motorpositionsbasiert) |
 | 2026-03-26 (session) | — | `lvgl_basis.yaml`: Tab "Licht" – Zeile "Slot-Breite": Slider `slider_slot_breite` (1–28 LEDs) → `global_leds_per_slot`; Wert-Label `lbl_slot_breite_val` |
+| 2026-03-27 (session) | — | `sensorphalanx.yaml`: Temperaturanzeige Komma-Format (`%d,%d °C`), `font_ts_xl` Glyphs mit `,` ergänzt |
+| 2026-03-27 (session) | — | `lvgl_overlay.yaml`: `bar_distanz` gespiegelt (`110 - d`), kein ungültiges `inverted:`; Startwert 60 |
+| 2026-03-27 (session) | — | `sensorphalanx.yaml`: `bin_standby` (TOF > 800mm & lvgl_is_idle, `delayed_on: 300s`, `delayed_off: 3s`) |
+| 2026-03-27 (session) | — | `lvgl_basis.yaml`: `lbl_standby_icon` (Mond U+F186, 40px, `#8899BB`) in Statusleiste; `font_icons` +U+F186 |
+| 2026-03-27 (session) | — | `sensorphalanx.yaml`: `bin_objekt_vor_sensor` NaN→`return false`; `delayed_off: 3s`-Filter |
+| 2026-03-27 (session) | — | `lvgl_overlay.yaml`: `font_icon_ts` 120px → **80px**; Sweet Spot 50mm → 45mm |
+| 2026-03-27 (session) | — | `lvgl_overlay.yaml`: Laser-Symbol entfernt; FOV-Kreis (`obj_ir_circle`) + Kreuz dynamisch via TOF skaliert |
+| 2026-03-27 (session) | — | `script_close_temp_overlay` aufgeräumt: nur noch `lvgl.widget.hide: overlay_temp_messung` |
+| 2026-03-27 (session) | — | `sensorphalanx.yaml`: Globals `global_emissivity` (0.9), `global_mat_type` (0), `global_mat_color` (3) |
+| 2026-03-27 (session) | — | `lvgl_overlay.yaml`: `obj_emissivity_container` (Slider + Range-Balken) + `obj_material_selector` (3 Buttons + 6 Farb-Swatches) |
+| 2026-03-27 (session) | — | `sensorphalanx.yaml`: `sensor_Temp_OBJECT` liest `global_emissivity` statt hardcoded 0.90 |
+| 2026-03-27 (session) | — | `ui/overlay_temp_messung.xml` erstellt: LVGL XML-Layout-Export für viewer.lvgl.io |
+| 2026-03-27 (session) | — | `display_7z_settings.yaml`: Substitutionen c_standby_*, c_tof_update_interval*, c_ir_update_interval* |
 
 
 ---

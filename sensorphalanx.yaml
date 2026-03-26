@@ -1,16 +1,19 @@
 # ================================
 # Sensor Phalanx – Hardware Konfiguration
-# MLX90632 · VL53L1X · SHT4x · BMP581 · VEML7700
+# MLX90632 · VL53L4CD · SHT4x · BMP581 · VEML7700
 #
 # Alle Sensoren teilen sich den gemeinsamen I²C-Bus
 # der Hauptkonfiguration (main_config): "i2c_bus"
 # ================================
 # ── Komponenten ──────────────────────────────────────────────────────────────────
-#  sensor:   distance_sensor, sensor_sht4x_temp, sensor_sht4x_humi,
-#            bmp_temperature, bmp_pressure, indoor_altitude,
-#            sensor_veml7700_lux, sensor_Temp_OBJECT
-#  button:   mlx_set_extended
-#  script:   script_mlx90632_set_mode_continous_extended_16hz
+#  sensor:          distance_sensor, sensor_sht4x_temp, sensor_sht4x_humi,
+#                   bmp_temperature, bmp_pressure, indoor_altitude,
+#                   sensor_veml7700_lux, sensor_Temp_OBJECT
+#  binary_sensor:   bin_objekt_vor_sensor, bin_standby
+#  globals:         global_lvgl_is_idle, global_emissivity, global_mat_type, global_mat_color
+#  interval:        500ms (AMG/Timer), 10s (LVGL-Idle-Check → global_lvgl_is_idle)
+#  button:          mlx_set_extended
+#  script:          script_close_temp_overlay, script_mlx90632_set_mode_continous_extended_16hz
 # ─────────────────────────────────────────────────────────────────────────────────
 
 globals:
