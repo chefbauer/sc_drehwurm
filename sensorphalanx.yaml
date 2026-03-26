@@ -387,7 +387,6 @@ binary_sensor:
       float d = id(distance_sensor).state;
       bool tof_frei = isnan(d) || d > ${c_standby_tof_min_mm};
       return tof_frei && id(global_lvgl_is_idle);
-    update_interval: 10s
     filters:
       - delayed_on: ${c_standby_delay}
       - delayed_off: 3s
