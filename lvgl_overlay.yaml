@@ -1151,37 +1151,60 @@ lvgl:
                       bg_color: 0x333333
                       radius: 6
 
-            # IR-Temperatur groß in der Mitte
+            # IR-FOV-Kreis: HINTERGRUND (zuerst = unten in Z-Order)
+            # Durchmesser = 2 * dist * tan(25°) * 6.674 px/mm
+            # MLX90632 FOV 50°, tan(25°)=0.46631, Display 7"/1024x600 → 6.674 px/mm
+            # Initialgröße für Sweetspot 45mm: 2*45*0.46631*6.674 ≈ 280px
             - obj:
-                id: obj_ts_container
-                width: 700
-                height: 300
+                id: obj_ir_circle
+                width: 280
+                height: 280
                 align: CENTER
-                x: 60
+                x: 0
+                y: 0
                 bg_opa: TRANSP
-                border_width: 0
+                border_color: 0xFF4444
+                border_width: 5
+                radius: 140
                 pad_all: 0
                 scrollable: false
                 widgets:
-                  - label:
-                      text: "\uF05B"
-                      text_font: font_icon_ts
-                      text_color: 0xFF4444
-                      align: LEFT_MID
-                      x: 60
-                  - label:
-                      id: lbl_ts_temp
-                      text: !lambda |-
-                        if (isnan(id(sensor_Temp_OBJECT).state)) return std::string("--,- °C");
-                        float t = id(sensor_Temp_OBJECT).state;
-                        int vor = (int)t;
-                        int nach = (int)(fabs(t - vor) * 10 + 0.5f);
-                        char b[16];
-                        snprintf(b, sizeof(b), "%d,%d °C", vor, nach);
-                        return std::string(b);
-                      text_font: font_ts_xl
-                      text_color: 0xFFFFFF
+                  # Horizontale Kreuzlinie
+                  - obj:
+                      id: obj_cross_h
+                      width: 280
+                      height: 5
                       align: CENTER
-                      x: 40
+                      bg_color: 0xFF4444
+                      bg_opa: COVER
+                      border_width: 0
+                      radius: 0
+                  # Vertikale Kreuzlinie
+                  - obj:
+                      id: obj_cross_v
+                      width: 5
+                      height: 280
+                      align: CENTER
+                      bg_color: 0xFF4444
+                      bg_opa: COVER
+                      border_width: 0
+                      radius: 0
 
-            # (Distanzwert wird jetzt direkt in der Bar angezeigt via lbl_dist_messung)
+            # Temperatur: absolut mittig, über dem Kreis (zuletzt = vorne in Z-Order)
+            - label:
+                id: lbl_ts_temp
+                text: !lambda |-
+                  if (isnan(id(sensor_Temp_OBJECT).state)) return std::string("--,- °C");
+                  float t = id(sensor_Temp_OBJECT).state;
+                  int vor = (int)t;
+                  int nach = (int)(fabs(t - vor) * 10 + 0.5f);
+                  char b[16];
+                  snprintf(b, sizeof(b), "%d,%d °C", vor, nach);
+                  return std::string(b);
+                text_font: font_ts_xl
+                text_color: 0xFFFFFF
+                align: CENTER
+                x: 0
+                y: 0
+
+            # (Distanzwert wird direkt in der Bar angezeigt via lbl_dist_messung)

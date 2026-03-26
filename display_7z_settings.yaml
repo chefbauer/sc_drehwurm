@@ -36,8 +36,8 @@ substitutions:
   # Sensor-Phalanx Update-Intervalle
   c_tof_update_interval: 500ms
   c_ir_update_interval: 1s
-  c_tof_update_interval_fast: 200ms
-  c_ir_update_interval_fast: 200ms
+  c_tof_update_interval_fast: 50ms
+  c_ir_update_interval_fast: 100ms
 
   # Standby-Erkennung
   c_standby_delay: 300s           # Zeit bis Standby aktiv wird (delayed_on)

@@ -81,6 +81,25 @@ sensor:
             if (d > 100.0f) d = 100.0f;
             lv_bar_set_value(id(bar_distanz), (int)(110.0f - d), LV_ANIM_ON);
             lv_label_set_text_fmt(id(lbl_dist_messung), "%.0fmm", x);
+            // IR-FOV-Kreis skalieren
+            // MLX90632 FOV 50° → Halbwinkel 25° → tan(25°) = 0.46631
+            // Display 7" diagonal, 1024×600px → 6.674 px/mm
+            if (!isnan(x) && x > 0.0f) {
+              const float TAN_25 = 0.46631f;
+              const float PX_PER_MM = 6.674f;
+              float diam_mm = 2.0f * x * TAN_25;
+              int dpx = (int)(diam_mm * PX_PER_MM);
+              if (dpx < 20) dpx = 20;
+              if (dpx > 560) dpx = 560;
+              lv_obj_set_size(id(obj_ir_circle), dpx, dpx);
+              lv_obj_set_style_radius(id(obj_ir_circle), LV_RADIUS_CIRCLE, LV_PART_MAIN | LV_STATE_DEFAULT);
+              lv_obj_set_size(id(obj_cross_h), dpx, 5);
+              lv_obj_set_size(id(obj_cross_v), 5, dpx);
+              lv_obj_align(id(obj_ir_circle), LV_ALIGN_CENTER, 0, 0);
+              lv_obj_align(id(obj_cross_h), LV_ALIGN_CENTER, 0, 0);
+              lv_obj_align(id(obj_cross_v), LV_ALIGN_CENTER, 0, 0);
+              lv_obj_invalidate(id(obj_ir_circle));
+            }
 
   # ── VL53L1X – Time-of-Flight Distanzsensor ────────────────
 #  - platform: vl53l1x
