@@ -548,4 +548,16 @@ button:
             id(script_schwenker_start).execute();
           }
 
+  - platform: template
+    name: "System EIN"
+    id: btn_web_system_ein
+    on_press:
+      - script.execute: script_system_ein
+
+  - platform: template
+    name: "System AUS (Not-Aus)"
+    id: btn_web_system_aus
+    on_press:
+      - script.execute: script_system_aus
+
 
