@@ -41,6 +41,9 @@ esphome:
             if (bri_pct > 100) bri_pct = 100;
             lv_slider_set_value(id(slider_led_helligkeit), bri_pct, LV_ANIM_OFF);
             lv_label_set_text_fmt(id(lbl_led_helligkeit_val), "%d%%", bri_pct);
+    - priority: -150        # System in sicheren Aus-Zustand (Not-Aus beim Booten)
+      then:
+        - script.execute: script_system_aus
     - priority: -200        # nach allem anderen – Motor in Nullstellung
       then:
         - script.execute: script_motor_set_zero
