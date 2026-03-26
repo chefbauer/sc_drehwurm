@@ -38,3 +38,8 @@ substitutions:
   c_ir_update_interval: 1s
   c_tof_update_interval_fast: 200ms
   c_ir_update_interval_fast: 200ms
+
+  # Standby-Erkennung
+  c_standby_delay: 300s           # Zeit bis Standby aktiv wird (delayed_on)
+  c_standby_lvgl_idle: 120s       # LVGL muss X Sekunden inaktiv sein
+  c_standby_tof_min_mm: "800"     # TOF unter dieser Distanz = jemand da = kein Standby

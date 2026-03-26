@@ -13,6 +13,30 @@
 #  script:   script_mlx90632_set_mode_continous_extended_16hz
 # ─────────────────────────────────────────────────────────────────────────────────
 
+globals:
+  # LVGL-Idle-Flag: wird per interval: alle 10s per lvgl.is_idle aktualisiert
+  - id: global_lvgl_is_idle
+    type: bool
+    restore_value: false
+    initial_value: 'false'
+
+interval:
+  # Prüft alle 10s ob LVGL idle ist → setzt global_lvgl_is_idle
+  - interval: 10s
+    then:
+      - if:
+          condition:
+            lvgl.is_idle:
+              timeout: ${c_standby_lvgl_idle}
+          then:
+            - globals.set:
+                id: global_lvgl_is_idle
+                value: 'true'
+          else:
+            - globals.set:
+                id: global_lvgl_is_idle
+                value: 'false'
+
 esphome:
   includes: 
       - includes/mlx_functions.h
@@ -57,6 +81,7 @@ sensor:
             if (d > 100.0f) d = 100.0f;
             lv_bar_set_value(id(bar_distanz), (int)(110.0f - d), LV_ANIM_ON);
             lv_label_set_text_fmt(id(lbl_dist_messung), "%.0fmm", x);
+        - component.update: bin_objekt_vor_sensor
 
   # ── VL53L1X – Time-of-Flight Distanzsensor ────────────────
 #  - platform: vl53l1x
@@ -350,6 +375,26 @@ binary_sensor:
       - component.resume:
           id: sensor_Temp_OBJECT
           update_interval: ${c_ir_update_interval}
+
+  # ── Standby-Erkennung ──────────────────────────────────────────────────────────
+  # EIN wenn: TOF frei (>800mm oder NaN) UND LVGL idle (${c_standby_lvgl_idle})
+  # delayed_on: ${c_standby_delay} → erst nach dieser Zeit wird Standby aktiv
+  - platform: template
+    id: bin_standby
+    name: "Standby"
+    internal: true
+    lambda: |-
+      float d = id(distance_sensor).state;
+      bool tof_frei = isnan(d) || d > ${c_standby_tof_min_mm};
+      return tof_frei && id(global_lvgl_is_idle);
+    update_interval: 10s
+    filters:
+      - delayed_on: ${c_standby_delay}
+      - delayed_off: 3s
+    on_press:
+      - lvgl.widget.show: lbl_standby_icon
+    on_release:
+      - lvgl.widget.hide: lbl_standby_icon
 
 script:
     - id: script_mlx90632_set_mode_continous_extended_16hz

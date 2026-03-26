@@ -82,6 +82,7 @@ font:
       - "\uF011"  # Power (Ein/Aus)
       - "\uF773"  # Water (Beckenfüllung)
       - "\uF021"  # arrows-rotate (Schwenker Start/Stop)
+      - "\uF186"  # Moon (Standby)
 
   # Dot-Matrix Font für Timer-Anzeige
   - file: "fonts/5x7-dot-matrix.ttf"
@@ -1251,6 +1252,16 @@ lvgl:
                               align: CENTER
                               x: 20
                               text_color: 0x003366
+                    # Standby-Indikator (Mond-Icon, nur sichtbar wenn Standby aktiv)
+                    - label:
+                        id: lbl_standby_icon
+                        text: "\uF186"
+                        text_font: font_icons
+                        text_color: 0x8899BB
+                        align: RIGHT_MID
+                        x: -72
+                        hidden: true
+
                     # Einstellungen-Button rechts (Zahnrad-Icon)
                     - button:
                         id: btn_to_settings
