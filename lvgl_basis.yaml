@@ -1867,6 +1867,45 @@ lvgl:
                                         text_font: font_normal
                                         text_color: 0xFFFFFF
 
+                        # Zeile: Slot-LED-Breite
+                        - obj:
+                            id: row_slot_breite
+                            width: 960
+                            height: 70
+                            align: TOP_MID
+                            y: 290
+                            bg_opa: TRANSP
+                            border_width: 0
+                            scrollable: false
+                            scrollbar_mode: "off"
+                            widgets:
+                              - label:
+                                  text: "Slot-Breite:"
+                                  align: LEFT_MID
+                                  x: 10
+                                  text_font: font_normal
+                                  text_color: 0x000000
+                              - slider:
+                                  id: slider_slot_breite
+                                  width: 590
+                                  height: 20
+                                  align: LEFT_MID
+                                  x: 240
+                                  min_value: 1
+                                  max_value: 28
+                                  value: 9
+                                  on_value:
+                                    - lambda: |-
+                                        id(global_leds_per_slot) = x;
+                                        lv_label_set_text_fmt(id(lbl_slot_breite_val), "%d", x);
+                              - label:
+                                  id: lbl_slot_breite_val
+                                  text: "9"
+                                  align: LEFT_MID
+                                  x: 850
+                                  text_font: font_normal
+                                  text_color: 0x003366
+
                     - name: "Bildschirm"
                       id: tab_bildschirm
                       scrollable: true
