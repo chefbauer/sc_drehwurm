@@ -1186,18 +1186,56 @@ lvgl:
                         text_font: font_icons
                         align: CENTER
                         text_color: 0xCCCCCC  # Grau = Kompressor aus
-                    # Becken-Temperatur rechts neben Schneeflocke
-                    - label:
-                        id: lbl_temp_becken
-                        text: !lambda |-
-                          if (isnan(id(sensor_temp_becken).state)) return std::string("--.-°C");
-                          char b[12];
-                          snprintf(b, sizeof(b), "%.1f°C", id(sensor_temp_becken).state);
-                          return std::string(b);
-                        text_font: font_temp
+                    # ED%-Badge am unteren Rand der Schneeflocke
+                    - obj:
+                        id: obj_ed_badge
+                        width: 50
+                        height: 22
+                        align: CENTER
+                        y: 16
+                        bg_color: 0x00274D
+                        bg_opa: 70%
+                        radius: 3
+                        border_width: 0
+                        scrollable: false
+                        widgets:
+                          - label:
+                              id: lbl_ed_pct
+                              text: "-"
+                              text_font: font_small
+                              text_color: 0xFFFFFF
+                              align: CENTER
+                    # Becken-Temperatur mit Wasserwellen-Hintergrund
+                    - obj:
+                        id: obj_temp_becken_bg
+                        width: 165
+                        height: 56
                         align: CENTER
                         x: 120
-                        text_color: 0x2299DD
+                        bg_color: 0xADE8F4
+                        bg_opa: COVER
+                        radius: 8
+                        border_width: 0
+                        pad_all: 0
+                        scrollable: false
+                        widgets:
+                          - label:
+                              text: "\uF773"
+                              text_font: font_icons
+                              align: LEFT_MID
+                              x: 6
+                              text_color: 0x70C9E0
+                          - label:
+                              id: lbl_temp_becken
+                              text: !lambda |-
+                                if (isnan(id(sensor_temp_becken).state)) return std::string("--.-°C");
+                                char b[12];
+                                snprintf(b, sizeof(b), "%.1f°C", id(sensor_temp_becken).state);
+                                return std::string(b);
+                              text_font: font_temp
+                              align: CENTER
+                              x: 20
+                              text_color: 0x003366
                     # Einstellungen-Button rechts (Zahnrad-Icon)
                     - button:
                         id: btn_to_settings

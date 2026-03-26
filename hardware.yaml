@@ -137,6 +137,19 @@ globals:
     type: bool
     restore_value: no
     initial_value: 'false'
+  # ED% (Einschaltdauer) Tracking
+  - id: kompressor_ein_ms
+    type: uint32_t
+    restore_value: false
+    initial_value: '0'
+  - id: kompressor_letzter_run_ms
+    type: uint32_t
+    restore_value: false
+    initial_value: '0'
+  - id: kompressor_aus_ms
+    type: uint32_t
+    restore_value: false
+    initial_value: '0'
 
 sensor:
   # Becken-Temperatursensor DS18B20 via I²C-Bridge (ESP32-C3, Adresse 0x48)
@@ -284,6 +297,18 @@ climate:
           level: "${c_pumpe_umwaelzung_ein_perc}%"
       - lambda: |-
           lv_slider_set_value(id(slider_umwaelzpumpe), ${c_pumpe_umwaelzung_ein_perc}, LV_ANIM_OFF);
+          // ED% Berechnung beim Wiedereinschalten
+          if (id(kompressor_aus_ms) > 0 && id(kompressor_letzter_run_ms) > 0) {
+            uint32_t aus_zeit = millis() - id(kompressor_aus_ms);
+            if (aus_zeit > 0) {
+              int ed = (int)((float)id(kompressor_letzter_run_ms) /
+                        ((float)id(kompressor_letzter_run_ms) + (float)aus_zeit) * 100.0f + 0.5f);
+              if (ed < 0) ed = 0;
+              if (ed > 100) ed = 100;
+              lv_label_set_text_fmt(id(lbl_ed_pct), "%d%%", ed);
+            }
+          }
+          id(kompressor_ein_ms) = millis();
     idle_action:
       - output.turn_off: output_kompressor_relais
       - lambda: |-
@@ -295,6 +320,11 @@ climate:
       - output.turn_off: output_pumpe_dacB
       - lambda: |-
           lv_slider_set_value(id(slider_umwaelzpumpe), 0, LV_ANIM_OFF);
+          // ED% Tracking: Laufzeit speichern
+          if (id(kompressor_ein_ms) > 0) {
+            id(kompressor_letzter_run_ms) = millis() - id(kompressor_ein_ms);
+          }
+          id(kompressor_aus_ms) = millis();
     default_preset: Eco
     preset:
       - name: Eco
