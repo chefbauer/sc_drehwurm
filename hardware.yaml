@@ -28,6 +28,12 @@ esphome:
             char mbuf[12];
             snprintf(mbuf, sizeof(mbuf), "%d mA", cur);
             lv_label_set_text(id(lbl_motor_strom_wert), mbuf);
+            // Slot-Breite aus NVS in Sensor + Slider + Label laden
+            float lps = id(global_leds_per_slot);
+            if (isnan(lps) || lps < 1.0f || lps > 28.0f) lps = 9.0f;
+            id(sensor_leds_per_slot).publish_state(lps);
+            lv_slider_set_value(id(slider_slot_breite), (int)lps, LV_ANIM_OFF);
+            lv_label_set_text_fmt(id(lbl_slot_breite_val), "%d", (int)lps);
     - priority: -200        # nach allem anderen – Motor in Nullstellung
       then:
         - script.execute: script_motor_set_zero

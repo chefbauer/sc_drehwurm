@@ -133,6 +133,10 @@ globals:
     type: bool
     restore_value: true
     initial_value: 'false'
+  - id: global_leds_per_slot
+    type: float
+    restore_value: true
+    initial_value: '9.0'
 sensor:
   - platform: template
     id: sensor_leds_per_slot
@@ -1901,6 +1905,7 @@ lvgl:
                                   value: 9
                                   on_value:
                                     - lambda: |-
+                                        id(global_leds_per_slot) = (float)x;
                                         id(sensor_leds_per_slot).publish_state((float)x);
                                         lv_label_set_text_fmt(id(lbl_slot_breite_val), "%d", x);
                               - label:
