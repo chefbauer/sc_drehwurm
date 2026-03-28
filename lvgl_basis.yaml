@@ -12,7 +12,7 @@
 #             font_clock, font_temp, font_icons, font_timer, font_arc_val, font_icon_xl
 #  globals:   slot_start_ms, slot_elapsed_ms, slot_status,
 #             slot_is_countdown, slot_countdown_max_ms,
-#             overlay_tc_open_slot, overlay_tc_type, overlay_tc_minutes,
+#             overlay_tc_open_slot, overlay_tc_type, overlay_tc_seconds,
 #             overlay_tc_mask,
 #             brightness_auto_mode, brightness_auto_updating, system_ein
 #  binary_sensor: bin_slot1_blink .. bin_slot6_blink  (template, internal)
@@ -176,10 +176,10 @@ globals:
     type: int
     restore_value: false
     initial_value: '0'
-  - id: overlay_tc_minutes
+  - id: overlay_tc_seconds
     type: int
     restore_value: false
-    initial_value: '4'
+    initial_value: '240'  # 4 Minuten in Sekunden
   - id: overlay_tc_mask
     type: int
     restore_value: false
@@ -218,10 +218,12 @@ script:
       - lambda: |-
           id(overlay_tc_open_slot) = slot_idx;
           id(overlay_tc_type) = id(slot_is_countdown)[slot_idx] ? 1 : 0;
-          int mins = (int)(id(slot_countdown_max_ms)[slot_idx] / 60000);
-          if (mins < 1) mins = 1;
-          if (mins > 10) mins = 10;
-          id(overlay_tc_minutes) = mins;
+          // Sekunden aus gespeichertem Max-Wert, auf 30s-Raster einrasten
+          int secs = (int)(id(slot_countdown_max_ms)[slot_idx] / 1000);
+          secs = (secs / 30) * 30;
+          if (secs < 30)  secs = 30;
+          if (secs > 720) secs = 720;
+          id(overlay_tc_seconds) = secs;
           id(overlay_tc_mask) = (1 << slot_idx);
           // Slot-Selector Buttons: Optik setzen
           lv_obj_t* sb[6] = {
@@ -245,11 +247,14 @@ script:
             lv_obj_add_flag(id(obj_tc_timer_content), LV_OBJ_FLAG_HIDDEN);
             lv_obj_clear_flag(id(obj_tc_cd_content), LV_OBJ_FLAG_HIDDEN);
           }
-          // Slider-Wert
-          lv_slider_set_value(id(slider_tc_minutes), id(overlay_tc_minutes), LV_ANIM_OFF);
-          char buf[10];
-          snprintf(buf, sizeof(buf), "%d min", id(overlay_tc_minutes));
-          lv_label_set_text(id(lbl_tc_minutes_val), buf);
+          // Slider-Wert + Label
+          lv_slider_set_value(id(slider_tc_minutes), id(overlay_tc_seconds), LV_ANIM_OFF);
+          { int m = id(overlay_tc_seconds)/60, s2 = id(overlay_tc_seconds)%60;
+            char buf[24];
+            if (m == 0)      snprintf(buf, sizeof(buf), "%d sek", s2);
+            else if (s2 == 0) snprintf(buf, sizeof(buf), "%d min", m);
+            else              snprintf(buf, sizeof(buf), "%d min %d sek", m, s2);
+            lv_label_set_text(id(lbl_tc_minutes_val), buf); }
           // Overlay einblenden
           lv_obj_clear_flag(id(overlay_timer_cowntdown), LV_OBJ_FLAG_HIDDEN);
 

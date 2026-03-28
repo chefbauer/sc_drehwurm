@@ -1674,22 +1674,22 @@ lvgl:
             # ── Schließen-Button (oben rechts) ─────────────────────────────
             - button:
                 id: btn_tc_exit
-                width: 60
+                width: 80
                 height: 60
                 align: TOP_RIGHT
                 x: -10
                 y: 10
                 bg_color: 0xCC3333
-                radius: 30
+                radius: 8
                 border_width: 0
                 on_click:
                   - lambda: |-
                       lv_obj_add_flag(id(overlay_timer_cowntdown), LV_OBJ_FLAG_HIDDEN);
                 widgets:
                   - label:
-                      text: "\xef\x80\x8d"
+                      text: "X"
                       align: CENTER
-                      text_font: font_icons
+                      text_font: font_normal
                       text_color: 0xFFFFFF
 
             # ── Titel ───────────────────────────────────────────────────────
@@ -1868,13 +1868,80 @@ lvgl:
                             text_font: font_small
                             text_color: 0xCCCCFF
 
+            # ── Quick-Presets: Dose + Flasche (direkt unter Slots) ─────────
+            - obj:
+                id: obj_tc_quick_row
+                width: 800
+                height: 64
+                align: TOP_MID
+                y: 178
+                bg_opa: 0%
+                border_width: 0
+                pad_all: 0
+
+                widgets:
+                  - button:
+                      id: btn_tc_dose
+                      width: 340
+                      height: 56
+                      align: LEFT_MID
+                      x: 60
+                      bg_color: 0x223355
+                      border_color: 0x4466AA
+                      border_width: 2
+                      radius: 8
+                      on_click:
+                        - lambda: |-
+                            // → Countdown-Modus + 4 min (240 sek)
+                            id(overlay_tc_type) = 1;
+                            lv_obj_set_style_bg_color(id(btn_tc_type_cd),    lv_color_hex(0x334488), 0);
+                            lv_obj_set_style_bg_color(id(btn_tc_type_timer), lv_color_hex(0x444444), 0);
+                            lv_obj_add_flag(id(obj_tc_timer_content),    LV_OBJ_FLAG_HIDDEN);
+                            lv_obj_clear_flag(id(obj_tc_cd_content), LV_OBJ_FLAG_HIDDEN);
+                            id(overlay_tc_seconds) = 240;
+                            lv_slider_set_value(id(slider_tc_minutes), 240, LV_ANIM_ON);
+                            lv_label_set_text(id(lbl_tc_minutes_val), "4 min");
+                      widgets:
+                        - label:
+                            text: "Dose 0,5l  /  4 min"
+                            align: CENTER
+                            text_font: font_normal
+                            text_color: 0xCCDDFF
+                  - button:
+                      id: btn_tc_flasche
+                      width: 340
+                      height: 56
+                      align: LEFT_MID
+                      x: 420
+                      bg_color: 0x223355
+                      border_color: 0x4466AA
+                      border_width: 2
+                      radius: 8
+                      on_click:
+                        - lambda: |-
+                            // → Countdown-Modus + 8 min (480 sek)
+                            id(overlay_tc_type) = 1;
+                            lv_obj_set_style_bg_color(id(btn_tc_type_cd),    lv_color_hex(0x334488), 0);
+                            lv_obj_set_style_bg_color(id(btn_tc_type_timer), lv_color_hex(0x444444), 0);
+                            lv_obj_add_flag(id(obj_tc_timer_content),    LV_OBJ_FLAG_HIDDEN);
+                            lv_obj_clear_flag(id(obj_tc_cd_content), LV_OBJ_FLAG_HIDDEN);
+                            id(overlay_tc_seconds) = 480;
+                            lv_slider_set_value(id(slider_tc_minutes), 480, LV_ANIM_ON);
+                            lv_label_set_text(id(lbl_tc_minutes_val), "8 min");
+                      widgets:
+                        - label:
+                            text: "Flasche 0,5l  /  8 min"
+                            align: CENTER
+                            text_font: font_normal
+                            text_color: 0xCCDDFF
+
             # ── Typ-Auswahl (Timer / Countdown) ────────────────────────────
             - obj:
                 id: obj_tc_type_row
                 width: 700
                 height: 64
                 align: TOP_MID
-                y: 170
+                y: 254
                 bg_opa: 0%
                 border_width: 0
                 pad_all: 0
@@ -1933,7 +2000,7 @@ lvgl:
                 width: 700
                 height: 140
                 align: TOP_MID
-                y: 240
+                y: 328
                 bg_opa: 0%
                 border_width: 0
                 pad_all: 0
@@ -1979,32 +2046,41 @@ lvgl:
             # ── Countdown-Inhalt (sichtbar wenn Typ = Countdown) ───────────
             - obj:
                 id: obj_tc_cd_content
-                width: 700
-                height: 180
+                width: 860
+                height: 210
                 align: TOP_MID
-                y: 240
+                y: 328
                 bg_opa: 0%
                 border_width: 0
                 pad_all: 0
                 hidden: true
 
                 widgets:
-                  # Slider 1–10 Minuten
+                  # Slider 30 sek – 12 min (in 30-sek-Schritten)
                   - slider:
                       id: slider_tc_minutes
-                      width: 560
+                      width: 820
                       height: 24
                       align: TOP_MID
                       y: 8
-                      min_value: 1
-                      max_value: 10
-                      value: 4
+                      min_value: 30
+                      max_value: 720
+                      value: 240
                       on_value:
                         - lambda: |-
-                            id(overlay_tc_minutes) = (int)x;
-                            char buf[16];
-                            snprintf(buf, sizeof(buf), "%d min", (int)x);
+                            // Auf 30-sek-Raster einrasten
+                            int raw = (int)x;
+                            int snapped = ((raw + 15) / 30) * 30;
+                            if (snapped < 30)  snapped = 30;
+                            if (snapped > 720) snapped = 720;
+                            id(overlay_tc_seconds) = snapped;
+                            int m = snapped / 60, s2 = snapped % 60;
+                            char buf[24];
+                            if (m == 0)       snprintf(buf, sizeof(buf), "%d sek", s2);
+                            else if (s2 == 0) snprintf(buf, sizeof(buf), "%d min", m);
+                            else              snprintf(buf, sizeof(buf), "%d min %d sek", m, s2);
                             lv_label_set_text(id(lbl_tc_minutes_val), buf);
+                            lv_slider_set_value(id(slider_tc_minutes), snapped, LV_ANIM_OFF);
                   - label:
                       id: lbl_tc_minutes_val
                       text: "4 min"
@@ -2012,50 +2088,226 @@ lvgl:
                       y: 42
                       text_font: font_normal
                       text_color: 0x003366
-                  # Preset-Buttons
+                  # Quick-Buttons 1–10 min
                   - button:
-                      id: btn_tc_dose
-                      width: 240
-                      height: 52
-                      align: BOTTOM_LEFT
-                      x: 30
-                      y: -8
-                      bg_color: 0x223355
-                      border_color: 0x445588
-                      border_width: 2
-                      radius: 8
+                      id: btn_tc_q1
+                      width: 74
+                      height: 48
+                      align: LEFT_MID
+                      x: 0
+                      y: 40
+                      bg_color: 0x334466
+                      border_color: 0x5577AA
+                      border_width: 1
+                      radius: 6
                       on_click:
                         - lambda: |-
-                            id(overlay_tc_minutes) = 4;
-                            lv_slider_set_value(id(slider_tc_minutes), 4, LV_ANIM_ON);
+                            id(overlay_tc_seconds) = 60;
+                            lv_slider_set_value(id(slider_tc_minutes), 60, LV_ANIM_ON);
+                            lv_label_set_text(id(lbl_tc_minutes_val), "1 min");
+                      widgets:
+                        - label:
+                            text: "1"
+                            align: CENTER
+                            text_font: font_normal
+                            text_color: 0xCCDDFF
+                  - button:
+                      id: btn_tc_q2
+                      width: 74
+                      height: 48
+                      align: LEFT_MID
+                      x: 87
+                      y: 40
+                      bg_color: 0x334466
+                      border_color: 0x5577AA
+                      border_width: 1
+                      radius: 6
+                      on_click:
+                        - lambda: |-
+                            id(overlay_tc_seconds) = 120;
+                            lv_slider_set_value(id(slider_tc_minutes), 120, LV_ANIM_ON);
+                            lv_label_set_text(id(lbl_tc_minutes_val), "2 min");
+                      widgets:
+                        - label:
+                            text: "2"
+                            align: CENTER
+                            text_font: font_normal
+                            text_color: 0xCCDDFF
+                  - button:
+                      id: btn_tc_q3
+                      width: 74
+                      height: 48
+                      align: LEFT_MID
+                      x: 174
+                      y: 40
+                      bg_color: 0x334466
+                      border_color: 0x5577AA
+                      border_width: 1
+                      radius: 6
+                      on_click:
+                        - lambda: |-
+                            id(overlay_tc_seconds) = 180;
+                            lv_slider_set_value(id(slider_tc_minutes), 180, LV_ANIM_ON);
+                            lv_label_set_text(id(lbl_tc_minutes_val), "3 min");
+                      widgets:
+                        - label:
+                            text: "3"
+                            align: CENTER
+                            text_font: font_normal
+                            text_color: 0xCCDDFF
+                  - button:
+                      id: btn_tc_q4
+                      width: 74
+                      height: 48
+                      align: LEFT_MID
+                      x: 261
+                      y: 40
+                      bg_color: 0x334466
+                      border_color: 0x5577AA
+                      border_width: 1
+                      radius: 6
+                      on_click:
+                        - lambda: |-
+                            id(overlay_tc_seconds) = 240;
+                            lv_slider_set_value(id(slider_tc_minutes), 240, LV_ANIM_ON);
                             lv_label_set_text(id(lbl_tc_minutes_val), "4 min");
                       widgets:
                         - label:
-                            text: "Dose 0,5l / 4 min"
+                            text: "4"
                             align: CENTER
-                            text_font: font_small
+                            text_font: font_normal
                             text_color: 0xCCDDFF
                   - button:
-                      id: btn_tc_flasche
-                      width: 240
-                      height: 52
-                      align: BOTTOM_RIGHT
-                      x: -30
-                      y: -8
-                      bg_color: 0x223355
-                      border_color: 0x445588
-                      border_width: 2
-                      radius: 8
+                      id: btn_tc_q5
+                      width: 74
+                      height: 48
+                      align: LEFT_MID
+                      x: 348
+                      y: 40
+                      bg_color: 0x334466
+                      border_color: 0x5577AA
+                      border_width: 1
+                      radius: 6
                       on_click:
                         - lambda: |-
-                            id(overlay_tc_minutes) = 8;
-                            lv_slider_set_value(id(slider_tc_minutes), 8, LV_ANIM_ON);
+                            id(overlay_tc_seconds) = 300;
+                            lv_slider_set_value(id(slider_tc_minutes), 300, LV_ANIM_ON);
+                            lv_label_set_text(id(lbl_tc_minutes_val), "5 min");
+                      widgets:
+                        - label:
+                            text: "5"
+                            align: CENTER
+                            text_font: font_normal
+                            text_color: 0xCCDDFF
+                  - button:
+                      id: btn_tc_q6
+                      width: 74
+                      height: 48
+                      align: LEFT_MID
+                      x: 435
+                      y: 40
+                      bg_color: 0x334466
+                      border_color: 0x5577AA
+                      border_width: 1
+                      radius: 6
+                      on_click:
+                        - lambda: |-
+                            id(overlay_tc_seconds) = 360;
+                            lv_slider_set_value(id(slider_tc_minutes), 360, LV_ANIM_ON);
+                            lv_label_set_text(id(lbl_tc_minutes_val), "6 min");
+                      widgets:
+                        - label:
+                            text: "6"
+                            align: CENTER
+                            text_font: font_normal
+                            text_color: 0xCCDDFF
+                  - button:
+                      id: btn_tc_q7
+                      width: 74
+                      height: 48
+                      align: LEFT_MID
+                      x: 522
+                      y: 40
+                      bg_color: 0x334466
+                      border_color: 0x5577AA
+                      border_width: 1
+                      radius: 6
+                      on_click:
+                        - lambda: |-
+                            id(overlay_tc_seconds) = 420;
+                            lv_slider_set_value(id(slider_tc_minutes), 420, LV_ANIM_ON);
+                            lv_label_set_text(id(lbl_tc_minutes_val), "7 min");
+                      widgets:
+                        - label:
+                            text: "7"
+                            align: CENTER
+                            text_font: font_normal
+                            text_color: 0xCCDDFF
+                  - button:
+                      id: btn_tc_q8
+                      width: 74
+                      height: 48
+                      align: LEFT_MID
+                      x: 609
+                      y: 40
+                      bg_color: 0x334466
+                      border_color: 0x5577AA
+                      border_width: 1
+                      radius: 6
+                      on_click:
+                        - lambda: |-
+                            id(overlay_tc_seconds) = 480;
+                            lv_slider_set_value(id(slider_tc_minutes), 480, LV_ANIM_ON);
                             lv_label_set_text(id(lbl_tc_minutes_val), "8 min");
                       widgets:
                         - label:
-                            text: "Flasche 0,5l / 8 min"
+                            text: "8"
                             align: CENTER
-                            text_font: font_small
+                            text_font: font_normal
+                            text_color: 0xCCDDFF
+                  - button:
+                      id: btn_tc_q9
+                      width: 74
+                      height: 48
+                      align: LEFT_MID
+                      x: 696
+                      y: 40
+                      bg_color: 0x334466
+                      border_color: 0x5577AA
+                      border_width: 1
+                      radius: 6
+                      on_click:
+                        - lambda: |-
+                            id(overlay_tc_seconds) = 540;
+                            lv_slider_set_value(id(slider_tc_minutes), 540, LV_ANIM_ON);
+                            lv_label_set_text(id(lbl_tc_minutes_val), "9 min");
+                      widgets:
+                        - label:
+                            text: "9"
+                            align: CENTER
+                            text_font: font_normal
+                            text_color: 0xCCDDFF
+                  - button:
+                      id: btn_tc_q10
+                      width: 74
+                      height: 48
+                      align: LEFT_MID
+                      x: 783
+                      y: 40
+                      bg_color: 0x334466
+                      border_color: 0x5577AA
+                      border_width: 1
+                      radius: 6
+                      on_click:
+                        - lambda: |-
+                            id(overlay_tc_seconds) = 600;
+                            lv_slider_set_value(id(slider_tc_minutes), 600, LV_ANIM_ON);
+                            lv_label_set_text(id(lbl_tc_minutes_val), "10 min");
+                      widgets:
+                        - label:
+                            text: "10"
+                            align: CENTER
+                            text_font: font_normal
                             text_color: 0xCCDDFF
 
             # ── OK-Button (Einstellungen übernehmen, Overlay schließen) ─────
@@ -2088,7 +2340,7 @@ lvgl:
                         id(slot_is_countdown)[i] = (id(overlay_tc_type) == 1);
                         if (id(overlay_tc_type) == 1) {
                           // Countdown: Max-Zeit setzen, Reset
-                          id(slot_countdown_max_ms)[i] = (uint32_t)id(overlay_tc_minutes) * 60000;
+                          id(slot_countdown_max_ms)[i] = (uint32_t)id(overlay_tc_seconds) * 1000;
                         }
                         // Timer/Countdown starten
                         id(slot_elapsed_ms)[i] = 0;
