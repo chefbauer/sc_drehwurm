@@ -155,6 +155,12 @@ Für 6 Timer-Slots (Index 0–5):
 | `slot_start_ms` | `std::array<uint32_t, 6>` | millis() beim letzten Start |
 | `slot_elapsed_ms` | `std::array<uint32_t, 6>` | akkumulierte Zeit in ms |
 | `slot_status` | `std::array<int, 6>` | 0=gestoppt, 1=läuft, 2=pausiert |
+| `slot_is_countdown` | `std::array<bool, 6>` | false=Timer, true=Countdown |
+| `slot_countdown_max_ms` | `std::array<uint32_t, 6>` | Countdown-Zielzeit in ms (NVS persistent, Default 4 min) |
+| `overlay_tc_open_slot` | int | Slot-Index (0–5) für den das Overlay geöffnet wurde |
+| `overlay_tc_type` | int | 0=Timer, 1=Countdown (Overlay-Zustand) |
+| `overlay_tc_minutes` | int | Ausgewählte Countdown-Minuten (1–10) |
+| `overlay_tc_mask` | int | Bitmask: welche Slots im Overlay selektiert sind (Bit 0 = Slot 1) |
 | `amg_pixel_temps` | `std::array<float, 64>` | AMG8833 8×8 Pixel-Temperaturen |
 | `global_leds_per_slot` | int | Anzahl LEDs pro Slot im WS2812-Ring (Tab Licht) |
 | `global_lvgl_is_idle` | bool | LVGL-Idle-Flag — per `interval: 10s` via `lvgl.is_idle` gesetzt |
@@ -162,7 +168,13 @@ Für 6 Timer-Slots (Index 0–5):
 | `global_mat_type` | int (0) | Materialtyp: 0=Glas, 1=Dose matt, 2=Dose glänzend |
 | `global_mat_color` | int (3) | Farbindex 0–5 (Farb-Swatch im Emissivitäts-Selector) |
 
-**Interval:** 500 ms → aktualisiert alle 6 Timer-Labels wenn Status = 1.  
+**Binary Sensors (internal) für Blink-Zustand:**
+
+| ID | Bedeutung |
+|---|---|
+| `bin_slot1_blink` … `bin_slot6_blink` | `true` = Slot blinkt (Countdown abgelaufen). `->state` ist plain bool — sicher in `addressable_lambda`. Schreiben via `publish_state(true/false)`. |
+
+**Interval:** 500 ms → aktualisiert alle 6 Timer-/Countdown-Labels, blinkt Tab-Farbe wenn `bin_slotN_blink` aktiv (`tc_blink_phase` static).  
 Aktualisiert auch das AMG8833-Overlay wenn es sichtbar ist.  
 **Interval:** 10 s → prüft `lvgl.is_idle: timeout: ${c_standby_lvgl_idle}` → setzt `global_lvgl_is_idle`
 
@@ -228,10 +240,12 @@ Anordnung im Uhrzeigersinn nach Farbrad:
   - Play/Pause-Icon rechtsbündig (x=-17)
 
 **Touch-Verhalten:**
-- `on_short_click`: Start (Status 0→1) / Pause (Status 1→2) Toggle
-- `on_long_press`: Reset — nur wenn Status=2 (pausiert) → Status=0, Anzeige=00:00
+- `on_short_click`:
+  - Wenn `bin_slotN_blink` aktiv: Blink stoppen + Zeit-Reset (Status=2, Anzeige=Countdown-Max oder 00:00)
+  - Sonst: Start/Pause-Toggle (Status 0/2 → 1, Status 1 → 2)
+- `on_long_press`: öffnet `overlay_timer_cowntdown` (mit diesem Slot vorbelegt); wenn Blink aktiv: vorher stoppen
 
-> `on_short_click` feuert bei Long Press **nicht** → kein Extra-Flag nötig
+> Countdown-Alarm: wenn Countdown auf 0 läuft → `bin_slotN_blink = true` → Tab blinkt + LED-Ring blinkt (500ms-Phase)
 
 **Textfarben** (auf 50%-Hintergrund):
 | Slot | Textfarbe |
@@ -394,6 +408,38 @@ Tab-Reihenfolge: **System · Schwenker · Licht · Bildschirm · Kühler · Test
 
 **XML-Layout-Export:** `ui/overlay_temp_messung.xml` — für viewer.lvgl.io (pixelgenaues Layout-Editing)
 
+### `overlay_timer_cowntdown` — Timer / Countdown Konfiguration
+- Vollflächig (100%×100%), `bg_color: #111122`, `bg_opa: 94%`, initial `hidden: true`
+- **Öffnen:** `script_open_timer_overlay(slot_idx)` — aus `on_long_press` jedes Slot-Tabs
+- **Schließen:** `btn_tc_exit` (rotes X) oder `btn_tc_ok` (OK, Übernehmen)
+- **Slot-Buttons** `btn_tc_s1`–`btn_tc_s6` + `btn_tc_all` („Alle“): Toggle Bitmask `overlay_tc_mask` (Bit 0–5)
+  - Selektiert = `bg_opa: COVER`, deselektiert = `bg_opa: 30%`
+- **Typ-Toggle:** `btn_tc_type_timer` (aktiv=`#334488`) / `btn_tc_type_cd`
+  - Schaltet `obj_tc_timer_content` (Timer-Content) vs. `obj_tc_cd_content` (Countdown-Content) sichtbar
+- **Timer-Content** (`obj_tc_timer_content`):
+  - `btn_tc_reset`: setzt alle gewählten Slots zurück (Status=0, Blink aus)
+- **Countdown-Content** (`obj_tc_cd_content`, hidden wenn Typ=Timer):
+  - `slider_tc_minutes` (1–10 min) + `lbl_tc_minutes_val`
+  - Presets: `btn_tc_dose` (Dose 0,5l / 4 min) + `btn_tc_flasche` (Flasche 0,5l / 8 min)
+- **`btn_tc_ok`** (grün, unten rechts): wendet Einstellungen auf alle gewählten Slots an + schließt Overlay
+  - Setzt `slot_is_countdown`, `slot_countdown_max_ms`, resettet Timer, Blink aus
+
+### `overlay_timer_cowntdown` — Timer / Countdown Konfiguration
+- Vollflächig (100%×100%), `bg_color: #111122`, `bg_opa: 94%`, initial `hidden: true`
+- **Öffnen:** `script_open_timer_overlay(slot_idx)` — aus `on_long_press` jedes Slot-Tabs
+- **Schließen:** `btn_tc_exit` (rotes X) oder `btn_tc_ok` (OK, Übernehmen)
+- **Slot-Buttons** `btn_tc_s1`–`btn_tc_s6` + `btn_tc_all` ("Alle"): Toggle Bitmask `overlay_tc_mask` (Bit 0–5)
+  - Selektiert = `bg_opa: COVER`, deselektiert = `bg_opa: 30%`
+- **Typ-Toggle:** `btn_tc_type_timer` (aktiv=`#334488`) / `btn_tc_type_cd`
+  - Schaltet `obj_tc_timer_content` (Timer-Content) vs. `obj_tc_cd_content` (Countdown-Content) sichtbar
+- **Timer-Content** (`obj_tc_timer_content`):
+  - `btn_tc_reset`: setzt alle gewählten Slots zurück (Status=0, Blink aus)
+- **Countdown-Content** (`obj_tc_cd_content`, hidden wenn Typ=Timer):
+  - `slider_tc_minutes` (1–10 min) + `lbl_tc_minutes_val`
+  - Presets: `btn_tc_dose` (Dose 0,5l / 4 min) + `btn_tc_flasche` (Flasche 0,5l / 8 min)
+- **`btn_tc_ok`** (grün, unten rechts): wendet Einstellungen auf alle gewählten Slots an + schließt Overlay
+  - Setzt `slot_is_countdown`, `slot_countdown_max_ms`, resettet Timer, Blink aus
+
 ### MCP4728 DAC — Turmpumpe
 - `output_pumpe_dacA`, Kanal A, `vref: vdd`
 - `power_down: normal`, `min_power: 0.2`, `max_power: 1.0`
@@ -495,7 +541,13 @@ Alle Sensoren auf `i2c_id: i2c_bus` (fremdkonfiguriert in main_config).
 - [x] sensorphalanx.yaml: VL53L1X, SHT4x, BMP581, VEML7700, MLX90632
 - [x] `zero_means_zero: true` für Turmpumpe (kein Nachlaufen)
 - [x] `lights.yaml`: WS2812-Ring (80 LEDs, `pin_led_h1`) mit Slot-Farb-Effekt (motorpositionsbasiert)
+- [x] `lights.yaml`: Blink-Effekt — `bin_slot1_blink`…`bin_slot6_blink` → Slot-LEDs blinken 2 Hz wenn Countdown abgelaufen
+- [x] LED-Ring Update-Rate: 40 Hz (25 ms) — Motor-Position wird alle 50 ms (20 Hz) per CAN aktualisiert; jede neue Position ist innerhalb max. 25 ms sichtbar
 - [x] Standby-System: `bin_standby` (TOF + LVGL-Idle), `global_lvgl_is_idle`, Mond-Icon in Statusleiste
+- [x] Timer/Countdown: `slot_is_countdown`, `slot_countdown_max_ms` (NVS-persistent), Globals + binary_sensors in `lvgl_basis.yaml`
+- [x] `script_open_timer_overlay`: öffnet `overlay_timer_cowntdown` mit Slot-Vorbelegung
+- [x] `overlay_timer_cowntdown`: Slot-Auswahl, Typ-Toggle, Slider 1–10 min, Presets Dose/Flasche, OK/Reset in `lvgl_overlay.yaml`
+- [x] Countdown-Alarm: Blink Tab + LED-Ring; Stopp per Touch (`on_short_click`) oder Long-Press
 - [x] Substitutionen c_standby_delay / c_standby_lvgl_idle / c_standby_tof_min_mm / c_tof*/c_ir* in `display_7z_settings.yaml`
 - [ ] Tank-Platzhalter durch echtes PNG ersetzen
 - [x] `sensor_temp_becken` via DS18B20 I²C-Bridge (`1w_i2c_bridge`, ESP-IDF 5.x) aktiv
@@ -722,10 +774,12 @@ Anordnung im Uhrzeigersinn nach Farbrad:
   - Play/Pause-Icon rechtsbündig (x=-17)
 
 **Touch-Verhalten:**
-- `on_short_click`: Start (Status 0→1) / Pause (Status 1→2) Toggle
-- `on_long_press`: Reset — nur wenn Status=2 (pausiert) → Status=0, Anzeige=00:00
+- `on_short_click`:
+  - Wenn `bin_slotN_blink` aktiv: Blink stoppen + Zeit-Reset (Status=2, Anzeige=Countdown-Max oder 00:00)
+  - Sonst: Start/Pause-Toggle (Status 0/2 → 1, Status 1 → 2)
+- `on_long_press`: öffnet `overlay_timer_cowntdown` (mit diesem Slot vorbelegt); wenn Blink aktiv: vorher stoppen
 
-> `on_short_click` feuert bei Long Press **nicht** → kein Extra-Flag nötig
+> Countdown-Alarm: wenn Countdown auf 0 läuft → `bin_slotN_blink = true` → Tab blinkt + LED-Ring blinkt (500ms-Phase)
 
 **Textfarben** (auf 50%-Hintergrund):
 | Slot | Textfarbe |

@@ -1,5 +1,5 @@
 # ── Komponenten ──────────────────────────────────────────────────────────────────
-#  esphome:   on_boot
+#  esphome:   on_boot  (init: Lichter, Sliders, LED-Helligkeit, bin_slot*_blink)
 #  time:      sntp_time
 #  mcp4728:   dac_output
 #  output:    output_pumpe_dacA, output_pumpe_dacB,
@@ -41,6 +41,13 @@ esphome:
             if (bri_pct > 100) bri_pct = 100;
             lv_slider_set_value(id(slider_led_helligkeit), bri_pct, LV_ANIM_OFF);
             lv_label_set_text_fmt(id(lbl_led_helligkeit_val), "%d%%", bri_pct);
+            // Blink-Sensoren beim Start auf false initialisieren
+            id(bin_slot1_blink).publish_state(false);
+            id(bin_slot2_blink).publish_state(false);
+            id(bin_slot3_blink).publish_state(false);
+            id(bin_slot4_blink).publish_state(false);
+            id(bin_slot5_blink).publish_state(false);
+            id(bin_slot6_blink).publish_state(false);
     - priority: -150        # System in sicheren Aus-Zustand (Not-Aus beim Booten)
       then:
         - script.execute: script_system_aus

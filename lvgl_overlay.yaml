@@ -11,6 +11,14 @@
 #    overlay_sensorphalanx:
 #      btn_sensorphalanx_exit,
 #      row_sp_tof/temp/humi/pressure/altitude/light/mlx + je badge + value_label
+#    overlay_timer_cowntdown:
+#      btn_tc_exit, lbl_tc_title,
+#      obj_tc_slot_row → btn_tc_s1..s6, btn_tc_all
+#      obj_tc_type_row → btn_tc_type_timer, btn_tc_type_cd
+#      obj_tc_timer_content → btn_tc_reset
+#      obj_tc_cd_content → slider_tc_minutes, lbl_tc_minutes_val,
+#                           btn_tc_dose, btn_tc_flasche
+#      btn_tc_ok
 # ─────────────────────────────────────────────────────────────────────────────────
 
 lvgl:
@@ -1626,3 +1634,447 @@ lvgl:
                             id(global_emissivity) = e;
                             lv_slider_set_value(id(slider_emissivity),(int)(e*100.0f+0.5f),LV_ANIM_ON);
                             lv_label_set_text_fmt(id(lbl_emissivity_val),"%.2f",e);
+
+      # ═══════════════════════════════════════════════════════════════════════
+      # Timer / Countdown Overlay
+      # Öffnen: on_long_press auf beliebigem Slot-Tab → script_open_timer_overlay
+      # Schließen: btn_tc_exit (X) oder btn_tc_ok (Übernehmen)
+      # ═══════════════════════════════════════════════════════════════════════
+      - obj:
+          id: overlay_timer_cowntdown
+          width: 100%
+          height: 100%
+          align: CENTER
+          bg_color: 0x111122
+          bg_opa: 94%
+          border_width: 0
+          pad_all: 0
+          flags: hidden
+
+          widgets:
+            # ── Schließen-Button (oben rechts) ─────────────────────────────
+            - button:
+                id: btn_tc_exit
+                width: 60
+                height: 60
+                align: TOP_RIGHT
+                x: -10
+                y: 10
+                bg_color: 0xCC3333
+                radius: 30
+                border_width: 0
+                on_click:
+                  - lambda: |-
+                      lv_obj_add_flag(id(overlay_timer_cowntdown), LV_OBJ_FLAG_HIDDEN);
+                widgets:
+                  - label:
+                      text: "\xef\x80\x8d"
+                      align: CENTER
+                      text_font: font_icons
+                      text_color: 0xFFFFFF
+
+            # ── Titel ───────────────────────────────────────────────────────
+            - label:
+                id: lbl_tc_title
+                text: "Timer / Countdown"
+                align: TOP_MID
+                y: 18
+                text_font: font_normal
+                text_color: 0xCCCCFF
+
+            # ── Slot-Auswahl-Zeile (7 Buttons: Slot 1–6 + Alle) ────────────
+            - obj:
+                id: obj_tc_slot_row
+                width: 800
+                height: 80
+                align: TOP_MID
+                y: 55
+                bg_opa: 0%
+                border_width: 0
+                pad_all: 0
+                flex_flow: ROW
+                flex_align_main: CENTER
+                flex_align_cross: CENTER
+                flex_align_track: CENTER
+
+                widgets:
+                  - button:
+                      id: btn_tc_s1
+                      width: 80
+                      height: 56
+                      bg_color: 0xFF0000
+                      bg_opa: 30%
+                      border_color: 0xFF0000
+                      border_width: 2
+                      radius: 8
+                      on_click:
+                        - lambda: |-
+                            id(overlay_tc_mask) |= (1 << 0);
+                            lv_obj_set_style_bg_opa(id(btn_tc_s1), id(overlay_tc_mask) & (1<<0) ? LV_OPA_COVER : LV_OPA_30, 0);
+                      widgets:
+                        - label:
+                            text: "1"
+                            align: CENTER
+                            text_font: font_normal
+                            text_color: 0xFFFFFF
+                  - button:
+                      id: btn_tc_s2
+                      width: 80
+                      height: 56
+                      bg_color: 0xFFFF00
+                      bg_opa: 30%
+                      border_color: 0xFFFF00
+                      border_width: 2
+                      radius: 8
+                      on_click:
+                        - lambda: |-
+                            id(overlay_tc_mask) ^= (1 << 1);
+                            lv_obj_set_style_bg_opa(id(btn_tc_s2), id(overlay_tc_mask) & (1<<1) ? LV_OPA_COVER : LV_OPA_30, 0);
+                      widgets:
+                        - label:
+                            text: "2"
+                            align: CENTER
+                            text_font: font_normal
+                            text_color: 0x111111
+                  - button:
+                      id: btn_tc_s3
+                      width: 80
+                      height: 56
+                      bg_color: 0x00FF00
+                      bg_opa: 30%
+                      border_color: 0x00FF00
+                      border_width: 2
+                      radius: 8
+                      on_click:
+                        - lambda: |-
+                            id(overlay_tc_mask) ^= (1 << 2);
+                            lv_obj_set_style_bg_opa(id(btn_tc_s3), id(overlay_tc_mask) & (1<<2) ? LV_OPA_COVER : LV_OPA_30, 0);
+                      widgets:
+                        - label:
+                            text: "3"
+                            align: CENTER
+                            text_font: font_normal
+                            text_color: 0x111111
+                  - button:
+                      id: btn_tc_s4
+                      width: 80
+                      height: 56
+                      bg_color: 0x00FFFF
+                      bg_opa: 30%
+                      border_color: 0x00FFFF
+                      border_width: 2
+                      radius: 8
+                      on_click:
+                        - lambda: |-
+                            id(overlay_tc_mask) ^= (1 << 3);
+                            lv_obj_set_style_bg_opa(id(btn_tc_s4), id(overlay_tc_mask) & (1<<3) ? LV_OPA_COVER : LV_OPA_30, 0);
+                      widgets:
+                        - label:
+                            text: "4"
+                            align: CENTER
+                            text_font: font_normal
+                            text_color: 0x111111
+                  - button:
+                      id: btn_tc_s5
+                      width: 80
+                      height: 56
+                      bg_color: 0x0000FF
+                      bg_opa: 30%
+                      border_color: 0x0000FF
+                      border_width: 2
+                      radius: 8
+                      on_click:
+                        - lambda: |-
+                            id(overlay_tc_mask) ^= (1 << 4);
+                            lv_obj_set_style_bg_opa(id(btn_tc_s5), id(overlay_tc_mask) & (1<<4) ? LV_OPA_COVER : LV_OPA_30, 0);
+                      widgets:
+                        - label:
+                            text: "5"
+                            align: CENTER
+                            text_font: font_normal
+                            text_color: 0xFFFFFF
+                  - button:
+                      id: btn_tc_s6
+                      width: 80
+                      height: 56
+                      bg_color: 0xFF00FF
+                      bg_opa: 30%
+                      border_color: 0xFF00FF
+                      border_width: 2
+                      radius: 8
+                      on_click:
+                        - lambda: |-
+                            id(overlay_tc_mask) ^= (1 << 5);
+                            lv_obj_set_style_bg_opa(id(btn_tc_s6), id(overlay_tc_mask) & (1<<5) ? LV_OPA_COVER : LV_OPA_30, 0);
+                      widgets:
+                        - label:
+                            text: "6"
+                            align: CENTER
+                            text_font: font_normal
+                            text_color: 0xFFFFFF
+                  - button:
+                      id: btn_tc_all
+                      width: 80
+                      height: 56
+                      bg_color: 0x333344
+                      bg_opa: COVER
+                      border_color: 0x8888AA
+                      border_width: 2
+                      radius: 8
+                      on_click:
+                        - lambda: |-
+                            // Alle Slots togglen: wenn alle aktiv → alle aus, sonst alle an
+                            bool all_on = (id(overlay_tc_mask) & 0x3F) == 0x3F;
+                            id(overlay_tc_mask) = all_on ? 0 : 0x3F;
+                            lv_obj_set_style_bg_opa(id(btn_tc_s1), id(overlay_tc_mask)&(1<<0)?LV_OPA_COVER:LV_OPA_30, 0);
+                            lv_obj_set_style_bg_opa(id(btn_tc_s2), id(overlay_tc_mask)&(1<<1)?LV_OPA_COVER:LV_OPA_30, 0);
+                            lv_obj_set_style_bg_opa(id(btn_tc_s3), id(overlay_tc_mask)&(1<<2)?LV_OPA_COVER:LV_OPA_30, 0);
+                            lv_obj_set_style_bg_opa(id(btn_tc_s4), id(overlay_tc_mask)&(1<<3)?LV_OPA_COVER:LV_OPA_30, 0);
+                            lv_obj_set_style_bg_opa(id(btn_tc_s5), id(overlay_tc_mask)&(1<<4)?LV_OPA_COVER:LV_OPA_30, 0);
+                            lv_obj_set_style_bg_opa(id(btn_tc_s6), id(overlay_tc_mask)&(1<<5)?LV_OPA_COVER:LV_OPA_30, 0);
+                      widgets:
+                        - label:
+                            text: "Alle"
+                            align: CENTER
+                            text_font: font_small
+                            text_color: 0xCCCCFF
+
+            # ── Typ-Auswahl (Timer / Countdown) ────────────────────────────
+            - obj:
+                id: obj_tc_type_row
+                width: 700
+                height: 64
+                align: TOP_MID
+                y: 148
+                bg_opa: 0%
+                border_width: 0
+                pad_all: 0
+                flex_flow: ROW
+                flex_align_main: CENTER
+                flex_align_cross: CENTER
+                flex_align_track: CENTER
+
+                widgets:
+                  - label:
+                      text: "Typ:"
+                      text_font: font_normal
+                      text_color: 0xCCCCFF
+                  - button:
+                      id: btn_tc_type_timer
+                      width: 180
+                      height: 52
+                      bg_color: 0x334488
+                      border_color: 0x6688CC
+                      border_width: 2
+                      radius: 8
+                      on_click:
+                        - lambda: |-
+                            id(overlay_tc_type) = 0;
+                            lv_obj_set_style_bg_color(id(btn_tc_type_timer), lv_color_hex(0x334488), 0);
+                            lv_obj_set_style_bg_color(id(btn_tc_type_cd),    lv_color_hex(0x222233), 0);
+                            lv_obj_clear_flag(id(obj_tc_timer_content), LV_OBJ_FLAG_HIDDEN);
+                            lv_obj_add_flag(id(obj_tc_cd_content),    LV_OBJ_FLAG_HIDDEN);
+                      widgets:
+                        - label:
+                            text: "Timer"
+                            align: CENTER
+                            text_font: font_normal
+                            text_color: 0xFFFFFF
+                  - button:
+                      id: btn_tc_type_cd
+                      width: 220
+                      height: 52
+                      bg_color: 0x222233
+                      border_color: 0x445566
+                      border_width: 2
+                      radius: 8
+                      on_click:
+                        - lambda: |-
+                            id(overlay_tc_type) = 1;
+                            lv_obj_set_style_bg_color(id(btn_tc_type_cd),    lv_color_hex(0x334488), 0);
+                            lv_obj_set_style_bg_color(id(btn_tc_type_timer), lv_color_hex(0x222233), 0);
+                            lv_obj_add_flag(id(obj_tc_timer_content),    LV_OBJ_FLAG_HIDDEN);
+                            lv_obj_clear_flag(id(obj_tc_cd_content), LV_OBJ_FLAG_HIDDEN);
+                      widgets:
+                        - label:
+                            text: "Countdown"
+                            align: CENTER
+                            text_font: font_normal
+                            text_color: 0xFFFFFF
+
+            # ── Timer-Inhalt (sichtbar wenn Typ = Timer) ────────────────────
+            - obj:
+                id: obj_tc_timer_content
+                width: 700
+                height: 140
+                align: TOP_MID
+                y: 240
+                bg_opa: 0%
+                border_width: 0
+                pad_all: 0
+
+                widgets:
+                  - button:
+                      id: btn_tc_reset
+                      width: 280
+                      height: 56
+                      align: CENTER
+                      bg_color: 0x336633
+                      border_color: 0x55AA55
+                      border_width: 2
+                      radius: 8
+                      on_click:
+                        - lambda: |-
+                            // Timer-Reset für alle gewählten Slots
+                            esphome::binary_sensor::BinarySensor* blink_s[6] = {
+                              id(bin_slot1_blink), id(bin_slot2_blink), id(bin_slot3_blink),
+                              id(bin_slot4_blink), id(bin_slot5_blink), id(bin_slot6_blink),
+                            };
+                            const uint32_t slot_fc[6] = {0xFF0000,0xFFFF00,0x00FF00,0x00FFFF,0x0000FF,0xFF00FF};
+                            lv_obj_t* slot_tabs[6] = {
+                              id(slot1_tab),id(slot2_tab),id(slot3_tab),
+                              id(slot4_tab),id(slot5_tab),id(slot6_tab),
+                            };
+                            for (int i = 0; i < 6; i++) {
+                              if (!(id(overlay_tc_mask) & (1 << i))) continue;
+                              id(slot_elapsed_ms)[i] = 0;
+                              id(slot_start_ms)[i]   = 0;
+                              id(slot_status)[i]     = 0;
+                              blink_s[i]->publish_state(false);
+                              lv_obj_set_style_bg_color(slot_tabs[i], lv_color_hex(slot_fc[i]), 0);
+                            }
+                      widgets:
+                        - label:
+                            text: "Timer Reset"
+                            align: CENTER
+                            text_font: font_normal
+                            text_color: 0xFFFFFF
+
+            # ── Countdown-Inhalt (sichtbar wenn Typ = Countdown) ───────────
+            - obj:
+                id: obj_tc_cd_content
+                width: 700
+                height: 180
+                align: TOP_MID
+                y: 240
+                bg_opa: 0%
+                border_width: 0
+                pad_all: 0
+                flags: hidden
+
+                widgets:
+                  # Slider 1–10 Minuten
+                  - slider:
+                      id: slider_tc_minutes
+                      width: 560
+                      height: 24
+                      align: TOP_MID
+                      y: 8
+                      min_value: 1
+                      max_value: 10
+                      value: 4
+                      on_value:
+                        - lambda: |-
+                            id(overlay_tc_minutes) = (int)x;
+                            char buf[16];
+                            snprintf(buf, sizeof(buf), "%d min", (int)x);
+                            lv_label_set_text(id(lbl_tc_minutes_val), buf);
+                  - label:
+                      id: lbl_tc_minutes_val
+                      text: "4 min"
+                      align: TOP_MID
+                      y: 42
+                      text_font: font_normal
+                      text_color: 0xCCCCFF
+                  # Preset-Buttons
+                  - button:
+                      id: btn_tc_dose
+                      width: 240
+                      height: 52
+                      align: BOTTOM_LEFT
+                      x: 30
+                      y: -8
+                      bg_color: 0x223355
+                      border_color: 0x445588
+                      border_width: 2
+                      radius: 8
+                      on_click:
+                        - lambda: |-
+                            id(overlay_tc_minutes) = 4;
+                            lv_slider_set_value(id(slider_tc_minutes), 4, LV_ANIM_ON);
+                            lv_label_set_text(id(lbl_tc_minutes_val), "4 min");
+                      widgets:
+                        - label:
+                            text: "Dose 0,5l / 4 min"
+                            align: CENTER
+                            text_font: font_small
+                            text_color: 0xCCDDFF
+                  - button:
+                      id: btn_tc_flasche
+                      width: 240
+                      height: 52
+                      align: BOTTOM_RIGHT
+                      x: -30
+                      y: -8
+                      bg_color: 0x223355
+                      border_color: 0x445588
+                      border_width: 2
+                      radius: 8
+                      on_click:
+                        - lambda: |-
+                            id(overlay_tc_minutes) = 8;
+                            lv_slider_set_value(id(slider_tc_minutes), 8, LV_ANIM_ON);
+                            lv_label_set_text(id(lbl_tc_minutes_val), "8 min");
+                      widgets:
+                        - label:
+                            text: "Flasche 0,5l / 8 min"
+                            align: CENTER
+                            text_font: font_small
+                            text_color: 0xCCDDFF
+
+            # ── OK-Button (Einstellungen übernehmen, Overlay schließen) ─────
+            - button:
+                id: btn_tc_ok
+                width: 160
+                height: 60
+                align: BOTTOM_RIGHT
+                x: -16
+                y: -16
+                bg_color: 0x226622
+                border_color: 0x44AA44
+                border_width: 2
+                radius: 10
+                on_click:
+                  - lambda: |-
+                      // Einstellungen auf alle gewählten Slots anwenden
+                      esphome::binary_sensor::BinarySensor* blink_s[6] = {
+                        id(bin_slot1_blink), id(bin_slot2_blink), id(bin_slot3_blink),
+                        id(bin_slot4_blink), id(bin_slot5_blink), id(bin_slot6_blink),
+                      };
+                      const uint32_t slot_fc[6] = {0xFF0000,0xFFFF00,0x00FF00,0x00FFFF,0x0000FF,0xFF00FF};
+                      lv_obj_t* slot_tabs[6] = {
+                        id(slot1_tab),id(slot2_tab),id(slot3_tab),
+                        id(slot4_tab),id(slot5_tab),id(slot6_tab),
+                      };
+                      for (int i = 0; i < 6; i++) {
+                        if (!(id(overlay_tc_mask) & (1 << i))) continue;
+                        // Typ setzen
+                        id(slot_is_countdown)[i] = (id(overlay_tc_type) == 1);
+                        if (id(overlay_tc_type) == 1) {
+                          // Countdown: Max-Zeit setzen, Reset
+                          id(slot_countdown_max_ms)[i] = (uint32_t)id(overlay_tc_minutes) * 60000;
+                        }
+                        // Timer/Countdown zurücksetzen
+                        id(slot_elapsed_ms)[i] = 0;
+                        id(slot_start_ms)[i]   = 0;
+                        id(slot_status)[i]     = 0;
+                        blink_s[i]->publish_state(false);
+                        lv_obj_set_style_bg_color(slot_tabs[i], lv_color_hex(slot_fc[i]), 0);
+                      }
+                      lv_obj_add_flag(id(overlay_timer_cowntdown), LV_OBJ_FLAG_HIDDEN);
+                widgets:
+                  - label:
+                      text: "\xef\x80\x8c  OK"
+                      align: CENTER
+                      text_font: font_normal
+                      text_color: 0xFFFFFF

@@ -11,8 +11,13 @@
 #  font:      font_title, font_normal, font_preset_num, font_tab, font_small,
 #             font_clock, font_temp, font_icons, font_timer, font_arc_val, font_icon_xl
 #  globals:   slot_start_ms, slot_elapsed_ms, slot_status,
+#             slot_is_countdown, slot_countdown_max_ms,
+#             overlay_tc_open_slot, overlay_tc_type, overlay_tc_minutes,
+#             overlay_tc_mask,
 #             brightness_auto_mode, brightness_auto_updating, system_ein
-#  interval:  (kein id)
+#  binary_sensor: bin_slot1_blink .. bin_slot6_blink  (template, internal)
+#  script:    script_open_timer_overlay
+#  interval:  500ms (Timer/Countdown-Anzeige + Blink + AMG), 10s (LVGL-Idle)
 #  lvgl:      page_main, page_settings
 # ─────────────────────────────────────────────────────────────────────────────────
 
@@ -153,45 +158,160 @@ globals:
     type: float
     restore_value: true
     initial_value: '9.0'
+  # ── Timer / Countdown ──────────────────────────────────────
+  - id: slot_is_countdown
+    type: std::array<bool, 6>
+    restore_value: false
+    initial_value: '{false, false, false, false, false, false}'
+  - id: slot_countdown_max_ms
+    type: std::array<uint32_t, 6>
+    restore_value: true
+    initial_value: '{240000, 240000, 240000, 240000, 240000, 240000}'
+  - id: overlay_tc_open_slot
+    type: int
+    restore_value: false
+    initial_value: '0'
+  - id: overlay_tc_type
+    type: int
+    restore_value: false
+    initial_value: '0'
+  - id: overlay_tc_minutes
+    type: int
+    restore_value: false
+    initial_value: '4'
+  - id: overlay_tc_mask
+    type: int
+    restore_value: false
+    initial_value: '1'
 sensor:
   - platform: template
     id: sensor_leds_per_slot
     internal: true
     accuracy_decimals: 0
+
+binary_sensor:
+  - platform: template
+    id: bin_slot1_blink
+    internal: true
+  - platform: template
+    id: bin_slot2_blink
+    internal: true
+  - platform: template
+    id: bin_slot3_blink
+    internal: true
+  - platform: template
+    id: bin_slot4_blink
+    internal: true
+  - platform: template
+    id: bin_slot5_blink
+    internal: true
+  - platform: template
+    id: bin_slot6_blink
+    internal: true
+
+script:
+  - id: script_open_timer_overlay
+    parameters:
+      slot_idx: int
+    then:
+      - lambda: |-
+          id(overlay_tc_open_slot) = slot_idx;
+          id(overlay_tc_type) = id(slot_is_countdown)[slot_idx] ? 1 : 0;
+          int mins = (int)(id(slot_countdown_max_ms)[slot_idx] / 60000);
+          if (mins < 1) mins = 1;
+          if (mins > 10) mins = 10;
+          id(overlay_tc_minutes) = mins;
+          id(overlay_tc_mask) = (1 << slot_idx);
+          // Slot-Selector Buttons: Optik setzen
+          lv_obj_t* sb[6] = {
+            id(btn_tc_s1), id(btn_tc_s2), id(btn_tc_s3),
+            id(btn_tc_s4), id(btn_tc_s5), id(btn_tc_s6)
+          };
+          for (int s = 0; s < 6; s++) {
+            lv_obj_set_style_bg_opa(sb[s],
+              (id(overlay_tc_mask) & (1 << s)) ? LV_OPA_COVER : LV_OPA_TRANSP, 0);
+          }
+          lv_obj_set_style_bg_opa(id(btn_tc_all), LV_OPA_TRANSP, 0);
+          // Typ-Buttons
+          if (id(overlay_tc_type) == 0) {
+            lv_obj_set_style_bg_color(id(btn_tc_type_timer), lv_color_hex(0x334488), 0);
+            lv_obj_set_style_bg_color(id(btn_tc_type_cd), lv_color_hex(0x444444), 0);
+            lv_obj_clear_flag(id(obj_tc_timer_content), LV_OBJ_FLAG_HIDDEN);
+            lv_obj_add_flag(id(obj_tc_cd_content), LV_OBJ_FLAG_HIDDEN);
+          } else {
+            lv_obj_set_style_bg_color(id(btn_tc_type_timer), lv_color_hex(0x444444), 0);
+            lv_obj_set_style_bg_color(id(btn_tc_type_cd), lv_color_hex(0x334488), 0);
+            lv_obj_add_flag(id(obj_tc_timer_content), LV_OBJ_FLAG_HIDDEN);
+            lv_obj_clear_flag(id(obj_tc_cd_content), LV_OBJ_FLAG_HIDDEN);
+          }
+          // Slider-Wert
+          lv_slider_set_value(id(slider_tc_minutes), id(overlay_tc_minutes), LV_ANIM_OFF);
+          char buf[10];
+          snprintf(buf, sizeof(buf), "%d min", id(overlay_tc_minutes));
+          lv_label_set_text(id(lbl_tc_minutes_val), buf);
+          // Overlay einblenden
+          lv_obj_clear_flag(id(overlay_timer_cowntdown), LV_OBJ_FLAG_HIDDEN);
+
 interval:
   - interval: 500ms
     then:
       - lambda: |-
-          char buf[6];
-          if (id(slot_status)[0] == 1) {
-            uint32_t s = (id(slot_elapsed_ms)[0] + (millis() - id(slot_start_ms)[0])) / 1000;
-            snprintf(buf, sizeof(buf), "%02u:%02u", (unsigned)(s / 60), (unsigned)(s % 60));
-            lv_label_set_text(id(lbl_slot1_time), buf);
-          }
-          if (id(slot_status)[1] == 1) {
-            uint32_t s = (id(slot_elapsed_ms)[1] + (millis() - id(slot_start_ms)[1])) / 1000;
-            snprintf(buf, sizeof(buf), "%02u:%02u", (unsigned)(s / 60), (unsigned)(s % 60));
-            lv_label_set_text(id(lbl_slot2_time), buf);
-          }
-          if (id(slot_status)[2] == 1) {
-            uint32_t s = (id(slot_elapsed_ms)[2] + (millis() - id(slot_start_ms)[2])) / 1000;
-            snprintf(buf, sizeof(buf), "%02u:%02u", (unsigned)(s / 60), (unsigned)(s % 60));
-            lv_label_set_text(id(lbl_slot3_time), buf);
-          }
-          if (id(slot_status)[3] == 1) {
-            uint32_t s = (id(slot_elapsed_ms)[3] + (millis() - id(slot_start_ms)[3])) / 1000;
-            snprintf(buf, sizeof(buf), "%02u:%02u", (unsigned)(s / 60), (unsigned)(s % 60));
-            lv_label_set_text(id(lbl_slot4_time), buf);
-          }
-          if (id(slot_status)[4] == 1) {
-            uint32_t s = (id(slot_elapsed_ms)[4] + (millis() - id(slot_start_ms)[4])) / 1000;
-            snprintf(buf, sizeof(buf), "%02u:%02u", (unsigned)(s / 60), (unsigned)(s % 60));
-            lv_label_set_text(id(lbl_slot5_time), buf);
-          }
-          if (id(slot_status)[5] == 1) {
-            uint32_t s = (id(slot_elapsed_ms)[5] + (millis() - id(slot_start_ms)[5])) / 1000;
-            snprintf(buf, sizeof(buf), "%02u:%02u", (unsigned)(s / 60), (unsigned)(s % 60));
-            lv_label_set_text(id(lbl_slot6_time), buf);
+          char buf[8];
+          // ── Blink-Phase (500 ms Takt) ────────────────────────────────
+          static bool tc_blink_phase = false;
+          tc_blink_phase = !tc_blink_phase;
+          lv_obj_t* slot_time_lbl[6] = {
+            id(lbl_slot1_time), id(lbl_slot2_time), id(lbl_slot3_time),
+            id(lbl_slot4_time), id(lbl_slot5_time), id(lbl_slot6_time)
+          };
+          lv_obj_t* slot_title_lbl[6] = {
+            id(lbl_slot1_timer_title), id(lbl_slot2_timer_title), id(lbl_slot3_timer_title),
+            id(lbl_slot4_timer_title), id(lbl_slot5_timer_title), id(lbl_slot6_timer_title)
+          };
+          lv_obj_t* slot_sym_lbl[6] = {
+            id(lbl_slot1_symbol), id(lbl_slot2_symbol), id(lbl_slot3_symbol),
+            id(lbl_slot4_symbol), id(lbl_slot5_symbol), id(lbl_slot6_symbol)
+          };
+          lv_obj_t* slot_tab_btn[6] = {
+            id(slot1_tab), id(slot2_tab), id(slot3_tab),
+            id(slot4_tab), id(slot5_tab), id(slot6_tab)
+          };
+          const uint32_t slot_fc[6] = {0xFF0000,0xFFFF00,0x00FF00,0x00FFFF,0x0000FF,0xFF00FF};
+          esphome::binary_sensor::BinarySensor* blink_s[6] = {
+            id(bin_slot1_blink), id(bin_slot2_blink), id(bin_slot3_blink),
+            id(bin_slot4_blink), id(bin_slot5_blink), id(bin_slot6_blink),
+          };
+          for (int ii = 0; ii < 6; ii++) {
+            // Titel: Timer / Countdown dynamisch
+            lv_label_set_text(slot_title_lbl[ii], id(slot_is_countdown)[ii] ? "Countdown" : "Timer");
+            // Blink: Tab-Farbe pulsieren lassen (bin_slotX_blink – safe in lambda)
+            if (blink_s[ii]->state) {
+              lv_obj_set_style_bg_color(slot_tab_btn[ii],
+                tc_blink_phase ? lv_color_hex(slot_fc[ii]) : lv_color_hex(0x222222), 0);
+            }
+            if (id(slot_status)[ii] != 1) continue;
+            uint32_t total_ms = id(slot_elapsed_ms)[ii] + (millis() - id(slot_start_ms)[ii]);
+            if (id(slot_is_countdown)[ii]) {
+              uint32_t max_ms = id(slot_countdown_max_ms)[ii];
+              if (total_ms >= max_ms) {
+                // Countdown abgelaufen: Alarm auslösen
+                id(slot_elapsed_ms)[ii] = 0;
+                id(slot_start_ms)[ii] = millis();
+                id(slot_status)[ii] = 2;
+                blink_s[ii]->publish_state(true);
+                lv_label_set_text(slot_time_lbl[ii], "00:00");
+                lv_label_set_text(slot_sym_lbl[ii], "\xef\x81\x8b");
+              } else {
+                uint32_t rem = max_ms - total_ms;
+                uint32_t s = rem / 1000;
+                snprintf(buf, sizeof(buf), "%02u:%02u", (unsigned)(s/60), (unsigned)(s%60));
+                lv_label_set_text(slot_time_lbl[ii], buf);
+              }
+            } else {
+              uint32_t s = total_ms / 1000;
+              snprintf(buf, sizeof(buf), "%02u:%02u", (unsigned)(s/60), (unsigned)(s%60));
+              lv_label_set_text(slot_time_lbl[ii], buf);
+            }
           }
           // AMG8833 Overlay aktualisieren wenn sichtbar
           if (!lv_obj_has_flag(id(overlay_amg8833), LV_OBJ_FLAG_HIDDEN)) {
@@ -561,28 +681,39 @@ lvgl:
                         on_short_click:
                           - lambda: |-
                               int i = 0;
+                              if (id(bin_slot1_blink)->state) {
+                                id(bin_slot1_blink)->publish_state(false);
+                                lv_obj_set_style_bg_color(id(slot1_tab), lv_color_hex(0xFF0000), 0);
+                                id(slot_elapsed_ms)[i] = 0;
+                                id(slot_start_ms)[i] = 0;
+                                id(slot_status)[i] = 2;
+                                if (id(slot_is_countdown)[i]) {
+                                  uint32_t s = id(slot_countdown_max_ms)[i] / 1000;
+                                  char rb[8]; snprintf(rb, sizeof(rb), "%02u:%02u", (unsigned)(s/60), (unsigned)(s%60));
+                                  lv_label_set_text(id(lbl_slot1_time), rb);
+                                } else { lv_label_set_text(id(lbl_slot1_time), "00:00"); }
+                                lv_label_set_text(id(lbl_slot1_symbol), "\xef\x81\x8b");
+                                return;
+                              }
                               if (id(slot_status)[i] == 0 || id(slot_status)[i] == 2) {
                                 id(slot_start_ms)[i] = millis();
                                 id(slot_status)[i] = 1;
                                 lv_label_set_text(id(lbl_slot1_symbol), "\xef\x81\x8c");
-                                ESP_LOGI("timer", "Timer 1: Start");
+                                ESP_LOGI("timer", "Slot 1: Start");
                               } else {
                                 id(slot_elapsed_ms)[i] += millis() - id(slot_start_ms)[i];
                                 id(slot_status)[i] = 2;
                                 lv_label_set_text(id(lbl_slot1_symbol), "\xef\x81\x8b");
-                                ESP_LOGI("timer", "Timer 1: Stop");
+                                ESP_LOGI("timer", "Slot 1: Pause");
                               }
                         on_long_press:
                           - lambda: |-
                               int i = 0;
-                              if (id(slot_status)[i] == 2) {
-                                id(slot_elapsed_ms)[i] = 0;
-                                id(slot_start_ms)[i] = 0;
-                                id(slot_status)[i] = 0;
-                                lv_label_set_text(id(lbl_slot1_time), "00:00");
-                                lv_label_set_text(id(lbl_slot1_symbol), "\xef\x81\x8b");
-                                ESP_LOGI("timer", "Timer 1: Reset");
+                              if (id(bin_slot1_blink)->state) {
+                                id(bin_slot1_blink)->publish_state(false);
+                                lv_obj_set_style_bg_color(id(slot1_tab), lv_color_hex(0xFF0000), 0);
                               }
+                              id(script_open_timer_overlay)->execute(i);
                         widgets:
                           - label:
                               id: lbl_slot1_timer_title
@@ -666,28 +797,39 @@ lvgl:
                         on_short_click:
                           - lambda: |-
                               int i = 1;
+                              if (id(bin_slot2_blink)->state) {
+                                id(bin_slot2_blink)->publish_state(false);
+                                lv_obj_set_style_bg_color(id(slot2_tab), lv_color_hex(0xFFFF00), 0);
+                                id(slot_elapsed_ms)[i] = 0;
+                                id(slot_start_ms)[i] = 0;
+                                id(slot_status)[i] = 2;
+                                if (id(slot_is_countdown)[i]) {
+                                  uint32_t s = id(slot_countdown_max_ms)[i] / 1000;
+                                  char rb[8]; snprintf(rb, sizeof(rb), "%02u:%02u", (unsigned)(s/60), (unsigned)(s%60));
+                                  lv_label_set_text(id(lbl_slot2_time), rb);
+                                } else { lv_label_set_text(id(lbl_slot2_time), "00:00"); }
+                                lv_label_set_text(id(lbl_slot2_symbol), "\xef\x81\x8b");
+                                return;
+                              }
                               if (id(slot_status)[i] == 0 || id(slot_status)[i] == 2) {
                                 id(slot_start_ms)[i] = millis();
                                 id(slot_status)[i] = 1;
                                 lv_label_set_text(id(lbl_slot2_symbol), "\xef\x81\x8c");
-                                ESP_LOGI("timer", "Timer 2: Start");
+                                ESP_LOGI("timer", "Slot 2: Start");
                               } else {
                                 id(slot_elapsed_ms)[i] += millis() - id(slot_start_ms)[i];
                                 id(slot_status)[i] = 2;
                                 lv_label_set_text(id(lbl_slot2_symbol), "\xef\x81\x8b");
-                                ESP_LOGI("timer", "Timer 2: Stop");
+                                ESP_LOGI("timer", "Slot 2: Pause");
                               }
                         on_long_press:
                           - lambda: |-
                               int i = 1;
-                              if (id(slot_status)[i] == 2) {
-                                id(slot_elapsed_ms)[i] = 0;
-                                id(slot_start_ms)[i] = 0;
-                                id(slot_status)[i] = 0;
-                                lv_label_set_text(id(lbl_slot2_time), "00:00");
-                                lv_label_set_text(id(lbl_slot2_symbol), "\xef\x81\x8b");
-                                ESP_LOGI("timer", "Timer 2: Reset");
+                              if (id(bin_slot2_blink)->state) {
+                                id(bin_slot2_blink)->publish_state(false);
+                                lv_obj_set_style_bg_color(id(slot2_tab), lv_color_hex(0xFFFF00), 0);
                               }
+                              id(script_open_timer_overlay)->execute(i);
                         widgets:
                           - label:
                               id: lbl_slot2_timer_title
@@ -771,28 +913,39 @@ lvgl:
                         on_short_click:
                           - lambda: |-
                               int i = 2;
+                              if (id(bin_slot3_blink)->state) {
+                                id(bin_slot3_blink)->publish_state(false);
+                                lv_obj_set_style_bg_color(id(slot3_tab), lv_color_hex(0x00FF00), 0);
+                                id(slot_elapsed_ms)[i] = 0;
+                                id(slot_start_ms)[i] = 0;
+                                id(slot_status)[i] = 2;
+                                if (id(slot_is_countdown)[i]) {
+                                  uint32_t s = id(slot_countdown_max_ms)[i] / 1000;
+                                  char rb[8]; snprintf(rb, sizeof(rb), "%02u:%02u", (unsigned)(s/60), (unsigned)(s%60));
+                                  lv_label_set_text(id(lbl_slot3_time), rb);
+                                } else { lv_label_set_text(id(lbl_slot3_time), "00:00"); }
+                                lv_label_set_text(id(lbl_slot3_symbol), "\xef\x81\x8b");
+                                return;
+                              }
                               if (id(slot_status)[i] == 0 || id(slot_status)[i] == 2) {
                                 id(slot_start_ms)[i] = millis();
                                 id(slot_status)[i] = 1;
                                 lv_label_set_text(id(lbl_slot3_symbol), "\xef\x81\x8c");
-                                ESP_LOGI("timer", "Timer 3: Start");
+                                ESP_LOGI("timer", "Slot 3: Start");
                               } else {
                                 id(slot_elapsed_ms)[i] += millis() - id(slot_start_ms)[i];
                                 id(slot_status)[i] = 2;
                                 lv_label_set_text(id(lbl_slot3_symbol), "\xef\x81\x8b");
-                                ESP_LOGI("timer", "Timer 3: Stop");
+                                ESP_LOGI("timer", "Slot 3: Pause");
                               }
                         on_long_press:
                           - lambda: |-
                               int i = 2;
-                              if (id(slot_status)[i] == 2) {
-                                id(slot_elapsed_ms)[i] = 0;
-                                id(slot_start_ms)[i] = 0;
-                                id(slot_status)[i] = 0;
-                                lv_label_set_text(id(lbl_slot3_time), "00:00");
-                                lv_label_set_text(id(lbl_slot3_symbol), "\xef\x81\x8b");
-                                ESP_LOGI("timer", "Timer 3: Reset");
+                              if (id(bin_slot3_blink)->state) {
+                                id(bin_slot3_blink)->publish_state(false);
+                                lv_obj_set_style_bg_color(id(slot3_tab), lv_color_hex(0x00FF00), 0);
                               }
+                              id(script_open_timer_overlay)->execute(i);
                         widgets:
                           - label:
                               id: lbl_slot3_timer_title
@@ -878,28 +1031,39 @@ lvgl:
                         on_short_click:
                           - lambda: |-
                               int i = 3;
+                              if (id(bin_slot4_blink)->state) {
+                                id(bin_slot4_blink)->publish_state(false);
+                                lv_obj_set_style_bg_color(id(slot4_tab), lv_color_hex(0x00FFFF), 0);
+                                id(slot_elapsed_ms)[i] = 0;
+                                id(slot_start_ms)[i] = 0;
+                                id(slot_status)[i] = 2;
+                                if (id(slot_is_countdown)[i]) {
+                                  uint32_t s = id(slot_countdown_max_ms)[i] / 1000;
+                                  char rb[8]; snprintf(rb, sizeof(rb), "%02u:%02u", (unsigned)(s/60), (unsigned)(s%60));
+                                  lv_label_set_text(id(lbl_slot4_time), rb);
+                                } else { lv_label_set_text(id(lbl_slot4_time), "00:00"); }
+                                lv_label_set_text(id(lbl_slot4_symbol), "\xef\x81\x8b");
+                                return;
+                              }
                               if (id(slot_status)[i] == 0 || id(slot_status)[i] == 2) {
                                 id(slot_start_ms)[i] = millis();
                                 id(slot_status)[i] = 1;
                                 lv_label_set_text(id(lbl_slot4_symbol), "\xef\x81\x8c");
-                                ESP_LOGI("timer", "Timer 4: Start");
+                                ESP_LOGI("timer", "Slot 4: Start");
                               } else {
                                 id(slot_elapsed_ms)[i] += millis() - id(slot_start_ms)[i];
                                 id(slot_status)[i] = 2;
                                 lv_label_set_text(id(lbl_slot4_symbol), "\xef\x81\x8b");
-                                ESP_LOGI("timer", "Timer 4: Stop");
+                                ESP_LOGI("timer", "Slot 4: Pause");
                               }
                         on_long_press:
                           - lambda: |-
                               int i = 3;
-                              if (id(slot_status)[i] == 2) {
-                                id(slot_elapsed_ms)[i] = 0;
-                                id(slot_start_ms)[i] = 0;
-                                id(slot_status)[i] = 0;
-                                lv_label_set_text(id(lbl_slot4_time), "00:00");
-                                lv_label_set_text(id(lbl_slot4_symbol), "\xef\x81\x8b");
-                                ESP_LOGI("timer", "Timer 4: Reset");
+                              if (id(bin_slot4_blink)->state) {
+                                id(bin_slot4_blink)->publish_state(false);
+                                lv_obj_set_style_bg_color(id(slot4_tab), lv_color_hex(0x00FFFF), 0);
                               }
+                              id(script_open_timer_overlay)->execute(i);
                         widgets:
                           - label:
                               id: lbl_slot4_timer_title
@@ -983,28 +1147,39 @@ lvgl:
                         on_short_click:
                           - lambda: |-
                               int i = 4;
+                              if (id(bin_slot5_blink)->state) {
+                                id(bin_slot5_blink)->publish_state(false);
+                                lv_obj_set_style_bg_color(id(slot5_tab), lv_color_hex(0x0000FF), 0);
+                                id(slot_elapsed_ms)[i] = 0;
+                                id(slot_start_ms)[i] = 0;
+                                id(slot_status)[i] = 2;
+                                if (id(slot_is_countdown)[i]) {
+                                  uint32_t s = id(slot_countdown_max_ms)[i] / 1000;
+                                  char rb[8]; snprintf(rb, sizeof(rb), "%02u:%02u", (unsigned)(s/60), (unsigned)(s%60));
+                                  lv_label_set_text(id(lbl_slot5_time), rb);
+                                } else { lv_label_set_text(id(lbl_slot5_time), "00:00"); }
+                                lv_label_set_text(id(lbl_slot5_symbol), "\xef\x81\x8b");
+                                return;
+                              }
                               if (id(slot_status)[i] == 0 || id(slot_status)[i] == 2) {
                                 id(slot_start_ms)[i] = millis();
                                 id(slot_status)[i] = 1;
                                 lv_label_set_text(id(lbl_slot5_symbol), "\xef\x81\x8c");
-                                ESP_LOGI("timer", "Timer 5: Start");
+                                ESP_LOGI("timer", "Slot 5: Start");
                               } else {
                                 id(slot_elapsed_ms)[i] += millis() - id(slot_start_ms)[i];
                                 id(slot_status)[i] = 2;
                                 lv_label_set_text(id(lbl_slot5_symbol), "\xef\x81\x8b");
-                                ESP_LOGI("timer", "Timer 5: Stop");
+                                ESP_LOGI("timer", "Slot 5: Pause");
                               }
                         on_long_press:
                           - lambda: |-
                               int i = 4;
-                              if (id(slot_status)[i] == 2) {
-                                id(slot_elapsed_ms)[i] = 0;
-                                id(slot_start_ms)[i] = 0;
-                                id(slot_status)[i] = 0;
-                                lv_label_set_text(id(lbl_slot5_time), "00:00");
-                                lv_label_set_text(id(lbl_slot5_symbol), "\xef\x81\x8b");
-                                ESP_LOGI("timer", "Timer 5: Reset");
+                              if (id(bin_slot5_blink)->state) {
+                                id(bin_slot5_blink)->publish_state(false);
+                                lv_obj_set_style_bg_color(id(slot5_tab), lv_color_hex(0x0000FF), 0);
                               }
+                              id(script_open_timer_overlay)->execute(i);
                         widgets:
                           - label:
                               id: lbl_slot5_timer_title
@@ -1088,28 +1263,39 @@ lvgl:
                         on_short_click:
                           - lambda: |-
                               int i = 5;
+                              if (id(bin_slot6_blink)->state) {
+                                id(bin_slot6_blink)->publish_state(false);
+                                lv_obj_set_style_bg_color(id(slot6_tab), lv_color_hex(0xFF00FF), 0);
+                                id(slot_elapsed_ms)[i] = 0;
+                                id(slot_start_ms)[i] = 0;
+                                id(slot_status)[i] = 2;
+                                if (id(slot_is_countdown)[i]) {
+                                  uint32_t s = id(slot_countdown_max_ms)[i] / 1000;
+                                  char rb[8]; snprintf(rb, sizeof(rb), "%02u:%02u", (unsigned)(s/60), (unsigned)(s%60));
+                                  lv_label_set_text(id(lbl_slot6_time), rb);
+                                } else { lv_label_set_text(id(lbl_slot6_time), "00:00"); }
+                                lv_label_set_text(id(lbl_slot6_symbol), "\xef\x81\x8b");
+                                return;
+                              }
                               if (id(slot_status)[i] == 0 || id(slot_status)[i] == 2) {
                                 id(slot_start_ms)[i] = millis();
                                 id(slot_status)[i] = 1;
                                 lv_label_set_text(id(lbl_slot6_symbol), "\xef\x81\x8c");
-                                ESP_LOGI("timer", "Timer 6: Start");
+                                ESP_LOGI("timer", "Slot 6: Start");
                               } else {
                                 id(slot_elapsed_ms)[i] += millis() - id(slot_start_ms)[i];
                                 id(slot_status)[i] = 2;
                                 lv_label_set_text(id(lbl_slot6_symbol), "\xef\x81\x8b");
-                                ESP_LOGI("timer", "Timer 6: Stop");
+                                ESP_LOGI("timer", "Slot 6: Pause");
                               }
                         on_long_press:
                           - lambda: |-
                               int i = 5;
-                              if (id(slot_status)[i] == 2) {
-                                id(slot_elapsed_ms)[i] = 0;
-                                id(slot_start_ms)[i] = 0;
-                                id(slot_status)[i] = 0;
-                                lv_label_set_text(id(lbl_slot6_time), "00:00");
-                                lv_label_set_text(id(lbl_slot6_symbol), "\xef\x81\x8b");
-                                ESP_LOGI("timer", "Timer 6: Reset");
+                              if (id(bin_slot6_blink)->state) {
+                                id(bin_slot6_blink)->publish_state(false);
+                                lv_obj_set_style_bg_color(id(slot6_tab), lv_color_hex(0xFF00FF), 0);
                               }
+                              id(script_open_timer_overlay)->execute(i);
                         widgets:
                           - label:
                               id: lbl_slot6_timer_title
