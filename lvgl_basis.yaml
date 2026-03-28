@@ -516,7 +516,7 @@ lvgl:
                         pad_all: 0
                         align: TOP_LEFT
                         x: 145
-                        y: 285
+                        y: 280
                         on_click:
                           - lambda: |-
                               id(script_schwenker_goto_slot)->execute(1);
@@ -537,8 +537,8 @@ lvgl:
                         border_color: 0xFFFF00
                         pad_all: 0
                         align: TOP_LEFT
-                        x: 24
-                        y: 215
+                        x: 28
+                        y: 213
                         on_click:
                           - lambda: |-
                               id(script_schwenker_goto_slot)->execute(2);
@@ -559,8 +559,8 @@ lvgl:
                         border_color: 0x00FF00
                         pad_all: 0
                         align: TOP_LEFT
-                        x: 24
-                        y: 75
+                        x: 28
+                        y: 78
                         on_click:
                           - lambda: |-
                               id(script_schwenker_goto_slot)->execute(3);
@@ -582,7 +582,7 @@ lvgl:
                         pad_all: 0
                         align: TOP_LEFT
                         x: 145
-                        y: 5
+                        y: 10
                         on_click:
                           - lambda: |-
                               id(script_schwenker_goto_slot)->execute(4);
@@ -603,8 +603,8 @@ lvgl:
                         border_color: 0x0000FF
                         pad_all: 0
                         align: TOP_LEFT
-                        x: 266
-                        y: 75
+                        x: 262
+                        y: 78
                         on_click:
                           - lambda: |-
                               id(script_schwenker_goto_slot)->execute(5);
@@ -625,8 +625,8 @@ lvgl:
                         border_color: 0xFF00FF
                         pad_all: 0
                         align: TOP_LEFT
-                        x: 266
-                        y: 215
+                        x: 262
+                        y: 213
                         on_click:
                           - lambda: |-
                               id(script_schwenker_goto_slot)->execute(6);
