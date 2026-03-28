@@ -32,13 +32,19 @@
 #   1 = CCW (LED-Index steigt gegen den Uhrzeigersinn, Draufsicht)
 # ACHTUNG: Motor/Display sind aus Draufsicht definiert.
 #          LED-Strip physisch montiert aus Motorwellen-Perspektive → direction=1 kompensiert.
+#
+# c_led_strip_color_mirror (Slot-Farbfolge-Richtung):
+#   0 = Farbfolge gleichsinnig mit motor_deg (Slot 0→1→2 in Richtung steigender motor_deg)
+#   1 = Farbfolge gespiegelt (Slot 0→1→2 gegen Richtung steigender motor_deg)
+#   Faustregel: wenn direction=1, meist color_mirror=1 nötig.
 # ─────────────────────────────────────────────────────────────────────────────────
 
 substitutions:
   c_led_strip_outer_led_num:       "172"
   c_led_strip_outer_led_0deg:      "86"
   c_led_strip_leds_per_slot:       "9"
-  c_led_strip_outer_direction:     "1"   # 1 = CCW — logisch gespiegelt (Motor/Display = Draufsicht, LED-Ring = Montageperspektive)
+  c_led_strip_outer_direction:     "1"   # 1 = CCW (LED-Strip Montageperspektive ≠ Draufsicht)
+  c_led_strip_color_mirror:        "1"   # 1 = Farbfolge gespiegelt (kompensiert direction=1)
 
 light:
   - platform: esp32_rmt_led_strip
@@ -90,7 +96,8 @@ light:
             bool blink_off = (millis() / 500u) % 2u == 0u;
             for (int s = 0; s < 6; s++) {
               if (blink_s[s] && blink_off) continue;  // Slot blinkt: in Aus-Phase LEDs dunkel lassen
-              float slot_deg = fmod(motor_deg + s * 60.0f, 360.0f);
+              float slot_step = (${c_led_strip_color_mirror} == 0) ? 60.0f : -60.0f;
+              float slot_deg = fmod(motor_deg + s * slot_step, 360.0f);
               if (slot_deg < 0.0f) slot_deg += 360.0f;
               float offset = slot_deg * total / 360.0f;
               int center = (int)(led0deg + (dir == 0 ? offset : -offset) + 0.5f);
@@ -125,7 +132,8 @@ light:
             Color bg = current_color;
             for (int i = 0; i < it.size(); i++) { it[i] = bg; }
             for (int s = 0; s < 6; s++) {
-              float slot_deg = fmod(motor_deg + s * 60.0f, 360.0f);
+              float slot_step = (${c_led_strip_color_mirror} == 0) ? 60.0f : -60.0f;
+              float slot_deg = fmod(motor_deg + s * slot_step, 360.0f);
               if (slot_deg < 0.0f) slot_deg += 360.0f;
               float offset = slot_deg * total / 360.0f;
               int center = (int)(led0deg + (dir == 0 ? offset : -offset) + 0.5f);
