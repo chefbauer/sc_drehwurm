@@ -14,6 +14,11 @@
 #  interval:        500ms (AMG/Timer), 10s (LVGL-Idle-Check → global_lvgl_is_idle)
 #  button:          mlx_set_extended
 #  script:          script_close_temp_overlay, script_mlx90632_set_mode_continous_extended_16hz
+#
+#  LVGL-Widgets (out-of-tree, definiert in lvgl_overlay.yaml):
+#    obj_ir_circle       → roter FOV-Kreis (MLX90632 Messfeld bei Distanz d)
+#    obj_ir_circle_blue  → blauer Kreis (FOV bei Schrägdistanz Sensor→Dosenrand)
+#                           Dose Ø67mm, Radius 33,5mm: d_rand=sqrt(d²+33,5²)
 # ─────────────────────────────────────────────────────────────────────────────────
 
 globals:
@@ -108,6 +113,8 @@ sensor:
             if (!isnan(x) && x > 0.0f) {
               const float TAN_25 = 0.46631f;
               const float PX_PER_MM = 6.674f;
+              const float DOSE_RADIUS_MM = 33.5f;  // Dose Ø67mm → Radius 33,5mm
+              // Roter Kreis: MLX90632 FOV bei Messdistanz d
               float diam_mm = 2.0f * x * TAN_25;
               int dpx = (int)(diam_mm * PX_PER_MM);
               if (dpx < 20) dpx = 20;
@@ -120,6 +127,17 @@ sensor:
               lv_obj_align(id(obj_cross_h), LV_ALIGN_CENTER, 0, 0);
               lv_obj_align(id(obj_cross_v), LV_ALIGN_CENTER, 0, 0);
               lv_obj_invalidate(id(obj_ir_circle));
+              // Blauer Kreis: FOV bei Schrägdistanz Sensor→Dosenrand
+              // d_rand = sqrt(d² + r_dose²)  →  Ø_blau = 2 * d_rand * tan(25°) * px/mm
+              float d_rand = sqrtf(x * x + DOSE_RADIUS_MM * DOSE_RADIUS_MM);
+              float b_diam_mm = 2.0f * d_rand * TAN_25;
+              int bpx = (int)(b_diam_mm * PX_PER_MM);
+              if (bpx < 20) bpx = 20;
+              if (bpx > 580) bpx = 580;
+              lv_obj_set_size(id(obj_ir_circle_blue), bpx, bpx);
+              lv_obj_set_style_radius(id(obj_ir_circle_blue), LV_RADIUS_CIRCLE, LV_PART_MAIN | LV_STATE_DEFAULT);
+              lv_obj_align(id(obj_ir_circle_blue), LV_ALIGN_CENTER, 0, 0);
+              lv_obj_invalidate(id(obj_ir_circle_blue));
             }
 
   # ── VL53L1X – Time-of-Flight Distanzsensor ────────────────

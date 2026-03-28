@@ -1159,6 +1159,25 @@ lvgl:
                       bg_color: 0x333333
                       radius: 6
 
+            # IR-FOV-Kreis Dosen-RAND (blau, dahinter = unter rotem Kreis)
+            # Physik: Dose Ø67mm → Radius 33,5mm
+            # Schrägdistanz Sensor→Dosenrand: d_rand = sqrt(d² + 33,5²)
+            # Kreisdurchmesser: 2 * d_rand * tan(25°) * 6,674 px/mm
+            # Initialgröße Sweetspot 45mm: sqrt(45²+33,5²)≈56mm → 349px
+            - obj:
+                id: obj_ir_circle_blue
+                width: 349
+                height: 349
+                align: CENTER
+                x: 0
+                y: 0
+                bg_opa: TRANSP
+                border_color: 0x4488FF
+                border_width: 3
+                radius: 175
+                pad_all: 0
+                scrollable: false
+
             # IR-FOV-Kreis: HINTERGRUND (zuerst = unten in Z-Order)
             # Durchmesser = 2 * dist * tan(25°) * 6.674 px/mm
             # MLX90632 FOV 50°, tan(25°)=0.46631, Display 7"/1024x600 → 6.674 px/mm

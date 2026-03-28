@@ -391,13 +391,18 @@ Tab-Reihenfolge: **System · Schwenker · Licht · Bildschirm · Kühler · Test
    - Labels: "100mm" oben (TOP_MID y:8), "45mm" CENTER y:-56 (grün = Sweet Spot), `lbl_dist_messung` BOTTOM_MID y:-4, "10mm" BOTTOM_MID y:-28
    - Optimal-Linie (120×3 px, CENTER y:-44, grün `#44AA44`)
    - `bar_distanz` (60×400 px, CENTER, min:10 max:100, init value:60) — **gespiegelter Wert**: Lambda `110 - d` (kein `inverted:`!)
-3. `obj_ir_circle` (init 280×280 px, CENTER x:0 y:0, TRANSP bg, roter Rand 5px, radius:140):
+3. `obj_ir_circle_blue` (init 349×349 px, CENTER, TRANSP bg, blauer Rand 3px `#4488FF`, Z-Order: hinter rotem Kreis):
+   - **Physik Schrägdistanz:** `d_rand = sqrt(d² + 33,5²)` (Dose Ø67mm = Radius 33,5mm)
+   - Durchmesser: `2 * d_rand * tan(25°) * 6,674 px/mm`
+   - Zeigt FOV-Messfeld am Dosenrand (immer größer als roter Kreis)
+   - Bei 50mm Distanz: d_rand ≈60mm → blaues Ø ≈374px, rotes Ø ≈312px
+4. `obj_ir_circle` (init 280×280 px, CENTER x:0 y:0, TRANSP bg, roter Rand 5px, radius:140):
    - `obj_cross_h` (init 280×5 px, CENTER, rot) — Fadenkreuz horizontal
    - `obj_cross_v` (init 5×280 px, CENTER, rot) — Fadenkreuz vertikal
    - Skaliert dynamisch per TOF via `lv_obj_set_size` + `lv_obj_set_style_radius` + `lv_obj_align`
-4. `lbl_ts_temp` (CENTER x:0 y:0, `font_ts_xl`, weiß, `clickable: true`) → `script_close_temp_overlay`
+5. `lbl_ts_temp` (CENTER x:0 y:0, `font_ts_xl`, weiß, `clickable: true`) → `script_close_temp_overlay`
    - Format: `%d,%d °C` mit manueller Vor/Nachkomma-Trennung (Komma statt Punkt)
-5. `obj_emissivity_container` (200×440 px, RIGHT_MID x:-20, `#1A1E2C`):
+6. `obj_emissivity_container` (200×440 px, RIGHT_MID x:-20, `#1A1E2C`):
    - Titel + `lbl_emissivity_val` (zeigt aktuellen ε-Wert)
    - 3 farbige Range-Balken: Glas (grün), Dose matt (orange), Alu (blau) mit Wertebereichen als Tick-Labels
    - `slider_emissivity` (28×340 px, LEFT_MID x:22, Bereich 1–100, init 90) → setzt `global_emissivity`
