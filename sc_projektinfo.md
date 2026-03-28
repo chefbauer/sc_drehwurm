@@ -229,7 +229,7 @@ Aktualisiert auch das AMG8833-Overlay wenn es sichtbar ist.
 | `c_led_strip_outer_led_num` | "172" | Anzahl LEDs im Ring |
 | `c_led_strip_outer_led_0deg` | "86" | LED-Index bei Motor-0° (Slot 1) |
 | `c_led_strip_leds_per_slot` | "9" | LEDs pro Slot (Standard) |
-| `c_led_strip_outer_direction` | "0" | **0=CW** (LED-Index steigt im Uhrzeigersinn), 1=CCW |
+| `c_led_strip_outer_direction` | "1" | **1=CCW** (logisch gespiegelt: Motor/Display=Draufsicht, LED-Montage=Wellenperspektive) |
 
 **Slot-Farben** (`lights.yaml` + `lvgl_basis.yaml` + `lvgl_overlay.yaml`, alle identisch):
 

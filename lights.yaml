@@ -27,16 +27,18 @@
 #   1 = eine LED exakt auf der Slot-Position
 #   3 = symmetrisch: Slot-LED + je 1 links/rechts (usw., immer ungerade)
 #
-# c_led_strip_outer_direction (physische Montagerichtung des Strips):
-#   0 = CW  (LED-Index steigt im Uhrzeigersinn)
-#   1 = CCW (LED-Index steigt gegen den Uhrzeigersinn)
+# c_led_strip_outer_direction (logische Drehrichtung, aus Draufsicht):
+#   0 = CW  (LED-Index steigt im Uhrzeigersinn, Draufsicht)
+#   1 = CCW (LED-Index steigt gegen den Uhrzeigersinn, Draufsicht)
+# ACHTUNG: Motor/Display sind aus Draufsicht definiert.
+#          LED-Strip physisch montiert aus Motorwellen-Perspektive → direction=1 kompensiert.
 # ─────────────────────────────────────────────────────────────────────────────────
 
 substitutions:
   c_led_strip_outer_led_num:       "172"
   c_led_strip_outer_led_0deg:      "86"
   c_led_strip_leds_per_slot:       "9"
-  c_led_strip_outer_direction:     "0"   # 0 = CW, 1 = CCW
+  c_led_strip_outer_direction:     "1"   # 1 = CCW — logisch gespiegelt (Motor/Display = Draufsicht, LED-Ring = Montageperspektive)
 
 light:
   - platform: esp32_rmt_led_strip
