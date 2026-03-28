@@ -458,13 +458,23 @@ lvgl:
                   radius: 180
                   bg_color: 0x2299CC
                   bg_opa: COVER
-                  border_width: 6
-                  border_color: 0x4455AA
+                  border_width: 0
                   clickable: false
                   pad_all: 0
                   scrollable: false
                   scrollbar_mode: "off"
                   widgets:
+                    # ── Ring-Border: als erstes Child → liegt unter allen anderen ──
+                    - obj:
+                        width: 360
+                        height: 360
+                        radius: 180
+                        bg_opa: 0%
+                        border_width: 6
+                        border_color: 0x4455AA
+                        align: CENTER
+                        clickable: false
+                        pad_all: 0
                     - button:
                         id: btn_schwenker_main
                         width: 196
@@ -515,7 +525,7 @@ lvgl:
                               text: "1"
                               align: CENTER
                               text_font: font_temp
-                              text_color: 0xFFFFFF
+                              text_color: 0x880000
                     - button:
                         id: ring_slot2_marker
                         width: 70
@@ -603,7 +613,7 @@ lvgl:
                               text: "5"
                               align: CENTER
                               text_font: font_temp
-                              text_color: 0xFFFFFF
+                              text_color: 0x000088
                     - button:
                         id: ring_slot6_marker
                         width: 70
@@ -625,7 +635,7 @@ lvgl:
                               text: "6"
                               align: CENTER
                               text_font: font_temp
-                              text_color: 0xFFFFFF
+                              text_color: 0x880088
 
               # ---- Slot-Container links: Slot 1 (R), 2 (Y), 3 (G) ----
               - obj:
