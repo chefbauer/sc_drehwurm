@@ -27,7 +27,7 @@ font:
     id: font_title
     size: 60
     bpp: 4
-    glyphs: " -CEKPSaceghiklnoprstuwx"  # nur tatsächlich verwendete Zeichen (Größe ≥60 → minimale Glyph-Liste!)
+    glyphs: " -/CEKPSTacdeghiklmnoprstuwx"  # Timer/Cowntdown + Sensor-Phalanx + Schwenker Einstellungen
 
   - file: "gfonts://Roboto@400"
     id: font_normal
@@ -88,6 +88,7 @@ font:
       - "\uF773"  # Water (Beckenfüllung)
       - "\uF021"  # arrows-rotate (Schwenker Start/Stop)
       - "\uF186"  # Moon (Standby)
+      - "\uF00D"  # xmark (X-Button)
 
   # Dot-Matrix Font für Timer-Anzeige
   - file: "fonts/5x7-dot-matrix.ttf"
@@ -229,7 +230,7 @@ script:
           };
           for (int s = 0; s < 6; s++) {
             lv_obj_set_style_bg_opa(sb[s],
-              (id(overlay_tc_mask) & (1 << s)) ? LV_OPA_COVER : LV_OPA_TRANSP, 0);
+              (id(overlay_tc_mask) & (1 << s)) ? LV_OPA_COVER : LV_OPA_30, 0);
           }
           lv_obj_set_style_bg_opa(id(btn_tc_all), LV_OPA_TRANSP, 0);
           // Typ-Buttons

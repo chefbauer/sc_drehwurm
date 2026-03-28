@@ -1664,8 +1664,8 @@ lvgl:
           width: 100%
           height: 100%
           align: CENTER
-          bg_color: 0x111122
-          bg_opa: 94%
+          bg_color: 0xFFFFFF
+          bg_opa: 97%
           border_width: 0
           pad_all: 0
           hidden: true
@@ -1697,9 +1697,9 @@ lvgl:
                 id: lbl_tc_title
                 text: "Timer / Countdown"
                 align: TOP_MID
-                y: 18
-                text_font: font_normal
-                text_color: 0xCCCCFF
+                y: 12
+                text_font: font_title
+                text_color: 0x003366
 
             # ── Slot-Auswahl-Zeile (7 Buttons: Slot 1–6 + Alle) ────────────
             - obj:
@@ -1707,7 +1707,7 @@ lvgl:
                 width: 800
                 height: 80
                 align: TOP_MID
-                y: 55
+                y: 90
                 bg_opa: 0%
                 border_width: 0
                 pad_all: 0
@@ -1718,7 +1718,7 @@ lvgl:
                       width: 80
                       height: 56
                       align: LEFT_MID
-                      x: 0
+                      x: 86
                       bg_color: 0xFF0000
                       bg_opa: 30%
                       border_color: 0xFF0000
@@ -1739,7 +1739,7 @@ lvgl:
                       width: 80
                       height: 56
                       align: LEFT_MID
-                      x: 88
+                      x: 174
                       bg_color: 0xFFFF00
                       bg_opa: 30%
                       border_color: 0xFFFF00
@@ -1760,7 +1760,7 @@ lvgl:
                       width: 80
                       height: 56
                       align: LEFT_MID
-                      x: 176
+                      x: 262
                       bg_color: 0x00FF00
                       bg_opa: 30%
                       border_color: 0x00FF00
@@ -1781,7 +1781,7 @@ lvgl:
                       width: 80
                       height: 56
                       align: LEFT_MID
-                      x: 264
+                      x: 350
                       bg_color: 0x00FFFF
                       bg_opa: 30%
                       border_color: 0x00FFFF
@@ -1802,7 +1802,7 @@ lvgl:
                       width: 80
                       height: 56
                       align: LEFT_MID
-                      x: 352
+                      x: 438
                       bg_color: 0x0000FF
                       bg_opa: 30%
                       border_color: 0x0000FF
@@ -1823,7 +1823,7 @@ lvgl:
                       width: 80
                       height: 56
                       align: LEFT_MID
-                      x: 440
+                      x: 526
                       bg_color: 0xFF00FF
                       bg_opa: 30%
                       border_color: 0xFF00FF
@@ -1844,7 +1844,7 @@ lvgl:
                       width: 80
                       height: 56
                       align: LEFT_MID
-                      x: 548
+                      x: 634
                       bg_color: 0x333344
                       bg_opa: COVER
                       border_color: 0x8888AA
@@ -1874,24 +1874,18 @@ lvgl:
                 width: 700
                 height: 64
                 align: TOP_MID
-                y: 148
+                y: 170
                 bg_opa: 0%
                 border_width: 0
                 pad_all: 0
 
                 widgets:
-                  - label:
-                      text: "Typ:"
-                      align: LEFT_MID
-                      x: 0
-                      text_font: font_normal
-                      text_color: 0xCCCCFF
                   - button:
                       id: btn_tc_type_timer
                       width: 180
                       height: 52
                       align: LEFT_MID
-                      x: 80
+                      x: 146
                       bg_color: 0x334488
                       border_color: 0x6688CC
                       border_width: 2
@@ -1900,7 +1894,7 @@ lvgl:
                         - lambda: |-
                             id(overlay_tc_type) = 0;
                             lv_obj_set_style_bg_color(id(btn_tc_type_timer), lv_color_hex(0x334488), 0);
-                            lv_obj_set_style_bg_color(id(btn_tc_type_cd),    lv_color_hex(0x222233), 0);
+                            lv_obj_set_style_bg_color(id(btn_tc_type_cd),    lv_color_hex(0x444444), 0);
                             lv_obj_clear_flag(id(obj_tc_timer_content), LV_OBJ_FLAG_HIDDEN);
                             lv_obj_add_flag(id(obj_tc_cd_content),    LV_OBJ_FLAG_HIDDEN);
                       widgets:
@@ -1914,16 +1908,16 @@ lvgl:
                       width: 220
                       height: 52
                       align: LEFT_MID
-                      x: 268
-                      bg_color: 0x222233
-                      border_color: 0x445566
+                      x: 334
+                      bg_color: 0x444444
+                      border_color: 0x666666
                       border_width: 2
                       radius: 8
                       on_click:
                         - lambda: |-
                             id(overlay_tc_type) = 1;
                             lv_obj_set_style_bg_color(id(btn_tc_type_cd),    lv_color_hex(0x334488), 0);
-                            lv_obj_set_style_bg_color(id(btn_tc_type_timer), lv_color_hex(0x222233), 0);
+                            lv_obj_set_style_bg_color(id(btn_tc_type_timer), lv_color_hex(0x444444), 0);
                             lv_obj_add_flag(id(obj_tc_timer_content),    LV_OBJ_FLAG_HIDDEN);
                             lv_obj_clear_flag(id(obj_tc_cd_content), LV_OBJ_FLAG_HIDDEN);
                       widgets:
@@ -1974,6 +1968,7 @@ lvgl:
                               blink_s[i]->publish_state(false);
                               lv_obj_set_style_bg_color(slot_tabs[i], lv_color_hex(slot_fc[i]), 0);
                             }
+                            lv_obj_add_flag(id(overlay_timer_cowntdown), LV_OBJ_FLAG_HIDDEN);
                       widgets:
                         - label:
                             text: "Timer Reset"
@@ -2016,7 +2011,7 @@ lvgl:
                       align: TOP_MID
                       y: 42
                       text_font: font_normal
-                      text_color: 0xCCCCFF
+                      text_color: 0x003366
                   # Preset-Buttons
                   - button:
                       id: btn_tc_dose
@@ -2095,17 +2090,17 @@ lvgl:
                           // Countdown: Max-Zeit setzen, Reset
                           id(slot_countdown_max_ms)[i] = (uint32_t)id(overlay_tc_minutes) * 60000;
                         }
-                        // Timer/Countdown zurücksetzen
+                        // Timer/Countdown starten
                         id(slot_elapsed_ms)[i] = 0;
-                        id(slot_start_ms)[i]   = 0;
-                        id(slot_status)[i]     = 0;
+                        id(slot_start_ms)[i]   = millis();
+                        id(slot_status)[i]     = 1;
                         blink_s[i]->publish_state(false);
                         lv_obj_set_style_bg_color(slot_tabs[i], lv_color_hex(slot_fc[i]), 0);
                       }
                       lv_obj_add_flag(id(overlay_timer_cowntdown), LV_OBJ_FLAG_HIDDEN);
                 widgets:
                   - label:
-                      text: "\xef\x80\x8c  OK"
+                      text: "OK"
                       align: CENTER
                       text_font: font_normal
                       text_color: 0xFFFFFF
