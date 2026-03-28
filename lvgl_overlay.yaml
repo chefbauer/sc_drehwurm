@@ -1649,7 +1649,7 @@ lvgl:
           bg_opa: 94%
           border_width: 0
           pad_all: 0
-          flags: hidden
+          hidden: true
 
           widgets:
             # ── Schließen-Button (oben rechts) ─────────────────────────────
@@ -1692,16 +1692,14 @@ lvgl:
                 bg_opa: 0%
                 border_width: 0
                 pad_all: 0
-                flex_flow: ROW
-                flex_align_main: CENTER
-                flex_align_cross: CENTER
-                flex_align_track: CENTER
 
                 widgets:
                   - button:
                       id: btn_tc_s1
                       width: 80
                       height: 56
+                      align: LEFT_MID
+                      x: 0
                       bg_color: 0xFF0000
                       bg_opa: 30%
                       border_color: 0xFF0000
@@ -1721,6 +1719,8 @@ lvgl:
                       id: btn_tc_s2
                       width: 80
                       height: 56
+                      align: LEFT_MID
+                      x: 88
                       bg_color: 0xFFFF00
                       bg_opa: 30%
                       border_color: 0xFFFF00
@@ -1740,6 +1740,8 @@ lvgl:
                       id: btn_tc_s3
                       width: 80
                       height: 56
+                      align: LEFT_MID
+                      x: 176
                       bg_color: 0x00FF00
                       bg_opa: 30%
                       border_color: 0x00FF00
@@ -1759,6 +1761,8 @@ lvgl:
                       id: btn_tc_s4
                       width: 80
                       height: 56
+                      align: LEFT_MID
+                      x: 264
                       bg_color: 0x00FFFF
                       bg_opa: 30%
                       border_color: 0x00FFFF
@@ -1778,6 +1782,8 @@ lvgl:
                       id: btn_tc_s5
                       width: 80
                       height: 56
+                      align: LEFT_MID
+                      x: 352
                       bg_color: 0x0000FF
                       bg_opa: 30%
                       border_color: 0x0000FF
@@ -1797,6 +1803,8 @@ lvgl:
                       id: btn_tc_s6
                       width: 80
                       height: 56
+                      align: LEFT_MID
+                      x: 440
                       bg_color: 0xFF00FF
                       bg_opa: 30%
                       border_color: 0xFF00FF
@@ -1816,6 +1824,8 @@ lvgl:
                       id: btn_tc_all
                       width: 80
                       height: 56
+                      align: LEFT_MID
+                      x: 548
                       bg_color: 0x333344
                       bg_opa: COVER
                       border_color: 0x8888AA
@@ -1849,20 +1859,20 @@ lvgl:
                 bg_opa: 0%
                 border_width: 0
                 pad_all: 0
-                flex_flow: ROW
-                flex_align_main: CENTER
-                flex_align_cross: CENTER
-                flex_align_track: CENTER
 
                 widgets:
                   - label:
                       text: "Typ:"
+                      align: LEFT_MID
+                      x: 0
                       text_font: font_normal
                       text_color: 0xCCCCFF
                   - button:
                       id: btn_tc_type_timer
                       width: 180
                       height: 52
+                      align: LEFT_MID
+                      x: 80
                       bg_color: 0x334488
                       border_color: 0x6688CC
                       border_width: 2
@@ -1884,6 +1894,8 @@ lvgl:
                       id: btn_tc_type_cd
                       width: 220
                       height: 52
+                      align: LEFT_MID
+                      x: 268
                       bg_color: 0x222233
                       border_color: 0x445566
                       border_width: 2
@@ -1960,7 +1972,7 @@ lvgl:
                 bg_opa: 0%
                 border_width: 0
                 pad_all: 0
-                flags: hidden
+                hidden: true
 
                 widgets:
                   # Slider 1–10 Minuten
