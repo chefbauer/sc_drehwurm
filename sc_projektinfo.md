@@ -2,6 +2,35 @@
 
 ---
 
+## ⚡ Schnell-Referenz (für KI-Kontext)
+
+| Was suche ich? | Wo? |
+|---|---|
+| **YAML-Dateien & Zweck** | Abschnitt „Projekt-Typ" |
+| **Hardware (Pins, Plattform, I²C-Adressen)** | Abschnitt „Hardware" + „I²C Devices" + „Outputs" |
+| **Fonts & Glyphs** | Abschnitt „Fonts" |
+| **Alle Globals / Binary Sensors** | Abschnitt „Globale Variablen" |
+| **Substitutionen** | Abschnitt „Substitutionen" |
+| **UI: Seiten & Tabs** | Abschnitt „Page 1" (Hauptseite) + „Page 2" (Einstellungen) |
+| **UI: Overlays** | Abschnitt „Overlays" → Unterabschnitte je Overlay |
+| **LED-Ring Logik** | `lights.yaml` + Abschnitt „LED-Ring" in dieser Datei |
+| **Schwenker-Motor / CAN** | Abschnitt „Schwenker" |
+| **ESPHome-Fallstricke (LVGL8, flex, hidden)** | `/memories/repo/esphome_yaml_rules.md` |
+| **Letzte Änderungen** | Abschnitt „Update-Log" (unten) |
+
+**Dateizuordnung:**
+- Fonts / Globals / Interval / LVGL Pages → `lvgl_basis.yaml`
+- Alle Overlays (top_layer) → `lvgl_overlay.yaml`
+- Sensoren / Kühler / DAC / Climate / AMG → `hardware.yaml`
+- MLX90632 / TOF / SHT4x / BMP581 / VEML7700 / Standby → `sensorphalanx.yaml`
+- Schwenker-Motor CAN-Bus → `schwenker.yaml`
+- WS2812-LED-Ring → `lights.yaml`
+- Hardware-Pins / Substitutionen → `display_7z_settings.yaml`
+- BLE-Scanner → `ble.yaml`
+- Kühler-Extras → `cooler.yaml`
+
+---
+
 > **KI-Arbeitsanweisung:** Diese Datei ist die zentrale Projektdokumentation.
 > **Nach jeder Änderung an YAML-Dateien** diese Projektinfo automatisch aktualisieren –
 > ohne dass der Benutzer es explizit fordert. Relevante Daten: Pin-Belegungen,
@@ -191,6 +220,27 @@ Aktualisiert auch das AMG8833-Overlay wenn es sichtbar ist.
 | `c_standby_delay` | 300s | Verzögerung bis Standby aktiv (bin_standby `delayed_on`) |
 | `c_standby_lvgl_idle` | 120s | LVGL-Idle-Timeout für Standby-Flag |
 | `c_standby_tof_min_mm` | "800" | Mindestdistanz für Standby (kein Objekt vor Sensor) |
+| `c_motor_direction` | "1" | Motorrichtung: 0=links/1=rechts auf Welle |
+
+**LED-Substitutionen (`lights.yaml`):**
+
+| Substitution | Wert | Bedeutung |
+|---|---|---|
+| `c_led_strip_outer_led_num` | "172" | Anzahl LEDs im Ring |
+| `c_led_strip_outer_led_0deg` | "86" | LED-Index bei Motor-0° (Slot 1) |
+| `c_led_strip_leds_per_slot` | "9" | LEDs pro Slot (Standard) |
+| `c_led_strip_outer_direction` | "0" | **0=CW** (LED-Index steigt im Uhrzeigersinn), 1=CCW |
+
+**Slot-Farben** (`lights.yaml` + `lvgl_basis.yaml` + `lvgl_overlay.yaml`, alle identisch):
+
+| Index | Slot | Farbe | Hex |
+|---|---|---|---|
+| 0 | 1 | Rot | `#FF0000` |
+| 1 | 2 | Gelb | `#FFFF00` |
+| 2 | 3 | Grün | `#00FF00` |
+| 3 | 4 | Cyan | `#00FFFF` |
+| 4 | 5 | Blau | `#0000FF` |
+| 5 | 6 | Magenta | `#FF00FF` |
 
 ---
 
@@ -414,36 +464,21 @@ Tab-Reihenfolge: **System · Schwenker · Licht · Bildschirm · Kühler · Test
 **XML-Layout-Export:** `ui/overlay_temp_messung.xml` — für viewer.lvgl.io (pixelgenaues Layout-Editing)
 
 ### `overlay_timer_cowntdown` — Timer / Countdown Konfiguration
-- Vollflächig (100%×100%), `bg_color: #111122`, `bg_opa: 94%`, initial `hidden: true`
-- **Öffnen:** `script_open_timer_overlay(slot_idx)` — aus `on_long_press` jedes Slot-Tabs
-- **Schließen:** `btn_tc_exit` (rotes X) oder `btn_tc_ok` (OK, Übernehmen)
+- Vollflächig (100%×100%), weißer Hintergrund (`#FFFFFF`, 97%), initial `hidden: true`
+- Öffnen: `script_open_timer_overlay(slot_idx)` — aus `on_long_press` jedes Slot-Tabs; öffnet Timer wenn Slot auf Timer, sonst Countdown
+- Schließen: `btn_tc_exit` (rotes X oben rechts) oder `btn_tc_ok`
+- **Titel** „Timer / Countdown“ mit `font_title`, `#003366`, TOP_MID y:12
 - **Slot-Buttons** `btn_tc_s1`–`btn_tc_s6` + `btn_tc_all` („Alle“): Toggle Bitmask `overlay_tc_mask` (Bit 0–5)
+  - Zentriert in 800px-Row (y:90): Basis-x=86, Schritt 88px, „Alle“ bei x=634
   - Selektiert = `bg_opa: COVER`, deselektiert = `bg_opa: 30%`
-- **Typ-Toggle:** `btn_tc_type_timer` (aktiv=`#334488`) / `btn_tc_type_cd`
-  - Schaltet `obj_tc_timer_content` (Timer-Content) vs. `obj_tc_cd_content` (Countdown-Content) sichtbar
+- **Typ-Toggle** (y:170): `btn_tc_type_timer` (x:146, aktiv=`#334488`) / `btn_tc_type_cd` (x:334, inaktiv=`#444444`)
+  - Schaltet `obj_tc_timer_content` vs. `obj_tc_cd_content` sichtbar; kein „Typ:“-Label
 - **Timer-Content** (`obj_tc_timer_content`):
-  - `btn_tc_reset`: setzt alle gewählten Slots zurück (Status=0, Blink aus)
+  - `btn_tc_reset`: alle gewählten Slots zurücksetzen **+ sofort Overlay schließen, kein Autostart**
 - **Countdown-Content** (`obj_tc_cd_content`, hidden wenn Typ=Timer):
-  - `slider_tc_minutes` (1–10 min) + `lbl_tc_minutes_val`
-  - Presets: `btn_tc_dose` (Dose 0,5l / 4 min) + `btn_tc_flasche` (Flasche 0,5l / 8 min)
-- **`btn_tc_ok`** (grün, unten rechts): wendet Einstellungen auf alle gewählten Slots an + schließt Overlay
-  - Setzt `slot_is_countdown`, `slot_countdown_max_ms`, resettet Timer, Blink aus
-
-### `overlay_timer_cowntdown` — Timer / Countdown Konfiguration
-- Vollflächig (100%×100%), `bg_color: #111122`, `bg_opa: 94%`, initial `hidden: true`
-- **Öffnen:** `script_open_timer_overlay(slot_idx)` — aus `on_long_press` jedes Slot-Tabs
-- **Schließen:** `btn_tc_exit` (rotes X) oder `btn_tc_ok` (OK, Übernehmen)
-- **Slot-Buttons** `btn_tc_s1`–`btn_tc_s6` + `btn_tc_all` ("Alle"): Toggle Bitmask `overlay_tc_mask` (Bit 0–5)
-  - Selektiert = `bg_opa: COVER`, deselektiert = `bg_opa: 30%`
-- **Typ-Toggle:** `btn_tc_type_timer` (aktiv=`#334488`) / `btn_tc_type_cd`
-  - Schaltet `obj_tc_timer_content` (Timer-Content) vs. `obj_tc_cd_content` (Countdown-Content) sichtbar
-- **Timer-Content** (`obj_tc_timer_content`):
-  - `btn_tc_reset`: setzt alle gewählten Slots zurück (Status=0, Blink aus)
-- **Countdown-Content** (`obj_tc_cd_content`, hidden wenn Typ=Timer):
-  - `slider_tc_minutes` (1–10 min) + `lbl_tc_minutes_val`
-  - Presets: `btn_tc_dose` (Dose 0,5l / 4 min) + `btn_tc_flasche` (Flasche 0,5l / 8 min)
-- **`btn_tc_ok`** (grün, unten rechts): wendet Einstellungen auf alle gewählten Slots an + schließt Overlay
-  - Setzt `slot_is_countdown`, `slot_countdown_max_ms`, resettet Timer, Blink aus
+  - `slider_tc_minutes` (1–10 min) + `lbl_tc_minutes_val` (Textfarbe `#003366`)
+  - Presets: `btn_tc_dose` (4 min) + `btn_tc_flasche` (8 min)
+- **`btn_tc_ok`** (grün, BOTTOM_RIGHT): setzt `slot_is_countdown`, `slot_countdown_max_ms`, **startet sofort** (`slot_status=1`), Blink aus, Overlay schließt
 
 ### MCP4728 DAC — Turmpumpe
 - `output_pumpe_dacA`, Kanal A, `vref: vdd`
@@ -722,125 +757,6 @@ Alle Sensoren auf `i2c_id: i2c_bus` (fremdkonfiguriert in main_config).
 | 2026-03-27 (session) | — | `sensorphalanx.yaml`: `sensor_Temp_OBJECT` liest `global_emissivity` statt hardcoded 0.90 |
 | 2026-03-27 (session) | — | `ui/overlay_temp_messung.xml` erstellt: LVGL XML-Layout-Export für viewer.lvgl.io |
 | 2026-03-27 (session) | — | `display_7z_settings.yaml`: Substitutionen c_standby_*, c_tof_update_interval*, c_ir_update_interval* |
-
-
----
-
-## Globale Variablen
-
-Für 6 Timer-Slots (Index 0–5):
-
-| ID | Typ | Bedeutung |
-|---|---|---|
-| `slot_start_ms` | `std::array<uint32_t, 6>` | millis() beim letzten Start |
-| `slot_elapsed_ms` | `std::array<uint32_t, 6>` | akkumulierte Zeit in ms |
-| `slot_status` | `std::array<int, 6>` | 0=gestoppt, 1=läuft, 2=pausiert |
-
-**Interval:** 500 ms → aktualisiert alle 6 Timer-Labels wenn Status = 1.
-
----
-
-## Page 1: Hauptseite (`page_main`)
-
-### Titel
-- Text: "Supercooler Drehwurm Kühler"
-- Font: `font_title`, Farbe: `#003366`, oben mittig, y=20
-
-### Tank-Widget (Platzhalter)
-- **TODO: durch echtes PNG-Bild ersetzen**
-- Position: zentriert, y=20, 360×360 px
-- Aufbau aus LVGL `obj`-Widgets (Zylinder-Illusion):
-  - `cyl_rim`: oben, grau, oval (Öffnung)
-  - `cyl_body`: Mantelrechteck, grau
-  - `water_surface`: hellblaue Ellipse (Wasseroberfläche)
-  - `water_body`: blaues Rechteck (Wasserkörper)
-  - `cyl_bottom`: dunkelgraue Ellipse (Boden)
-
-### 6 Farbslots (Timer-Buttons)
-
-Anordnung im Uhrzeigersinn nach Farbrad:
-
-| Slot | Farbe | Seite | y-Position | Index |
-|---|---|---|---|---|
-| 1 | Rot `#FF0000` | links | 110 | 0 |
-| 2 | Gelb `#FFFF00` | links | 250 | 1 |
-| 3 | Grün `#00FF00` | links | 390 | 2 |
-| 4 | Cyan `#00FFFF` | rechts | 110 | 3 |
-| 5 | Blau `#0000FF` | rechts | 250 | 4 |
-| 6 | Magenta `#FF00FF` | rechts | 390 | 5 |
-
-**Jeder Slot ist ein `button`** (290×120 px, radius=16, clip_corner=true, bg_opa=TRANSP):
-
-- **Linker Tab** (60×100%, `clickable: true`): volle Slot-Farbe, Slot-Nummer zentriert  
-  `on_click` → `script_schwenker_goto_slot->execute(N)` (N=1–6, Zielwinkel = (N-1)×60°)
-- **Rechter Bereich** (230×100%, `clickable: false`): 50% Opacity, enthält:
-  - Label "Timer:" oben links
-  - Zeitanzeige `MM:SS` darunter
-  - Play/Pause-Icon rechtsbündig (x=-17)
-
-**Touch-Verhalten:**
-- `on_short_click`:
-  - Wenn `bin_slotN_blink` aktiv: Blink stoppen + Zeit-Reset (Status=2, Anzeige=Countdown-Max oder 00:00)
-  - Sonst: Start/Pause-Toggle (Status 0/2 → 1, Status 1 → 2)
-- `on_long_press`: öffnet `overlay_timer_cowntdown` (mit diesem Slot vorbelegt); wenn Blink aktiv: vorher stoppen
-
-> Countdown-Alarm: wenn Countdown auf 0 läuft → `bin_slotN_blink = true` → Tab blinkt + LED-Ring blinkt (500ms-Phase)
-
-**Textfarben** (auf 50%-Hintergrund):
-| Slot | Textfarbe |
-|---|---|
-| 1 R | `#880000` |
-| 2 Y | `#666600` |
-| 3 G | `#004400` |
-| 4 C | `#004444` |
-| 5 B | `#FFFFFF` |
-| 6 M | `#880044` |
-
-### Navigation
-- Button "Einstellungen" unten rechts → `lvgl.page.show: page_settings`
-
----
-
-## Page 2: Einstellungen (`page_settings`)
-
-### Titel
-- Text: "Einstellungen", Font: `font_title`, Farbe: `#003366`, oben mittig
-
-### TabView (3 Tabs, `font_tab`, Hintergrund `#E0E0E0`)
-
-**Tab "Bildschirm":**
-- Zeile: Label "Helligkeit" + Slider (`slider_helligkeit`, 0–100, Standard 80)
-  - `on_value` → `light.control` auf `light_screen_background` mit `brightness: x/100.0`
-  - Bei manueller Bedienung: Auto-Modus deaktivieren + Switch zurücksetzen
-- Zeile: Switch `sw_brightness_auto` + Label "Auto (VEML7700)"
-  - Ein: VEML7700-Lux steuert Helligkeit automatisch (Formel: 0 lux → 50%, 100 lux → 100%)
-  - Aus: manuelle Steuerung
-- Farbtest-Quadrate (150×150 px): Rot / Grün / Blau nebeneinander zentriert
-
-**Tab "System":** Platzhalter
-
-**Tab "Kühler":** Platzhalter
-
-### Navigation
-- Button "Zurück" unten links, `#444444` → `lvgl.page.show: page_main`
-
----
-
-## Bekannte LVGL-8-Einschränkungen
-
-| Problem | Lösung |
-|---|---|
-| `transform_scale_y` nicht verfügbar (LVGL9) | nicht verwenden |
-| `bg_opa` nur `%`-Suffix oder Keywords | `50%`, `COVER`, `TRANSP` |
-| ESPHome setzt `LV_OBJ_FLAG_CLICKABLE` auf alle `obj` | `clickable: false` direkt im YAML setzen |
-| `obj` empfängt keinen `on_click` zuverlässig | Widget-Typ `button` verwenden |
-
----
-
-## Status
-
-- [x] Font-Definitionen
-- [x] Timer-Globals (6 Slots)
 - [x] Interval 500ms (alle 6 Slots)
 - [x] Hauptseite Titel
 - [x] Tank-Widget (Platzhalter)
@@ -887,3 +803,8 @@ Anordnung im Uhrzeigersinn nach Farbrad:
 | 2026-03-18 | `script_schwenker_goto_slot`: acc 20→10; acc=0/255-Guard (sofortiger Ruck) in `script_motor_goto_relative_degree`; sanfter Stop via F5 speed=0 acc=10 + 500ms Delay vor FOC | `schwenker.yaml`, `motorcontrol_can-bus.yaml` |
 | 2026-03-18 | Compile-Fehler behoben: Kommentar-Text `(25% → 15% …)` befand sich außerhalb Lambda-Kommentar in `script_pumpe_a_kurz` | `schwenker.yaml` |
 | 2026-03-18 | App-Titel umbenannt auf "SCK Schwippschwenker"; `font_title`-Glyphs um `K` ergänzt | `lvgl_basis.yaml` |
+| 2026-03-24 (session) | — | `lights.yaml`: WS2812-Ring komplett (172 LEDs, 6 Slot-Farben, motorpositionsbasiert) + alle Substitutionen | `lights.yaml` |
+| 2026-03-27 (session) | — | `lights.yaml`: LED-Blink-Effekte (Timer läuft/pausiert/abgelaufen), Slot-Countdown-Farbe weiß gedimmt | `lights.yaml` |
+| 2026-03-28 (session) | — | `lvgl_overlay.yaml`, `lvgl_basis.yaml`: Timer-Overlay Komplett-Redesign: weißer Hintergrund (#FFFFFF), `font_title` für Titel, Slot-Buttons + Typ-Buttons zentriert, OK startet sofort, Reset schließt ohne Autostart | `lvgl_overlay.yaml`, `lvgl_basis.yaml` |
+| 2026-03-28 (session) | — | `lights.yaml`: LED-Ring Farbkorrektur – `direction` "1"→"0" (CW), kanonische Farbordnung wiederhergestellt: Rot/Gelb/Grün/Cyan/Blau/Magenta | `lights.yaml` |
+| 2026-03-28 (session) | — | `sc_projektinfo.md`: Schnell-Referenz-Index oben ergänzt, 3 Duplikat-Abschnitte entfernt, Timer-Overlay-Doku aktualisiert, LED-Substitutionen + Slot-Farbtabelle eingefügt | `sc_projektinfo.md` |
