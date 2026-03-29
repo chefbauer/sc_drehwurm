@@ -551,7 +551,6 @@ lvgl:
                                   lv_label_set_text(id(lbl_slot1_time), rb);
                                 } else { lv_label_set_text(id(lbl_slot1_time), "00:00"); }
                                 lv_label_set_text(id(lbl_slot1_symbol), "\xef\x81\x8b");
-                                return;
                               }
                               id(script_schwenker_goto_slot)->execute(1);
                         on_long_press:
@@ -591,7 +590,6 @@ lvgl:
                                   lv_label_set_text(id(lbl_slot2_time), rb);
                                 } else { lv_label_set_text(id(lbl_slot2_time), "00:00"); }
                                 lv_label_set_text(id(lbl_slot2_symbol), "\xef\x81\x8b");
-                                return;
                               }
                               id(script_schwenker_goto_slot)->execute(2);
                         on_long_press:
@@ -631,7 +629,6 @@ lvgl:
                                   lv_label_set_text(id(lbl_slot3_time), rb);
                                 } else { lv_label_set_text(id(lbl_slot3_time), "00:00"); }
                                 lv_label_set_text(id(lbl_slot3_symbol), "\xef\x81\x8b");
-                                return;
                               }
                               id(script_schwenker_goto_slot)->execute(3);
                         on_long_press:
@@ -671,7 +668,6 @@ lvgl:
                                   lv_label_set_text(id(lbl_slot4_time), rb);
                                 } else { lv_label_set_text(id(lbl_slot4_time), "00:00"); }
                                 lv_label_set_text(id(lbl_slot4_symbol), "\xef\x81\x8b");
-                                return;
                               }
                               id(script_schwenker_goto_slot)->execute(4);
                         on_long_press:
@@ -711,7 +707,6 @@ lvgl:
                                   lv_label_set_text(id(lbl_slot5_time), rb);
                                 } else { lv_label_set_text(id(lbl_slot5_time), "00:00"); }
                                 lv_label_set_text(id(lbl_slot5_symbol), "\xef\x81\x8b");
-                                return;
                               }
                               id(script_schwenker_goto_slot)->execute(5);
                         on_long_press:
@@ -751,7 +746,6 @@ lvgl:
                                   lv_label_set_text(id(lbl_slot6_time), rb);
                                 } else { lv_label_set_text(id(lbl_slot6_time), "00:00"); }
                                 lv_label_set_text(id(lbl_slot6_symbol), "\xef\x81\x8b");
-                                return;
                               }
                               id(script_schwenker_goto_slot)->execute(6);
                         on_long_press:
