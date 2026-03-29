@@ -39,13 +39,6 @@
 #   Faustregel: wenn direction=1, meist color_mirror=1 nötig.
 # ─────────────────────────────────────────────────────────────────────────────────
 
-substitutions:
-  c_led_strip_outer_led_num:       "172"
-  c_led_strip_outer_led_0deg:      "86"
-  c_led_strip_leds_per_slot:       "9"
-  c_led_strip_outer_direction:     "1"   # 1 = CCW (LED-Strip Montageperspektive ≠ Draufsicht)
-  c_led_strip_color_mirror:        "1"   # 1 = Farbfolge gespiegelt (kompensiert direction=1)
-
 light:
   - platform: esp32_rmt_led_strip
     rgb_order: GRB

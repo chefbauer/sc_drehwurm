@@ -1,0 +1,81 @@
+# ============================================================
+# SCK Schwippschwenker — Haupt-Paketdatei
+#
+# Einbinden im Hauptprojekt:
+#   packages:
+#     sck: !include schwippschwenker.yaml
+#
+# Alle Substitutions sind hier zentral konfigurierbar.
+# Die Werte im Hauptprojekt überschreiben diese Defaults.
+# ============================================================
+
+substitutions:
+
+  # ── Hardware-Pins ────────────────────────────────────────
+  pin_i2c_scl:     GPIO8
+  pin_i2c_sda:     GPIO7
+  pin_can_rx_pin:  GPIO32   # Board-Pin 7
+  pin_can_tx_pin:  GPIO33   # Board-Pin 8
+  pin_pwm1:        GPIO1
+  pin_pwm2:        GPIO2
+  pin_pwm3:        GPIO3
+  pin_pwm4:        GPIO4
+  pin_led_h1:      GPIO5    # Board-Pin 5 — ACHTUNG: MIPI RESET
+  pin_led_h2:      GPIO20   # Board-Pin 6
+  pin_led_v1:      GPIO47
+  pin_led_v2:      GPIO46
+  pin_1w:          GPIO45
+
+  # ── Motor / CAN ──────────────────────────────────────────
+  master_can_id:      "1"
+  motor_can_id:       "3"
+  c_motor_direction:  "1"   # 0 = links, 1 = rechts (Motor → Welle)
+
+  # ── Kühler / Pumpen ──────────────────────────────────────
+  fan_kompressor_min_perc:        "25"
+  fan_kompressor_max_perc:        "92"
+  c_pumpe_umwaelzung_ein_perc:    "30"
+
+  # ── Sensor-Phalanx Update-Intervalle ─────────────────────
+  c_tof_update_interval:       500ms
+  c_tof_update_interval_fast:   50ms
+  c_ir_update_interval:          1s
+  c_ir_update_interval_fast:   100ms
+
+  # ── Standby-Erkennung ────────────────────────────────────
+  c_standby_delay:        300s    # Verzögerung bis Standby aktiv (delayed_on)
+  c_standby_lvgl_idle:    120s    # LVGL muss X Sekunden inaktiv sein
+  c_standby_tof_min_mm:   "800"   # TOF-Distanz mm: darunter = Person anwesend
+
+  # ── LED-Ring (WS2812, außen) ──────────────────────────────
+  c_led_strip_outer_led_num:     "172"  # Gesamtanzahl LEDs im Ring
+  c_led_strip_outer_led_0deg:    "86"   # LED-Index bei Motor-0° (= Slot 1 Rot)
+  c_led_strip_leds_per_slot:     "9"    # Breite eines Slot-Farbflecks in LEDs
+  c_led_strip_outer_direction:   "1"    # 0=CW, 1=CCW (Draufsicht)
+  c_led_strip_color_mirror:      "1"    # 0=normal, 1=gespiegelt (kompensiert direction=1)
+
+# ── Packages ─────────────────────────────────────────────────
+packages:
+  # Basis-Hardware: Pins, I²C, Pumpen, Lüfter, Thermostat, AMG8833
+  hardware:        !include hardware.yaml
+
+  # Externe Sensor-Gruppe: TOF, SHT4x, BMP581, VEML7700, MLX90632, Standby
+  sensorphalanx:   !include sensorphalanx.yaml
+
+  # Schwenker-Motor: Sinus-Pendel, CAN F5, goto_slot, Presets
+  schwenker:       !include schwenker.yaml
+
+  # CAN-Bus Motorsteuerung: script_motor_*, CAN-Tx/Rx
+  motorcontrol:    !include motorcontrol_can-bus.yaml
+
+  # WS2812-LED-Ring: Slot-Farben, Blink-Effekte
+  lights:          !include lights.yaml
+
+  # LVGL Basis: Fonts, Globals, Interval, Pages
+  lvgl_basis:      !include lvgl_basis.yaml
+
+  # LVGL Overlays: Schwenker, Timer/Countdown, AMG, Sensor-Phalanx, IR-Temp
+  lvgl_overlay:    !include lvgl_overlay.yaml
+
+  # Kühler-Extras
+  cooler:          !include cooler.yaml
