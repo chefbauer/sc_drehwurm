@@ -95,6 +95,16 @@ globals:
     restore_value: no
     initial_value: 'false'
 
+  - id: sw_auto_stop_armed     # true = Schwenker soll stoppen wenn alle Timer/CDs enden
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+
+  - id: sw_auto_stop_slot      # Slot-Index (0-basiert) für Auto-Stop-Positionsfahrt
+    type: int
+    restore_value: no
+    initial_value: '0'
+
   - id: slider_trim_last       # merkt sich den letzten Slider-Wert für Delta-Berechnung
     type: int
     restore_value: no
@@ -270,6 +280,16 @@ script:
           id(sw_aktiv)     = true;
           lv_obj_set_style_bg_color(id(btn_schwenker_main), lv_color_hex(0x229933), 0);
           lv_obj_set_style_bg_color(id(btn_schwenker_overlay_toggle), lv_color_hex(0x229933), 0);
+          // Auto-Stop: Flag setzen wenn mindestens ein Slot läuft
+          id(sw_auto_stop_armed) = false;
+          for (int _s = 0; _s < 6; _s++) {
+            if (id(slot_status)[_s] == 1) {
+              id(sw_auto_stop_armed) = true;
+              id(sw_auto_stop_slot)  = _s;
+              ESP_LOGI("schwenker", "Auto-Stop armed: erster aktiver Slot=%d", _s + 1);
+              break;
+            }
+          }
 
   # ── Stoppen ───────────────────────────────────────────────
   - id: script_schwenker_stop
@@ -283,7 +303,21 @@ script:
             ESP_LOGI("schwenker", "STOP: war bereits inaktiv");
             return;
           }
-          // Schwenker läuft → pending setzen, Buttons orange, warte auf Zyklusende
+          // Auto-Stop deaktivieren (manueller Stop)
+          id(sw_auto_stop_armed) = false;
+          // Prüfe ob ein fertiger Slot blinkt → ersten anfahren (goto_slot stoppt intern)
+          esphome::binary_sensor::BinarySensor* blink_s[6] = {
+            id(bin_slot1_blink), id(bin_slot2_blink), id(bin_slot3_blink),
+            id(bin_slot4_blink), id(bin_slot5_blink), id(bin_slot6_blink),
+          };
+          for (int _b = 0; _b < 6; _b++) {
+            if (blink_s[_b]->state) {
+              ESP_LOGI("schwenker", "STOP: Slot %d blinkt, fahre an", _b + 1);
+              id(script_schwenker_goto_slot)->execute(_b + 1);
+              return;
+            }
+          }
+          // Kein blinkender Slot → normaler Stop
           id(sw_stop_pending) = true;
           lv_obj_set_style_bg_color(id(btn_schwenker_main), lv_color_hex(0xAA8800), 0);
           lv_obj_set_style_bg_color(id(btn_schwenker_overlay_toggle), lv_color_hex(0xAA8800), 0);

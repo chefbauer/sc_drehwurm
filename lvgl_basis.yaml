@@ -344,8 +344,19 @@ interval:
             snprintf(dbuf, sizeof(dbuf), "%s, %02d.%02d.", wdays[dow], t.day_of_month, t.month);
             lv_label_set_text(id(lbl_status_date), dbuf);
           }
-
-# LVGL Configuration
+          // ── Auto-Stop: Schwenker stoppen + Slot anfahren wenn alle Timer/CDs enden ──
+          if (id(sw_auto_stop_armed) && id(sw_aktiv)) {
+            bool any_running = false;
+            for (int _j = 0; _j < 6; _j++) {
+              if (id(slot_status)[_j] == 1) { any_running = true; break; }
+            }
+            if (!any_running) {
+              int target = id(sw_auto_stop_slot) + 1;  // 0-basiert → 1-basiert
+              id(sw_auto_stop_armed) = false;
+              ESP_LOGI("schwenker", "Auto-Stop: alle Timer beendet, fahre Slot %d an", target);
+              id(script_schwenker_goto_slot)->execute(target);
+            }
+          }
 lvgl:
   log_level: INFO
   color_depth: 16
@@ -525,9 +536,12 @@ lvgl:
                         align: TOP_LEFT
                         x: 145
                         y: 280
-                        on_click:
+                        on_short_click:
                           - lambda: |-
                               id(script_schwenker_goto_slot)->execute(1);
+                        on_long_press:
+                          - lambda: |-
+                              id(script_open_timer_overlay)->execute(0);
                         widgets:
                           - label:
                               text: "1"
@@ -547,9 +561,12 @@ lvgl:
                         align: TOP_LEFT
                         x: 28
                         y: 213
-                        on_click:
+                        on_short_click:
                           - lambda: |-
                               id(script_schwenker_goto_slot)->execute(2);
+                        on_long_press:
+                          - lambda: |-
+                              id(script_open_timer_overlay)->execute(1);
                         widgets:
                           - label:
                               text: "2"
@@ -569,9 +586,12 @@ lvgl:
                         align: TOP_LEFT
                         x: 28
                         y: 78
-                        on_click:
+                        on_short_click:
                           - lambda: |-
                               id(script_schwenker_goto_slot)->execute(3);
+                        on_long_press:
+                          - lambda: |-
+                              id(script_open_timer_overlay)->execute(2);
                         widgets:
                           - label:
                               text: "3"
@@ -591,9 +611,12 @@ lvgl:
                         align: TOP_LEFT
                         x: 145
                         y: 10
-                        on_click:
+                        on_short_click:
                           - lambda: |-
                               id(script_schwenker_goto_slot)->execute(4);
+                        on_long_press:
+                          - lambda: |-
+                              id(script_open_timer_overlay)->execute(3);
                         widgets:
                           - label:
                               text: "4"
@@ -613,9 +636,12 @@ lvgl:
                         align: TOP_LEFT
                         x: 262
                         y: 78
-                        on_click:
+                        on_short_click:
                           - lambda: |-
                               id(script_schwenker_goto_slot)->execute(5);
+                        on_long_press:
+                          - lambda: |-
+                              id(script_open_timer_overlay)->execute(4);
                         widgets:
                           - label:
                               text: "5"
@@ -635,9 +661,12 @@ lvgl:
                         align: TOP_LEFT
                         x: 262
                         y: 213
-                        on_click:
+                        on_short_click:
                           - lambda: |-
                               id(script_schwenker_goto_slot)->execute(6);
+                        on_long_press:
+                          - lambda: |-
+                              id(script_open_timer_overlay)->execute(5);
                         widgets:
                           - label:
                               text: "6"
