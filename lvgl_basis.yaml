@@ -225,25 +225,33 @@ script:
           if (secs > 720) secs = 720;
           id(overlay_tc_seconds) = secs;
           id(overlay_tc_mask) = (1 << slot_idx);
-          // Slot-Selector Buttons: Optik setzen
+          // Slot-Buttons: bg_color + text_color setzen
+          const uint32_t fc[6]     = {0xFF0000,0xFFFF00,0x00FF00,0x00FFFF,0x0000FF,0xFF00FF};
+          const uint32_t tc_on[6]  = {0xFFFFFF,0x111111,0x111111,0x111111,0xFFFFFF,0xFFFFFF};
+          const uint32_t tc_off[6] = {0xCC0000,0x777700,0x006600,0x007777,0x0000CC,0xAA00AA};
           lv_obj_t* sb[6] = {
             id(btn_tc_s1), id(btn_tc_s2), id(btn_tc_s3),
             id(btn_tc_s4), id(btn_tc_s5), id(btn_tc_s6)
           };
           for (int s = 0; s < 6; s++) {
-            lv_obj_set_style_bg_opa(sb[s],
-              (id(overlay_tc_mask) & (1 << s)) ? LV_OPA_COVER : LV_OPA_30, 0);
+            bool on = (id(overlay_tc_mask) & (1 << s));
+            lv_obj_set_style_bg_color(sb[s], lv_color_hex(on ? fc[s] : 0xFFFFFF), 0);
+            lv_obj_set_style_text_color(lv_obj_get_child(sb[s], 0), lv_color_hex(on ? tc_on[s] : tc_off[s]), 0);
           }
-          lv_obj_set_style_bg_opa(id(btn_tc_all), LV_OPA_TRANSP, 0);
-          // Typ-Buttons
+          lv_obj_set_style_bg_opa(id(btn_tc_all), LV_OPA_COVER, 0);
+          // Typ-Tabs
           if (id(overlay_tc_type) == 0) {
             lv_obj_set_style_bg_color(id(btn_tc_type_timer), lv_color_hex(0x334488), 0);
-            lv_obj_set_style_bg_color(id(btn_tc_type_cd), lv_color_hex(0x444444), 0);
+            lv_obj_set_style_bg_color(id(btn_tc_type_cd),    lv_color_hex(0xCCCCCC), 0);
+            lv_obj_set_style_text_color(lv_obj_get_child(id(btn_tc_type_timer), 0), lv_color_hex(0xFFFFFF), 0);
+            lv_obj_set_style_text_color(lv_obj_get_child(id(btn_tc_type_cd), 0),    lv_color_hex(0x333333), 0);
             lv_obj_clear_flag(id(obj_tc_timer_content), LV_OBJ_FLAG_HIDDEN);
             lv_obj_add_flag(id(obj_tc_cd_content), LV_OBJ_FLAG_HIDDEN);
           } else {
-            lv_obj_set_style_bg_color(id(btn_tc_type_timer), lv_color_hex(0x444444), 0);
-            lv_obj_set_style_bg_color(id(btn_tc_type_cd), lv_color_hex(0x334488), 0);
+            lv_obj_set_style_bg_color(id(btn_tc_type_timer), lv_color_hex(0xCCCCCC), 0);
+            lv_obj_set_style_bg_color(id(btn_tc_type_cd),    lv_color_hex(0x334488), 0);
+            lv_obj_set_style_text_color(lv_obj_get_child(id(btn_tc_type_timer), 0), lv_color_hex(0x333333), 0);
+            lv_obj_set_style_text_color(lv_obj_get_child(id(btn_tc_type_cd), 0),    lv_color_hex(0xFFFFFF), 0);
             lv_obj_add_flag(id(obj_tc_timer_content), LV_OBJ_FLAG_HIDDEN);
             lv_obj_clear_flag(id(obj_tc_cd_content), LV_OBJ_FLAG_HIDDEN);
           }
@@ -251,9 +259,9 @@ script:
           lv_slider_set_value(id(slider_tc_minutes), id(overlay_tc_seconds), LV_ANIM_OFF);
           { int m = id(overlay_tc_seconds)/60, s2 = id(overlay_tc_seconds)%60;
             char buf[24];
-            if (m == 0)      snprintf(buf, sizeof(buf), "%d sek", s2);
+            if (m == 0)       snprintf(buf, sizeof(buf), "%d sek", s2);
             else if (s2 == 0) snprintf(buf, sizeof(buf), "%d min", m);
-            else              snprintf(buf, sizeof(buf), "%d min %d sek", m, s2);
+            else              snprintf(buf, sizeof(buf), "%d:%02d", m, s2);
             lv_label_set_text(id(lbl_tc_minutes_val), buf); }
           // Overlay einblenden
           lv_obj_clear_flag(id(overlay_timer_cowntdown), LV_OBJ_FLAG_HIDDEN);

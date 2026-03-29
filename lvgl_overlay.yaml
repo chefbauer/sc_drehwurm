@@ -1702,10 +1702,11 @@ lvgl:
                 text_color: 0x003366
 
             # ── Slot-Auswahl-Zeile (7 Buttons: Slot 1–6 + Alle) ────────────
+            # Inaktiv: weißer Hintergrund, farbiger Rand (4px); Aktiv: Vollfarbe
             - obj:
                 id: obj_tc_slot_row
                 width: 800
-                height: 80
+                height: 70
                 align: TOP_MID
                 y: 90
                 bg_opa: 0%
@@ -1719,126 +1720,138 @@ lvgl:
                       height: 56
                       align: LEFT_MID
                       x: 86
-                      bg_color: 0xFF0000
-                      bg_opa: 30%
+                      bg_color: 0xFFFFFF
+                      bg_opa: COVER
                       border_color: 0xFF0000
-                      border_width: 2
+                      border_width: 4
                       radius: 8
                       on_click:
                         - lambda: |-
-                            id(overlay_tc_mask) |= (1 << 0);
-                            lv_obj_set_style_bg_opa(id(btn_tc_s1), id(overlay_tc_mask) & (1<<0) ? LV_OPA_COVER : LV_OPA_30, 0);
+                            id(overlay_tc_mask) ^= (1 << 0);
+                            bool on = id(overlay_tc_mask) & (1<<0);
+                            lv_obj_set_style_bg_color(id(btn_tc_s1), lv_color_hex(on ? 0xFF0000 : 0xFFFFFF), 0);
+                            lv_obj_set_style_text_color(lv_obj_get_child(id(btn_tc_s1), 0), lv_color_hex(on ? 0xFFFFFF : 0xCC0000), 0);
                       widgets:
                         - label:
                             text: "1"
                             align: CENTER
                             text_font: font_normal
-                            text_color: 0xFFFFFF
+                            text_color: 0xCC0000
                   - button:
                       id: btn_tc_s2
                       width: 80
                       height: 56
                       align: LEFT_MID
                       x: 174
-                      bg_color: 0xFFFF00
-                      bg_opa: 30%
-                      border_color: 0xFFFF00
-                      border_width: 2
+                      bg_color: 0xFFFFFF
+                      bg_opa: COVER
+                      border_color: 0xCCCC00
+                      border_width: 4
                       radius: 8
                       on_click:
                         - lambda: |-
                             id(overlay_tc_mask) ^= (1 << 1);
-                            lv_obj_set_style_bg_opa(id(btn_tc_s2), id(overlay_tc_mask) & (1<<1) ? LV_OPA_COVER : LV_OPA_30, 0);
+                            bool on = id(overlay_tc_mask) & (1<<1);
+                            lv_obj_set_style_bg_color(id(btn_tc_s2), lv_color_hex(on ? 0xFFFF00 : 0xFFFFFF), 0);
+                            lv_obj_set_style_text_color(lv_obj_get_child(id(btn_tc_s2), 0), lv_color_hex(on ? 0x111111 : 0x777700), 0);
                       widgets:
                         - label:
                             text: "2"
                             align: CENTER
                             text_font: font_normal
-                            text_color: 0x111111
+                            text_color: 0x777700
                   - button:
                       id: btn_tc_s3
                       width: 80
                       height: 56
                       align: LEFT_MID
                       x: 262
-                      bg_color: 0x00FF00
-                      bg_opa: 30%
-                      border_color: 0x00FF00
-                      border_width: 2
+                      bg_color: 0xFFFFFF
+                      bg_opa: COVER
+                      border_color: 0x00CC00
+                      border_width: 4
                       radius: 8
                       on_click:
                         - lambda: |-
                             id(overlay_tc_mask) ^= (1 << 2);
-                            lv_obj_set_style_bg_opa(id(btn_tc_s3), id(overlay_tc_mask) & (1<<2) ? LV_OPA_COVER : LV_OPA_30, 0);
+                            bool on = id(overlay_tc_mask) & (1<<2);
+                            lv_obj_set_style_bg_color(id(btn_tc_s3), lv_color_hex(on ? 0x00FF00 : 0xFFFFFF), 0);
+                            lv_obj_set_style_text_color(lv_obj_get_child(id(btn_tc_s3), 0), lv_color_hex(on ? 0x111111 : 0x006600), 0);
                       widgets:
                         - label:
                             text: "3"
                             align: CENTER
                             text_font: font_normal
-                            text_color: 0x111111
+                            text_color: 0x006600
                   - button:
                       id: btn_tc_s4
                       width: 80
                       height: 56
                       align: LEFT_MID
                       x: 350
-                      bg_color: 0x00FFFF
-                      bg_opa: 30%
-                      border_color: 0x00FFFF
-                      border_width: 2
+                      bg_color: 0xFFFFFF
+                      bg_opa: COVER
+                      border_color: 0x00CCCC
+                      border_width: 4
                       radius: 8
                       on_click:
                         - lambda: |-
                             id(overlay_tc_mask) ^= (1 << 3);
-                            lv_obj_set_style_bg_opa(id(btn_tc_s4), id(overlay_tc_mask) & (1<<3) ? LV_OPA_COVER : LV_OPA_30, 0);
+                            bool on = id(overlay_tc_mask) & (1<<3);
+                            lv_obj_set_style_bg_color(id(btn_tc_s4), lv_color_hex(on ? 0x00FFFF : 0xFFFFFF), 0);
+                            lv_obj_set_style_text_color(lv_obj_get_child(id(btn_tc_s4), 0), lv_color_hex(on ? 0x111111 : 0x007777), 0);
                       widgets:
                         - label:
                             text: "4"
                             align: CENTER
                             text_font: font_normal
-                            text_color: 0x111111
+                            text_color: 0x007777
                   - button:
                       id: btn_tc_s5
                       width: 80
                       height: 56
                       align: LEFT_MID
                       x: 438
-                      bg_color: 0x0000FF
-                      bg_opa: 30%
+                      bg_color: 0xFFFFFF
+                      bg_opa: COVER
                       border_color: 0x0000FF
-                      border_width: 2
+                      border_width: 4
                       radius: 8
                       on_click:
                         - lambda: |-
                             id(overlay_tc_mask) ^= (1 << 4);
-                            lv_obj_set_style_bg_opa(id(btn_tc_s5), id(overlay_tc_mask) & (1<<4) ? LV_OPA_COVER : LV_OPA_30, 0);
+                            bool on = id(overlay_tc_mask) & (1<<4);
+                            lv_obj_set_style_bg_color(id(btn_tc_s5), lv_color_hex(on ? 0x0000FF : 0xFFFFFF), 0);
+                            lv_obj_set_style_text_color(lv_obj_get_child(id(btn_tc_s5), 0), lv_color_hex(on ? 0xFFFFFF : 0x0000CC), 0);
                       widgets:
                         - label:
                             text: "5"
                             align: CENTER
                             text_font: font_normal
-                            text_color: 0xFFFFFF
+                            text_color: 0x0000CC
                   - button:
                       id: btn_tc_s6
                       width: 80
                       height: 56
                       align: LEFT_MID
                       x: 526
-                      bg_color: 0xFF00FF
-                      bg_opa: 30%
+                      bg_color: 0xFFFFFF
+                      bg_opa: COVER
                       border_color: 0xFF00FF
-                      border_width: 2
+                      border_width: 4
                       radius: 8
                       on_click:
                         - lambda: |-
                             id(overlay_tc_mask) ^= (1 << 5);
-                            lv_obj_set_style_bg_opa(id(btn_tc_s6), id(overlay_tc_mask) & (1<<5) ? LV_OPA_COVER : LV_OPA_30, 0);
+                            bool on = id(overlay_tc_mask) & (1<<5);
+                            lv_obj_set_style_bg_color(id(btn_tc_s6), lv_color_hex(on ? 0xFF00FF : 0xFFFFFF), 0);
+                            lv_obj_set_style_text_color(lv_obj_get_child(id(btn_tc_s6), 0), lv_color_hex(on ? 0xFFFFFF : 0xAA00AA), 0);
                       widgets:
                         - label:
                             text: "6"
                             align: CENTER
                             text_font: font_normal
-                            text_color: 0xFFFFFF
+                            text_color: 0xAA00AA
                   - button:
                       id: btn_tc_all
                       width: 80
@@ -1852,15 +1865,17 @@ lvgl:
                       radius: 8
                       on_click:
                         - lambda: |-
-                            // Alle Slots togglen: wenn alle aktiv → alle aus, sonst alle an
                             bool all_on = (id(overlay_tc_mask) & 0x3F) == 0x3F;
                             id(overlay_tc_mask) = all_on ? 0 : 0x3F;
-                            lv_obj_set_style_bg_opa(id(btn_tc_s1), id(overlay_tc_mask)&(1<<0)?LV_OPA_COVER:LV_OPA_30, 0);
-                            lv_obj_set_style_bg_opa(id(btn_tc_s2), id(overlay_tc_mask)&(1<<1)?LV_OPA_COVER:LV_OPA_30, 0);
-                            lv_obj_set_style_bg_opa(id(btn_tc_s3), id(overlay_tc_mask)&(1<<2)?LV_OPA_COVER:LV_OPA_30, 0);
-                            lv_obj_set_style_bg_opa(id(btn_tc_s4), id(overlay_tc_mask)&(1<<3)?LV_OPA_COVER:LV_OPA_30, 0);
-                            lv_obj_set_style_bg_opa(id(btn_tc_s5), id(overlay_tc_mask)&(1<<4)?LV_OPA_COVER:LV_OPA_30, 0);
-                            lv_obj_set_style_bg_opa(id(btn_tc_s6), id(overlay_tc_mask)&(1<<5)?LV_OPA_COVER:LV_OPA_30, 0);
+                            const uint32_t fc[6]     = {0xFF0000,0xFFFF00,0x00FF00,0x00FFFF,0x0000FF,0xFF00FF};
+                            const uint32_t tc_on[6]  = {0xFFFFFF,0x111111,0x111111,0x111111,0xFFFFFF,0xFFFFFF};
+                            const uint32_t tc_off[6] = {0xCC0000,0x777700,0x006600,0x007777,0x0000CC,0xAA00AA};
+                            lv_obj_t* btns[6] = {id(btn_tc_s1),id(btn_tc_s2),id(btn_tc_s3),id(btn_tc_s4),id(btn_tc_s5),id(btn_tc_s6)};
+                            for (int i = 0; i < 6; i++) {
+                              bool on = id(overlay_tc_mask) & (1 << i);
+                              lv_obj_set_style_bg_color(btns[i], lv_color_hex(on ? fc[i] : 0xFFFFFF), 0);
+                              lv_obj_set_style_text_color(lv_obj_get_child(btns[i], 0), lv_color_hex(on ? tc_on[i] : tc_off[i]), 0);
+                            }
                       widgets:
                         - label:
                             text: "Alle"
@@ -1868,13 +1883,13 @@ lvgl:
                             text_font: font_small
                             text_color: 0xCCCCFF
 
-            # ── Quick-Presets: Dose + Flasche (direkt unter Slots) ─────────
+            # ── Quick-Presets: Dose + Flasche ───────────────────────────────
             - obj:
                 id: obj_tc_quick_row
                 width: 800
-                height: 64
+                height: 58
                 align: TOP_MID
-                y: 178
+                y: 170
                 bg_opa: 0%
                 border_width: 0
                 pad_all: 0
@@ -1883,7 +1898,7 @@ lvgl:
                   - button:
                       id: btn_tc_dose
                       width: 340
-                      height: 56
+                      height: 50
                       align: LEFT_MID
                       x: 60
                       bg_color: 0x223355
@@ -1892,10 +1907,11 @@ lvgl:
                       radius: 8
                       on_click:
                         - lambda: |-
-                            // → Countdown-Modus + 4 min (240 sek)
                             id(overlay_tc_type) = 1;
                             lv_obj_set_style_bg_color(id(btn_tc_type_cd),    lv_color_hex(0x334488), 0);
-                            lv_obj_set_style_bg_color(id(btn_tc_type_timer), lv_color_hex(0x444444), 0);
+                            lv_obj_set_style_bg_color(id(btn_tc_type_timer), lv_color_hex(0xCCCCCC), 0);
+                            lv_obj_set_style_text_color(lv_obj_get_child(id(btn_tc_type_cd), 0),    lv_color_hex(0xFFFFFF), 0);
+                            lv_obj_set_style_text_color(lv_obj_get_child(id(btn_tc_type_timer), 0), lv_color_hex(0x333333), 0);
                             lv_obj_add_flag(id(obj_tc_timer_content),    LV_OBJ_FLAG_HIDDEN);
                             lv_obj_clear_flag(id(obj_tc_cd_content), LV_OBJ_FLAG_HIDDEN);
                             id(overlay_tc_seconds) = 240;
@@ -1910,7 +1926,7 @@ lvgl:
                   - button:
                       id: btn_tc_flasche
                       width: 340
-                      height: 56
+                      height: 50
                       align: LEFT_MID
                       x: 420
                       bg_color: 0x223355
@@ -1919,10 +1935,11 @@ lvgl:
                       radius: 8
                       on_click:
                         - lambda: |-
-                            // → Countdown-Modus + 8 min (480 sek)
                             id(overlay_tc_type) = 1;
                             lv_obj_set_style_bg_color(id(btn_tc_type_cd),    lv_color_hex(0x334488), 0);
-                            lv_obj_set_style_bg_color(id(btn_tc_type_timer), lv_color_hex(0x444444), 0);
+                            lv_obj_set_style_bg_color(id(btn_tc_type_timer), lv_color_hex(0xCCCCCC), 0);
+                            lv_obj_set_style_text_color(lv_obj_get_child(id(btn_tc_type_cd), 0),    lv_color_hex(0xFFFFFF), 0);
+                            lv_obj_set_style_text_color(lv_obj_get_child(id(btn_tc_type_timer), 0), lv_color_hex(0x333333), 0);
                             lv_obj_add_flag(id(obj_tc_timer_content),    LV_OBJ_FLAG_HIDDEN);
                             lv_obj_clear_flag(id(obj_tc_cd_content), LV_OBJ_FLAG_HIDDEN);
                             id(overlay_tc_seconds) = 480;
@@ -1935,33 +1952,36 @@ lvgl:
                             text_font: font_normal
                             text_color: 0xCCDDFF
 
-            # ── Typ-Auswahl (Timer / Countdown) ────────────────────────────
+            # ── Typ-Tabs: grauer Container, aktiver Tab = blau ──────────────
             - obj:
                 id: obj_tc_type_row
-                width: 700
-                height: 64
+                width: 500
+                height: 52
                 align: TOP_MID
-                y: 254
-                bg_opa: 0%
+                y: 238
+                bg_color: 0xCCCCCC
+                bg_opa: COVER
                 border_width: 0
+                radius: 8
                 pad_all: 0
 
                 widgets:
                   - button:
                       id: btn_tc_type_timer
-                      width: 180
+                      width: 220
                       height: 52
                       align: LEFT_MID
-                      x: 146
+                      x: 0
                       bg_color: 0x334488
-                      border_color: 0x6688CC
-                      border_width: 2
+                      border_width: 0
                       radius: 8
                       on_click:
                         - lambda: |-
                             id(overlay_tc_type) = 0;
                             lv_obj_set_style_bg_color(id(btn_tc_type_timer), lv_color_hex(0x334488), 0);
-                            lv_obj_set_style_bg_color(id(btn_tc_type_cd),    lv_color_hex(0x444444), 0);
+                            lv_obj_set_style_bg_color(id(btn_tc_type_cd),    lv_color_hex(0xCCCCCC), 0);
+                            lv_obj_set_style_text_color(lv_obj_get_child(id(btn_tc_type_timer), 0), lv_color_hex(0xFFFFFF), 0);
+                            lv_obj_set_style_text_color(lv_obj_get_child(id(btn_tc_type_cd), 0),    lv_color_hex(0x333333), 0);
                             lv_obj_clear_flag(id(obj_tc_timer_content), LV_OBJ_FLAG_HIDDEN);
                             lv_obj_add_flag(id(obj_tc_cd_content),    LV_OBJ_FLAG_HIDDEN);
                       widgets:
@@ -1972,19 +1992,20 @@ lvgl:
                             text_color: 0xFFFFFF
                   - button:
                       id: btn_tc_type_cd
-                      width: 220
+                      width: 280
                       height: 52
                       align: LEFT_MID
-                      x: 334
-                      bg_color: 0x444444
-                      border_color: 0x666666
-                      border_width: 2
+                      x: 220
+                      bg_color: 0xCCCCCC
+                      border_width: 0
                       radius: 8
                       on_click:
                         - lambda: |-
                             id(overlay_tc_type) = 1;
                             lv_obj_set_style_bg_color(id(btn_tc_type_cd),    lv_color_hex(0x334488), 0);
-                            lv_obj_set_style_bg_color(id(btn_tc_type_timer), lv_color_hex(0x444444), 0);
+                            lv_obj_set_style_bg_color(id(btn_tc_type_timer), lv_color_hex(0xCCCCCC), 0);
+                            lv_obj_set_style_text_color(lv_obj_get_child(id(btn_tc_type_cd), 0),    lv_color_hex(0xFFFFFF), 0);
+                            lv_obj_set_style_text_color(lv_obj_get_child(id(btn_tc_type_timer), 0), lv_color_hex(0x333333), 0);
                             lv_obj_add_flag(id(obj_tc_timer_content),    LV_OBJ_FLAG_HIDDEN);
                             lv_obj_clear_flag(id(obj_tc_cd_content), LV_OBJ_FLAG_HIDDEN);
                       widgets:
@@ -1992,15 +2013,15 @@ lvgl:
                             text: "Countdown"
                             align: CENTER
                             text_font: font_normal
-                            text_color: 0xFFFFFF
+                            text_color: 0x333333
 
-            # ── Timer-Inhalt (sichtbar wenn Typ = Timer) ────────────────────
+            # ── Timer-Inhalt ─────────────────────────────────────────────────
             - obj:
                 id: obj_tc_timer_content
                 width: 700
-                height: 140
+                height: 100
                 align: TOP_MID
-                y: 328
+                y: 302
                 bg_opa: 0%
                 border_width: 0
                 pad_all: 0
@@ -2017,7 +2038,7 @@ lvgl:
                       radius: 8
                       on_click:
                         - lambda: |-
-                            // Timer-Reset für alle gewählten Slots
+                            // Reset: Slot auf 0, mode=Timer, KEIN Autostart, Overlay bleibt offen
                             esphome::binary_sensor::BinarySensor* blink_s[6] = {
                               id(bin_slot1_blink), id(bin_slot2_blink), id(bin_slot3_blink),
                               id(bin_slot4_blink), id(bin_slot5_blink), id(bin_slot6_blink),
@@ -2029,12 +2050,21 @@ lvgl:
                             };
                             for (int i = 0; i < 6; i++) {
                               if (!(id(overlay_tc_mask) & (1 << i))) continue;
-                              id(slot_elapsed_ms)[i] = 0;
-                              id(slot_start_ms)[i]   = 0;
-                              id(slot_status)[i]     = 0;
+                              id(slot_elapsed_ms)[i]   = 0;
+                              id(slot_start_ms)[i]     = 0;
+                              id(slot_status)[i]       = 0;
+                              id(slot_is_countdown)[i] = false;
                               blink_s[i]->publish_state(false);
                               lv_obj_set_style_bg_color(slot_tabs[i], lv_color_hex(slot_fc[i]), 0);
                             }
+                            // Tabs → Timer
+                            id(overlay_tc_type) = 0;
+                            lv_obj_set_style_bg_color(id(btn_tc_type_timer), lv_color_hex(0x334488), 0);
+                            lv_obj_set_style_bg_color(id(btn_tc_type_cd),    lv_color_hex(0xCCCCCC), 0);
+                            lv_obj_set_style_text_color(lv_obj_get_child(id(btn_tc_type_timer), 0), lv_color_hex(0xFFFFFF), 0);
+                            lv_obj_set_style_text_color(lv_obj_get_child(id(btn_tc_type_cd), 0),    lv_color_hex(0x333333), 0);
+                            lv_obj_clear_flag(id(obj_tc_timer_content), LV_OBJ_FLAG_HIDDEN);
+                            lv_obj_add_flag(id(obj_tc_cd_content),    LV_OBJ_FLAG_HIDDEN);
                             lv_obj_add_flag(id(overlay_timer_cowntdown), LV_OBJ_FLAG_HIDDEN);
                       widgets:
                         - label:
@@ -2043,32 +2073,32 @@ lvgl:
                             text_font: font_normal
                             text_color: 0xFFFFFF
 
-            # ── Countdown-Inhalt (sichtbar wenn Typ = Countdown) ───────────
+            # ── Countdown-Inhalt ─────────────────────────────────────────────
             - obj:
                 id: obj_tc_cd_content
                 width: 860
-                height: 210
+                height: 170
                 align: TOP_MID
-                y: 328
+                y: 302
                 bg_opa: 0%
                 border_width: 0
                 pad_all: 0
                 hidden: true
 
                 widgets:
-                  # Slider 30 sek – 12 min (in 30-sek-Schritten)
+                  # Slider + Wert-Label nebeneinander in einer Zeile
                   - slider:
                       id: slider_tc_minutes
-                      width: 820
+                      width: 680
                       height: 24
-                      align: TOP_MID
+                      align: TOP_LEFT
+                      x: 0
                       y: 8
                       min_value: 30
                       max_value: 720
                       value: 240
                       on_value:
                         - lambda: |-
-                            // Auf 30-sek-Raster einrasten
                             int raw = (int)x;
                             int snapped = ((raw + 15) / 30) * 30;
                             if (snapped < 30)  snapped = 30;
@@ -2078,14 +2108,15 @@ lvgl:
                             char buf[24];
                             if (m == 0)       snprintf(buf, sizeof(buf), "%d sek", s2);
                             else if (s2 == 0) snprintf(buf, sizeof(buf), "%d min", m);
-                            else              snprintf(buf, sizeof(buf), "%d min %d sek", m, s2);
+                            else              snprintf(buf, sizeof(buf), "%d:%02d", m, s2);
                             lv_label_set_text(id(lbl_tc_minutes_val), buf);
                             lv_slider_set_value(id(slider_tc_minutes), snapped, LV_ANIM_OFF);
                   - label:
                       id: lbl_tc_minutes_val
                       text: "4 min"
-                      align: TOP_MID
-                      y: 42
+                      align: TOP_LEFT
+                      x: 692
+                      y: 6
                       text_font: font_normal
                       text_color: 0x003366
                   # Quick-Buttons 1–10 min
@@ -2093,9 +2124,9 @@ lvgl:
                       id: btn_tc_q1
                       width: 74
                       height: 48
-                      align: LEFT_MID
+                      align: TOP_LEFT
                       x: 0
-                      y: 40
+                      y: 44
                       bg_color: 0x334466
                       border_color: 0x5577AA
                       border_width: 1
@@ -2115,9 +2146,9 @@ lvgl:
                       id: btn_tc_q2
                       width: 74
                       height: 48
-                      align: LEFT_MID
+                      align: TOP_LEFT
                       x: 87
-                      y: 40
+                      y: 44
                       bg_color: 0x334466
                       border_color: 0x5577AA
                       border_width: 1
@@ -2137,9 +2168,9 @@ lvgl:
                       id: btn_tc_q3
                       width: 74
                       height: 48
-                      align: LEFT_MID
+                      align: TOP_LEFT
                       x: 174
-                      y: 40
+                      y: 44
                       bg_color: 0x334466
                       border_color: 0x5577AA
                       border_width: 1
@@ -2159,9 +2190,9 @@ lvgl:
                       id: btn_tc_q4
                       width: 74
                       height: 48
-                      align: LEFT_MID
+                      align: TOP_LEFT
                       x: 261
-                      y: 40
+                      y: 44
                       bg_color: 0x334466
                       border_color: 0x5577AA
                       border_width: 1
@@ -2181,9 +2212,9 @@ lvgl:
                       id: btn_tc_q5
                       width: 74
                       height: 48
-                      align: LEFT_MID
+                      align: TOP_LEFT
                       x: 348
-                      y: 40
+                      y: 44
                       bg_color: 0x334466
                       border_color: 0x5577AA
                       border_width: 1
@@ -2203,9 +2234,9 @@ lvgl:
                       id: btn_tc_q6
                       width: 74
                       height: 48
-                      align: LEFT_MID
+                      align: TOP_LEFT
                       x: 435
-                      y: 40
+                      y: 44
                       bg_color: 0x334466
                       border_color: 0x5577AA
                       border_width: 1
@@ -2225,9 +2256,9 @@ lvgl:
                       id: btn_tc_q7
                       width: 74
                       height: 48
-                      align: LEFT_MID
+                      align: TOP_LEFT
                       x: 522
-                      y: 40
+                      y: 44
                       bg_color: 0x334466
                       border_color: 0x5577AA
                       border_width: 1
@@ -2247,9 +2278,9 @@ lvgl:
                       id: btn_tc_q8
                       width: 74
                       height: 48
-                      align: LEFT_MID
+                      align: TOP_LEFT
                       x: 609
-                      y: 40
+                      y: 44
                       bg_color: 0x334466
                       border_color: 0x5577AA
                       border_width: 1
@@ -2269,9 +2300,9 @@ lvgl:
                       id: btn_tc_q9
                       width: 74
                       height: 48
-                      align: LEFT_MID
+                      align: TOP_LEFT
                       x: 696
-                      y: 40
+                      y: 44
                       bg_color: 0x334466
                       border_color: 0x5577AA
                       border_width: 1
@@ -2291,9 +2322,9 @@ lvgl:
                       id: btn_tc_q10
                       width: 74
                       height: 48
-                      align: LEFT_MID
+                      align: TOP_LEFT
                       x: 783
-                      y: 40
+                      y: 44
                       bg_color: 0x334466
                       border_color: 0x5577AA
                       border_width: 1
@@ -2308,6 +2339,7 @@ lvgl:
                             text: "10"
                             align: CENTER
                             text_font: font_normal
+                            text_color: 0xCCDDFF
                             text_color: 0xCCDDFF
 
             # ── OK-Button (Einstellungen übernehmen, Overlay schließen) ─────
