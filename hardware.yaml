@@ -5,7 +5,6 @@
 #  output:    output_pumpe_dacA, output_pumpe_dacB,
 #             output_luefter_kompressor_pwm, output_kompressor_relais
 #  i2c:       i2c_amg8833, temp_bridge
-#  tca9548a:  i2c_mux  (channel: i2c_mux_ch0)
 #  globals:   amg_pixel_temps, kompressor_soll_ein
 #  sensor:    sensor_temp_becken, sensor_amg8833
 #  climate:   climate_thermostat

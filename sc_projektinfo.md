@@ -26,7 +26,6 @@
 - Schwenker-Motor CAN-Bus → `schwenker.yaml`
 - WS2812-LED-Ring → `lights.yaml`
 - Hardware-Pins / Substitutionen → `display_7z_settings.yaml`
-- BLE-Scanner → `ble.yaml`
 - Kühler-Extras → `cooler.yaml`
 
 ---
@@ -40,9 +39,10 @@
 > **YAML-Komponenten-Übersichten:** Jede YAML-Datei hat am Anfang einen `# ── Komponenten ──`
 > Kommentarblock mit allen ESPHome-Typen und ihren IDs. Dieser Kommentarblock **muss
 > ebenfalls aktualisiert werden**, wenn Komponenten hinzukommen, wegfallen oder umbenannt werden.
-> Gilt für alle 9 Dateien: `ble.yaml`, `cooler.yaml`, `display.yaml`, `hardware.yaml`,
+> Gilt für alle 8 aktiven Dateien: `cooler.yaml`, `display_7z_settings.yaml`, `hardware.yaml`,
 > `lvgl_basis.yaml`, `lvgl_overlay.yaml`, `motorcontrol_can-bus.yaml`, `schwenker.yaml`,
 > `sensorphalanx.yaml`.
+> (`ble.yaml` existiert noch als Archiv, wird aber **nicht eingebunden**.)
 
 ---
 
@@ -93,7 +93,6 @@ Ausgelegt für **Dosen und Flaschen** — durch das Drehen wird die Kühlleistun
 | Betrieb | Standalone (kein Home Assistant nötig) |
 | Zeit-Quelle | SNTP (NTP) — RTC wird später hinzugefügt |
 | Radio-Koprocessor | ESP32-C6 via `esp32_hosted` (SDIO 4-bit, extern definiert) |
-| BLE | ESP32-C6 stellt BLE bereit; Scanner in `ble.yaml` |
 | 1-Wire Bus | DS18B20 an ESP32-C3 I²C-Bridge (`0x48`) → `temp_bridge` in `hardware.yaml` |
 
 ---
@@ -789,11 +788,9 @@ Alle Sensoren auf `i2c_id: i2c_bus` (fremdkonfiguriert in main_config).
 | 2026-03-15 | Pump-Slider (`row_turmpumpe`, `row_umwaelzpumpe`) von Tab "Test" → Tab "System" (y:110/200, nach row_overlays) | `lvgl_basis.yaml` |
 | 2026-03-15 | `on_control`: `c_pumpe_standby_perc` → `c_pumpe_umwaelzung_ein_perc`; `on_state`: `slider_umwaelzpumpe` synchronisiert Thermostat-Modus | `hardware.yaml` |
 | 2026-03-15 | DS18B20-Bridge: I²C-Slave entfernt → BLE BTHome v2 Advertising (NimBLE, ESP32-C3 v3.x) | `ds18b20_i2c_bridge.ino` |
-| 2026-03-15 | `ble.yaml` neu: `esp32_ble_tracker` (passiv); `esp32_hosted` extern, nicht in dieser Datei | `ble.yaml` |
-| 2026-03-15 | BLE MAC ermittelt (`dc:da:0c:a1:89:8e`); `sensor_temp_becken` via BTHome v2 aktiviert | `ble.yaml` |
-| 2026-03-15 | I²C-Bridge `temp_bridge` (0x48) + Template-Sensor aus `hardware.yaml` entfernt | `hardware.yaml` |
+| 2026-03-15 | I²C-Bridge `temp_bridge` (0x48) + Template-Sensor aus `hardware.yaml` entfernt (BLE-Zwischenlösung) | `hardware.yaml` |
 | 2026-03-17 | TCA9548A-Mux entfernt; alle sensorphalanx-Sensoren direkt auf `i2c_bus` umgestellt | `sensorphalanx.yaml` |
-| 2026-03-17 | I²C-Bridge (`1w_i2c_bridge`, ESP-IDF 5.x) wieder aktiv; `sensor_temp_becken` liest `temp_bridge` (0x48, 3s); `ble.yaml`-BLE-Sensor abgelöst | `hardware.yaml` |
+| 2026-03-17 | I²C-Bridge (`1w_i2c_bridge`, ESP-IDF 5.x) reaktiviert; `sensor_temp_becken` liest `temp_bridge` (0x48, 3s) — BLE endgültig abgelöst | `hardware.yaml` |
 | 2026-03-18 | Timer-Kontrast: Alle 6 Slot-Timer-Bereiche: `font_small` → Roboto@700 (fett), `font_timer` 35→38px, `bg_opa` 50%→40%; Textfarben Slots 1–4 → schwarz, Slot 6 → weiß | `lvgl_basis.yaml` |
 | 2026-03-18 | `btn_beckenfuellung`: Runder Button 80×80px, Position tangential 45° rechts unten am Ring (`align: CENTER, x:156, y:176`); Icon `\uF773` (fa-water) zu `font_icons`-Glyph-Liste ergänzt | `lvgl_basis.yaml` |
 | 2026-03-18 | `script_pumpe_a_kurz/lang`: Slider `slider_turmpumpe` wird am Ende auf 15 gesetzt | `schwenker.yaml` |
