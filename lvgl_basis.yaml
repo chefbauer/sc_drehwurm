@@ -818,6 +818,23 @@ lvgl:
                         on_short_click:
                           - lambda: |-
                               int i = 0;
+                              static uint32_t last_ms_s1 = 0;
+                              uint32_t now = millis();
+                              if (now - last_ms_s1 < 400 && last_ms_s1 != 0) {
+                                last_ms_s1 = 0;
+                                if (id(slot_status)[i] == 1) id(slot_elapsed_ms)[i] += millis() - id(slot_start_ms)[i];
+                                id(slot_elapsed_ms)[i] = 0; id(slot_start_ms)[i] = 0; id(slot_status)[i] = 0;
+                                id(bin_slot1_blink)->publish_state(false);
+                                lv_obj_set_style_bg_color(id(slot1_tab), lv_color_hex(0xFF0000), 0);
+                                if (id(slot_is_countdown)[i]) {
+                                  uint32_t s = id(slot_countdown_max_ms)[i] / 1000;
+                                  char rb[8]; snprintf(rb, sizeof(rb), "%02u:%02u", (unsigned)(s/60), (unsigned)(s%60));
+                                  lv_label_set_text(id(lbl_slot1_time), rb);
+                                } else { lv_label_set_text(id(lbl_slot1_time), "00:00"); }
+                                lv_label_set_text(id(lbl_slot1_symbol), "\xef\x81\x8b");
+                                ESP_LOGI("timer", "Slot 1: Reset (DblClick)"); return;
+                              }
+                              last_ms_s1 = now;
                               if (id(bin_slot1_blink)->state) {
                                 id(bin_slot1_blink)->publish_state(false);
                                 lv_obj_set_style_bg_color(id(slot1_tab), lv_color_hex(0xFF0000), 0);
@@ -829,8 +846,7 @@ lvgl:
                                   char rb[8]; snprintf(rb, sizeof(rb), "%02u:%02u", (unsigned)(s/60), (unsigned)(s%60));
                                   lv_label_set_text(id(lbl_slot1_time), rb);
                                 } else { lv_label_set_text(id(lbl_slot1_time), "00:00"); }
-                                lv_label_set_text(id(lbl_slot1_symbol), "\xef\x81\x8b");
-                                return;
+                                lv_label_set_text(id(lbl_slot1_symbol), "\xef\x81\x8b"); return;
                               }
                               if (id(slot_status)[i] == 0 || id(slot_status)[i] == 2) {
                                 id(slot_start_ms)[i] = millis();
@@ -934,6 +950,23 @@ lvgl:
                         on_short_click:
                           - lambda: |-
                               int i = 1;
+                              static uint32_t last_ms_s2 = 0;
+                              uint32_t now = millis();
+                              if (now - last_ms_s2 < 400 && last_ms_s2 != 0) {
+                                last_ms_s2 = 0;
+                                if (id(slot_status)[i] == 1) id(slot_elapsed_ms)[i] += millis() - id(slot_start_ms)[i];
+                                id(slot_elapsed_ms)[i] = 0; id(slot_start_ms)[i] = 0; id(slot_status)[i] = 0;
+                                id(bin_slot2_blink)->publish_state(false);
+                                lv_obj_set_style_bg_color(id(slot2_tab), lv_color_hex(0xFFFF00), 0);
+                                if (id(slot_is_countdown)[i]) {
+                                  uint32_t s = id(slot_countdown_max_ms)[i] / 1000;
+                                  char rb[8]; snprintf(rb, sizeof(rb), "%02u:%02u", (unsigned)(s/60), (unsigned)(s%60));
+                                  lv_label_set_text(id(lbl_slot2_time), rb);
+                                } else { lv_label_set_text(id(lbl_slot2_time), "00:00"); }
+                                lv_label_set_text(id(lbl_slot2_symbol), "\xef\x81\x8b");
+                                ESP_LOGI("timer", "Slot 2: Reset (DblClick)"); return;
+                              }
+                              last_ms_s2 = now;
                               if (id(bin_slot2_blink)->state) {
                                 id(bin_slot2_blink)->publish_state(false);
                                 lv_obj_set_style_bg_color(id(slot2_tab), lv_color_hex(0xFFFF00), 0);
@@ -945,8 +978,7 @@ lvgl:
                                   char rb[8]; snprintf(rb, sizeof(rb), "%02u:%02u", (unsigned)(s/60), (unsigned)(s%60));
                                   lv_label_set_text(id(lbl_slot2_time), rb);
                                 } else { lv_label_set_text(id(lbl_slot2_time), "00:00"); }
-                                lv_label_set_text(id(lbl_slot2_symbol), "\xef\x81\x8b");
-                                return;
+                                lv_label_set_text(id(lbl_slot2_symbol), "\xef\x81\x8b"); return;
                               }
                               if (id(slot_status)[i] == 0 || id(slot_status)[i] == 2) {
                                 id(slot_start_ms)[i] = millis();
@@ -1050,6 +1082,23 @@ lvgl:
                         on_short_click:
                           - lambda: |-
                               int i = 2;
+                              static uint32_t last_ms_s3 = 0;
+                              uint32_t now = millis();
+                              if (now - last_ms_s3 < 400 && last_ms_s3 != 0) {
+                                last_ms_s3 = 0;
+                                if (id(slot_status)[i] == 1) id(slot_elapsed_ms)[i] += millis() - id(slot_start_ms)[i];
+                                id(slot_elapsed_ms)[i] = 0; id(slot_start_ms)[i] = 0; id(slot_status)[i] = 0;
+                                id(bin_slot3_blink)->publish_state(false);
+                                lv_obj_set_style_bg_color(id(slot3_tab), lv_color_hex(0x00FF00), 0);
+                                if (id(slot_is_countdown)[i]) {
+                                  uint32_t s = id(slot_countdown_max_ms)[i] / 1000;
+                                  char rb[8]; snprintf(rb, sizeof(rb), "%02u:%02u", (unsigned)(s/60), (unsigned)(s%60));
+                                  lv_label_set_text(id(lbl_slot3_time), rb);
+                                } else { lv_label_set_text(id(lbl_slot3_time), "00:00"); }
+                                lv_label_set_text(id(lbl_slot3_symbol), "\xef\x81\x8b");
+                                ESP_LOGI("timer", "Slot 3: Reset (DblClick)"); return;
+                              }
+                              last_ms_s3 = now;
                               if (id(bin_slot3_blink)->state) {
                                 id(bin_slot3_blink)->publish_state(false);
                                 lv_obj_set_style_bg_color(id(slot3_tab), lv_color_hex(0x00FF00), 0);
@@ -1061,8 +1110,7 @@ lvgl:
                                   char rb[8]; snprintf(rb, sizeof(rb), "%02u:%02u", (unsigned)(s/60), (unsigned)(s%60));
                                   lv_label_set_text(id(lbl_slot3_time), rb);
                                 } else { lv_label_set_text(id(lbl_slot3_time), "00:00"); }
-                                lv_label_set_text(id(lbl_slot3_symbol), "\xef\x81\x8b");
-                                return;
+                                lv_label_set_text(id(lbl_slot3_symbol), "\xef\x81\x8b"); return;
                               }
                               if (id(slot_status)[i] == 0 || id(slot_status)[i] == 2) {
                                 id(slot_start_ms)[i] = millis();
@@ -1168,6 +1216,23 @@ lvgl:
                         on_short_click:
                           - lambda: |-
                               int i = 3;
+                              static uint32_t last_ms_s4 = 0;
+                              uint32_t now = millis();
+                              if (now - last_ms_s4 < 400 && last_ms_s4 != 0) {
+                                last_ms_s4 = 0;
+                                if (id(slot_status)[i] == 1) id(slot_elapsed_ms)[i] += millis() - id(slot_start_ms)[i];
+                                id(slot_elapsed_ms)[i] = 0; id(slot_start_ms)[i] = 0; id(slot_status)[i] = 0;
+                                id(bin_slot4_blink)->publish_state(false);
+                                lv_obj_set_style_bg_color(id(slot4_tab), lv_color_hex(0x00FFFF), 0);
+                                if (id(slot_is_countdown)[i]) {
+                                  uint32_t s = id(slot_countdown_max_ms)[i] / 1000;
+                                  char rb[8]; snprintf(rb, sizeof(rb), "%02u:%02u", (unsigned)(s/60), (unsigned)(s%60));
+                                  lv_label_set_text(id(lbl_slot4_time), rb);
+                                } else { lv_label_set_text(id(lbl_slot4_time), "00:00"); }
+                                lv_label_set_text(id(lbl_slot4_symbol), "\xef\x81\x8b");
+                                ESP_LOGI("timer", "Slot 4: Reset (DblClick)"); return;
+                              }
+                              last_ms_s4 = now;
                               if (id(bin_slot4_blink)->state) {
                                 id(bin_slot4_blink)->publish_state(false);
                                 lv_obj_set_style_bg_color(id(slot4_tab), lv_color_hex(0x00FFFF), 0);
@@ -1179,8 +1244,7 @@ lvgl:
                                   char rb[8]; snprintf(rb, sizeof(rb), "%02u:%02u", (unsigned)(s/60), (unsigned)(s%60));
                                   lv_label_set_text(id(lbl_slot4_time), rb);
                                 } else { lv_label_set_text(id(lbl_slot4_time), "00:00"); }
-                                lv_label_set_text(id(lbl_slot4_symbol), "\xef\x81\x8b");
-                                return;
+                                lv_label_set_text(id(lbl_slot4_symbol), "\xef\x81\x8b"); return;
                               }
                               if (id(slot_status)[i] == 0 || id(slot_status)[i] == 2) {
                                 id(slot_start_ms)[i] = millis();
@@ -1284,6 +1348,23 @@ lvgl:
                         on_short_click:
                           - lambda: |-
                               int i = 4;
+                              static uint32_t last_ms_s5 = 0;
+                              uint32_t now = millis();
+                              if (now - last_ms_s5 < 400 && last_ms_s5 != 0) {
+                                last_ms_s5 = 0;
+                                if (id(slot_status)[i] == 1) id(slot_elapsed_ms)[i] += millis() - id(slot_start_ms)[i];
+                                id(slot_elapsed_ms)[i] = 0; id(slot_start_ms)[i] = 0; id(slot_status)[i] = 0;
+                                id(bin_slot5_blink)->publish_state(false);
+                                lv_obj_set_style_bg_color(id(slot5_tab), lv_color_hex(0x0000FF), 0);
+                                if (id(slot_is_countdown)[i]) {
+                                  uint32_t s = id(slot_countdown_max_ms)[i] / 1000;
+                                  char rb[8]; snprintf(rb, sizeof(rb), "%02u:%02u", (unsigned)(s/60), (unsigned)(s%60));
+                                  lv_label_set_text(id(lbl_slot5_time), rb);
+                                } else { lv_label_set_text(id(lbl_slot5_time), "00:00"); }
+                                lv_label_set_text(id(lbl_slot5_symbol), "\xef\x81\x8b");
+                                ESP_LOGI("timer", "Slot 5: Reset (DblClick)"); return;
+                              }
+                              last_ms_s5 = now;
                               if (id(bin_slot5_blink)->state) {
                                 id(bin_slot5_blink)->publish_state(false);
                                 lv_obj_set_style_bg_color(id(slot5_tab), lv_color_hex(0x0000FF), 0);
@@ -1295,8 +1376,7 @@ lvgl:
                                   char rb[8]; snprintf(rb, sizeof(rb), "%02u:%02u", (unsigned)(s/60), (unsigned)(s%60));
                                   lv_label_set_text(id(lbl_slot5_time), rb);
                                 } else { lv_label_set_text(id(lbl_slot5_time), "00:00"); }
-                                lv_label_set_text(id(lbl_slot5_symbol), "\xef\x81\x8b");
-                                return;
+                                lv_label_set_text(id(lbl_slot5_symbol), "\xef\x81\x8b"); return;
                               }
                               if (id(slot_status)[i] == 0 || id(slot_status)[i] == 2) {
                                 id(slot_start_ms)[i] = millis();
@@ -1400,6 +1480,23 @@ lvgl:
                         on_short_click:
                           - lambda: |-
                               int i = 5;
+                              static uint32_t last_ms_s6 = 0;
+                              uint32_t now = millis();
+                              if (now - last_ms_s6 < 400 && last_ms_s6 != 0) {
+                                last_ms_s6 = 0;
+                                if (id(slot_status)[i] == 1) id(slot_elapsed_ms)[i] += millis() - id(slot_start_ms)[i];
+                                id(slot_elapsed_ms)[i] = 0; id(slot_start_ms)[i] = 0; id(slot_status)[i] = 0;
+                                id(bin_slot6_blink)->publish_state(false);
+                                lv_obj_set_style_bg_color(id(slot6_tab), lv_color_hex(0xFF00FF), 0);
+                                if (id(slot_is_countdown)[i]) {
+                                  uint32_t s = id(slot_countdown_max_ms)[i] / 1000;
+                                  char rb[8]; snprintf(rb, sizeof(rb), "%02u:%02u", (unsigned)(s/60), (unsigned)(s%60));
+                                  lv_label_set_text(id(lbl_slot6_time), rb);
+                                } else { lv_label_set_text(id(lbl_slot6_time), "00:00"); }
+                                lv_label_set_text(id(lbl_slot6_symbol), "\xef\x81\x8b");
+                                ESP_LOGI("timer", "Slot 6: Reset (DblClick)"); return;
+                              }
+                              last_ms_s6 = now;
                               if (id(bin_slot6_blink)->state) {
                                 id(bin_slot6_blink)->publish_state(false);
                                 lv_obj_set_style_bg_color(id(slot6_tab), lv_color_hex(0xFF00FF), 0);
@@ -1411,8 +1508,7 @@ lvgl:
                                   char rb[8]; snprintf(rb, sizeof(rb), "%02u:%02u", (unsigned)(s/60), (unsigned)(s%60));
                                   lv_label_set_text(id(lbl_slot6_time), rb);
                                 } else { lv_label_set_text(id(lbl_slot6_time), "00:00"); }
-                                lv_label_set_text(id(lbl_slot6_symbol), "\xef\x81\x8b");
-                                return;
+                                lv_label_set_text(id(lbl_slot6_symbol), "\xef\x81\x8b"); return;
                               }
                               if (id(slot_status)[i] == 0 || id(slot_status)[i] == 2) {
                                 id(slot_start_ms)[i] = millis();
