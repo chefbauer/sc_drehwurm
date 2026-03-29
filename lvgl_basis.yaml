@@ -538,6 +538,21 @@ lvgl:
                         y: 280
                         on_short_click:
                           - lambda: |-
+                              int i = 0;
+                              if (id(bin_slot1_blink)->state) {
+                                id(bin_slot1_blink)->publish_state(false);
+                                lv_obj_set_style_bg_color(id(slot1_tab), lv_color_hex(0xFF0000), 0);
+                                id(slot_elapsed_ms)[i] = 0;
+                                id(slot_start_ms)[i] = 0;
+                                id(slot_status)[i] = 2;
+                                if (id(slot_is_countdown)[i]) {
+                                  uint32_t s = id(slot_countdown_max_ms)[i] / 1000;
+                                  char rb[8]; snprintf(rb, sizeof(rb), "%02u:%02u", (unsigned)(s/60), (unsigned)(s%60));
+                                  lv_label_set_text(id(lbl_slot1_time), rb);
+                                } else { lv_label_set_text(id(lbl_slot1_time), "00:00"); }
+                                lv_label_set_text(id(lbl_slot1_symbol), "\xef\x81\x8b");
+                                return;
+                              }
                               id(script_schwenker_goto_slot)->execute(1);
                         on_long_press:
                           - lambda: |-
@@ -563,6 +578,21 @@ lvgl:
                         y: 213
                         on_short_click:
                           - lambda: |-
+                              int i = 1;
+                              if (id(bin_slot2_blink)->state) {
+                                id(bin_slot2_blink)->publish_state(false);
+                                lv_obj_set_style_bg_color(id(slot2_tab), lv_color_hex(0xFFFF00), 0);
+                                id(slot_elapsed_ms)[i] = 0;
+                                id(slot_start_ms)[i] = 0;
+                                id(slot_status)[i] = 2;
+                                if (id(slot_is_countdown)[i]) {
+                                  uint32_t s = id(slot_countdown_max_ms)[i] / 1000;
+                                  char rb[8]; snprintf(rb, sizeof(rb), "%02u:%02u", (unsigned)(s/60), (unsigned)(s%60));
+                                  lv_label_set_text(id(lbl_slot2_time), rb);
+                                } else { lv_label_set_text(id(lbl_slot2_time), "00:00"); }
+                                lv_label_set_text(id(lbl_slot2_symbol), "\xef\x81\x8b");
+                                return;
+                              }
                               id(script_schwenker_goto_slot)->execute(2);
                         on_long_press:
                           - lambda: |-
@@ -588,6 +618,21 @@ lvgl:
                         y: 78
                         on_short_click:
                           - lambda: |-
+                              int i = 2;
+                              if (id(bin_slot3_blink)->state) {
+                                id(bin_slot3_blink)->publish_state(false);
+                                lv_obj_set_style_bg_color(id(slot3_tab), lv_color_hex(0x00FF00), 0);
+                                id(slot_elapsed_ms)[i] = 0;
+                                id(slot_start_ms)[i] = 0;
+                                id(slot_status)[i] = 2;
+                                if (id(slot_is_countdown)[i]) {
+                                  uint32_t s = id(slot_countdown_max_ms)[i] / 1000;
+                                  char rb[8]; snprintf(rb, sizeof(rb), "%02u:%02u", (unsigned)(s/60), (unsigned)(s%60));
+                                  lv_label_set_text(id(lbl_slot3_time), rb);
+                                } else { lv_label_set_text(id(lbl_slot3_time), "00:00"); }
+                                lv_label_set_text(id(lbl_slot3_symbol), "\xef\x81\x8b");
+                                return;
+                              }
                               id(script_schwenker_goto_slot)->execute(3);
                         on_long_press:
                           - lambda: |-
@@ -613,6 +658,21 @@ lvgl:
                         y: 10
                         on_short_click:
                           - lambda: |-
+                              int i = 3;
+                              if (id(bin_slot4_blink)->state) {
+                                id(bin_slot4_blink)->publish_state(false);
+                                lv_obj_set_style_bg_color(id(slot4_tab), lv_color_hex(0x00FFFF), 0);
+                                id(slot_elapsed_ms)[i] = 0;
+                                id(slot_start_ms)[i] = 0;
+                                id(slot_status)[i] = 2;
+                                if (id(slot_is_countdown)[i]) {
+                                  uint32_t s = id(slot_countdown_max_ms)[i] / 1000;
+                                  char rb[8]; snprintf(rb, sizeof(rb), "%02u:%02u", (unsigned)(s/60), (unsigned)(s%60));
+                                  lv_label_set_text(id(lbl_slot4_time), rb);
+                                } else { lv_label_set_text(id(lbl_slot4_time), "00:00"); }
+                                lv_label_set_text(id(lbl_slot4_symbol), "\xef\x81\x8b");
+                                return;
+                              }
                               id(script_schwenker_goto_slot)->execute(4);
                         on_long_press:
                           - lambda: |-
@@ -638,6 +698,21 @@ lvgl:
                         y: 78
                         on_short_click:
                           - lambda: |-
+                              int i = 4;
+                              if (id(bin_slot5_blink)->state) {
+                                id(bin_slot5_blink)->publish_state(false);
+                                lv_obj_set_style_bg_color(id(slot5_tab), lv_color_hex(0x0000FF), 0);
+                                id(slot_elapsed_ms)[i] = 0;
+                                id(slot_start_ms)[i] = 0;
+                                id(slot_status)[i] = 2;
+                                if (id(slot_is_countdown)[i]) {
+                                  uint32_t s = id(slot_countdown_max_ms)[i] / 1000;
+                                  char rb[8]; snprintf(rb, sizeof(rb), "%02u:%02u", (unsigned)(s/60), (unsigned)(s%60));
+                                  lv_label_set_text(id(lbl_slot5_time), rb);
+                                } else { lv_label_set_text(id(lbl_slot5_time), "00:00"); }
+                                lv_label_set_text(id(lbl_slot5_symbol), "\xef\x81\x8b");
+                                return;
+                              }
                               id(script_schwenker_goto_slot)->execute(5);
                         on_long_press:
                           - lambda: |-
@@ -663,6 +738,21 @@ lvgl:
                         y: 213
                         on_short_click:
                           - lambda: |-
+                              int i = 5;
+                              if (id(bin_slot6_blink)->state) {
+                                id(bin_slot6_blink)->publish_state(false);
+                                lv_obj_set_style_bg_color(id(slot6_tab), lv_color_hex(0xFF00FF), 0);
+                                id(slot_elapsed_ms)[i] = 0;
+                                id(slot_start_ms)[i] = 0;
+                                id(slot_status)[i] = 2;
+                                if (id(slot_is_countdown)[i]) {
+                                  uint32_t s = id(slot_countdown_max_ms)[i] / 1000;
+                                  char rb[8]; snprintf(rb, sizeof(rb), "%02u:%02u", (unsigned)(s/60), (unsigned)(s%60));
+                                  lv_label_set_text(id(lbl_slot6_time), rb);
+                                } else { lv_label_set_text(id(lbl_slot6_time), "00:00"); }
+                                lv_label_set_text(id(lbl_slot6_symbol), "\xef\x81\x8b");
+                                return;
+                              }
                               id(script_schwenker_goto_slot)->execute(6);
                         on_long_press:
                           - lambda: |-
