@@ -2099,18 +2099,25 @@ lvgl:
                       value: 240
                       on_value:
                         - lambda: |-
+                            // Guard gegen rekursiven Aufruf (lv_slider_set_value → on_value → ...)
+                            static bool in_snap = false;
+                            if (in_snap) return;
                             int raw = (int)x;
                             int snapped = ((raw + 15) / 30) * 30;
                             if (snapped < 30)  snapped = 30;
                             if (snapped > 720) snapped = 720;
                             id(overlay_tc_seconds) = snapped;
+                            if (raw != snapped) {
+                              in_snap = true;
+                              lv_slider_set_value(id(slider_tc_minutes), snapped, LV_ANIM_OFF);
+                              in_snap = false;
+                            }
                             int m = snapped / 60, s2 = snapped % 60;
                             char buf[24];
                             if (m == 0)       snprintf(buf, sizeof(buf), "%d sek", s2);
                             else if (s2 == 0) snprintf(buf, sizeof(buf), "%d min", m);
                             else              snprintf(buf, sizeof(buf), "%d:%02d", m, s2);
                             lv_label_set_text(id(lbl_tc_minutes_val), buf);
-                            lv_slider_set_value(id(slider_tc_minutes), snapped, LV_ANIM_OFF);
                   - label:
                       id: lbl_tc_minutes_val
                       text: "4 min"
@@ -2339,7 +2346,6 @@ lvgl:
                             text: "10"
                             align: CENTER
                             text_font: font_normal
-                            text_color: 0xCCDDFF
                             text_color: 0xCCDDFF
 
             # ── OK-Button (Einstellungen übernehmen, Overlay schließen) ─────
