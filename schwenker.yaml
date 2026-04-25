@@ -227,10 +227,10 @@ globals:
     restore_value: yes
     initial_value: '30'
 
-  - id: dr_acc               # Motor-Beschleunigung 1–254 (nie 0/255!)
+  - id: dr_acc               # Ramp-Schritt: 1–30 (= 0.1–3.0 s pro 10-UPM-Stufe, Motor-acc fest 1)
     type: int
     restore_value: yes
-    initial_value: '50'
+    initial_value: '5'          # 5 = 0.5 s/Stufe
 
   - id: dr_richtung          # +1 = CW, -1 = CCW
     type: int
@@ -242,6 +242,16 @@ globals:
     restore_value: yes
     initial_value: '4'
 
+  - id: dr_current_rpm       # aktuell gesendete Drehzahl (Software-Rampe)
+    type: int
+    restore_value: no
+    initial_value: '0'
+
+  - id: dr_ramp_last_ms      # millis() beim letzten Ramp-Schritt
+    type: uint32_t
+    restore_value: no
+    initial_value: '0'
+
   # ── Drehe-Presets ─────────────────────────────────────────
   - id: drp1_rpm
     type: int
@@ -250,7 +260,7 @@ globals:
   - id: drp1_acc
     type: int
     restore_value: yes
-    initial_value: '50'
+    initial_value: '10'         # 1.0 s
   - id: drp1_richtung
     type: int
     restore_value: yes
@@ -267,7 +277,7 @@ globals:
   - id: drp2_acc
     type: int
     restore_value: yes
-    initial_value: '80'
+    initial_value: '5'          # 0.5 s
   - id: drp2_richtung
     type: int
     restore_value: yes
@@ -284,7 +294,7 @@ globals:
   - id: drp3_acc
     type: int
     restore_value: yes
-    initial_value: '100'
+    initial_value: '3'          # 0.3 s
   - id: drp3_richtung
     type: int
     restore_value: yes
@@ -301,7 +311,7 @@ globals:
   - id: drp4_acc
     type: int
     restore_value: yes
-    initial_value: '150'
+    initial_value: '2'          # 0.2 s
   - id: drp4_richtung
     type: int
     restore_value: yes
@@ -318,7 +328,7 @@ globals:
   - id: drp5_acc
     type: int
     restore_value: yes
-    initial_value: '200'
+    initial_value: '2'          # 0.2 s
   - id: drp5_richtung
     type: int
     restore_value: yes
@@ -632,10 +642,10 @@ script:
     then:
       - lambda: |-
           lv_arc_set_value(id(arc_dr_rpm), std::max(5, std::min(400, id(dr_speed_rpm))));
-          lv_arc_set_value(id(arc_dr_acc), std::max(1, std::min(254, id(dr_acc))));
+          lv_arc_set_value(id(arc_dr_acc), std::max(1, std::min(30, id(dr_acc))));
           char b1[8]; snprintf(b1, sizeof(b1), "%d", id(dr_speed_rpm));
           lv_label_set_text(id(lbl_dr_rpm_val), b1);
-          char b2[6]; snprintf(b2, sizeof(b2), "%d", id(dr_acc));
+          char b2[8]; snprintf(b2, sizeof(b2), "%.1fs", id(dr_acc) / 10.0f);
           lv_label_set_text(id(lbl_dr_acc_val), b2);
           if (id(dr_richtung) > 0) {
             lv_label_set_text(id(lbl_dr_richtung), "Rechts \xef\x81\x8b");
@@ -676,13 +686,15 @@ script:
           ESP_LOGI("drehen", "Strom: %d mA", cur_ma);
       - delay: 150ms
       - lambda: |-
-          id(dr_speed_rpm) = std::max(5, std::min(400, id(dr_speed_rpm)));
-          id(dr_acc)       = std::max(1, std::min(254, id(dr_acc)));
-          id(dr_aktiv)     = true;
-          id(dr_modus)     = true;
+          id(dr_speed_rpm)    = std::max(5, std::min(400, id(dr_speed_rpm)));
+          id(dr_acc)          = std::max(1, std::min(30, id(dr_acc)));
+          id(dr_current_rpm)  = 0;
+          id(dr_ramp_last_ms) = millis();
+          id(dr_aktiv)        = true;
+          id(dr_modus)        = true;
           lv_obj_set_style_bg_color(id(btn_dr_start_stop), lv_color_hex(0x229933), 0);
           lv_obj_set_style_bg_color(id(btn_schwenker_main), lv_color_hex(0x229933), 0);
-          ESP_LOGI("drehen", "START  speed=%d UPM  acc=%d  dir=%+d  mode=%d",
+          ESP_LOGI("drehen", "START  speed=%d UPM  ramp_step=%d×100ms  dir=%+d  mode=%d",
                    id(dr_speed_rpm), id(dr_acc), id(dr_richtung), id(dr_motor_mode));
 
   # ── Drehen stoppen ────────────────────────────────────────
@@ -696,8 +708,9 @@ script:
             ESP_LOGI("drehen", "STOP: war bereits inaktiv");
             return;
           }
-          id(dr_aktiv) = false;
-          uint8_t acc_b = (uint8_t)std::max(1, std::min(254, id(dr_acc)));
+          id(dr_aktiv)       = false;
+          id(dr_current_rpm) = 0;
+          uint8_t acc_b =  0x01;  // Motor-acc fest 1 (minimales Hardware-Ramping)
           int32_t stgt  = (int32_t)(id(dr_richtung)) * 8000000;
           uint32_t sv   = (uint32_t)(stgt) & 0x00FFFFFFU;
           id(can_bus)->send_data(${motor_can_id}, false,
@@ -743,15 +756,25 @@ interval:
             }
           }
 
-          // ── Drehmodus: konstante F5-Ausgabe alle 50 ms ──────────────────────
+          // ── Drehmodus: Software-Rampe alle dr_acc × 100 ms um 10 UPM ─────────────
           if (id(dr_aktiv)) {
-            int _spd = std::max(5, std::min(400, id(dr_speed_rpm)));
-            uint8_t _a = (uint8_t)std::max(1, std::min(254, id(dr_acc)));
+            int _target = std::max(5, std::min(400, id(dr_speed_rpm)));
+            if (id(dr_current_rpm) < _target) {
+              uint32_t _step_ms = (uint32_t)std::max(1, std::min(30, id(dr_acc))) * 100;
+              if (millis() - id(dr_ramp_last_ms) >= _step_ms) {
+                id(dr_ramp_last_ms) = millis();
+                id(dr_current_rpm)  = std::min(_target, id(dr_current_rpm) + 10);
+                ESP_LOGI("drehen", "Ramp: %d UPM (Schritt %u ms)", id(dr_current_rpm), _step_ms);
+              }
+            } else {
+              id(dr_current_rpm) = _target;  // Absenkung wird sofort übernommen
+            }
+            int _spd = std::max(0, id(dr_current_rpm));
             int32_t _tgt = (int32_t)(id(dr_richtung)) * 8000000;
             uint32_t _val = (uint32_t)(_tgt) & 0x00FFFFFFU;
             id(can_bus)->send_data(${motor_can_id}, false,
                 add_crc(${motor_can_id}, { 0xF5,
-                    (uint8_t)(_spd >> 8), (uint8_t)(_spd & 0xFF), _a,
+                    (uint8_t)(_spd >> 8), (uint8_t)(_spd & 0xFF), 0x01,
                     (uint8_t)((_val>>16)&0xFF), (uint8_t)((_val>>8)&0xFF), (uint8_t)(_val&0xFF) }));
             return;
           }

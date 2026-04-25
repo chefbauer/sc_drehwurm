@@ -1,0 +1,413 @@
+obj:
+  id: overlay_sensorphalanx
+  width: 100%
+  height: 100%
+  bg_color: 0xFFFFFF
+  bg_opa: 93%
+  hidden: true
+  clickable: true
+  pad_all: 0
+  scrollable: false
+  widgets:
+    # Titel
+    - label:
+        id: lbl_sensorphalanx_title
+        text: "Sensor-Phalanx"
+        align: TOP_MID
+        y: 12
+        text_font: font_title
+        text_color: 0x003366
+        text_align: CENTER
+
+    # Exit-Button
+    - button:
+        id: btn_sensorphalanx_exit
+        width: 80
+        height: 55
+        align: TOP_RIGHT
+        x: -10
+        y: 10
+        bg_color: 0xCC3333
+        widgets:
+          - label:
+              text: "X"
+              align: CENTER
+              text_font: font_normal
+              text_color: 0xFFFFFF
+        on_click:
+          - lvgl.widget.hide: overlay_sensorphalanx
+
+    # ── Zeile 1: VL53L1X Distanz ──────────────────────────
+    - obj:
+        id: row_sp_tof
+        width: 990
+        height: 65
+        align: TOP_LEFT
+        x: 15
+        y: 82
+        bg_color: 0xF0F4F8
+        border_width: 0
+        radius: 10
+        scrollable: false
+        widgets:
+          - obj:
+              id: badge_sp_tof
+              width: 72
+              height: 53
+              align: LEFT_MID
+              x: 6
+              bg_color: 0x2255CC
+              radius: 8
+              border_width: 0
+              scrollable: false
+              widgets:
+                - label:
+                    text: "\uF545"
+                    align: CENTER
+                    text_font: font_icons
+                    text_color: 0xFFFFFF
+          - label:
+              text: "Distanz"
+              align: LEFT_MID
+              x: 90
+              text_font: font_normal
+              text_color: 0x000000
+          - label:
+              text: "Time-of-Flight · VL53L1X · 50–4000 mm"
+              align: LEFT_MID
+              x: 380
+              text_font: font_small
+              text_color: 0x555555
+          - label:
+              id: distance_value_label
+              text: !lambda |-
+                if (isnan(id(distance_sensor).state)) return std::string("---");
+                char b[12];
+                snprintf(b, sizeof(b), "%.0fmm", id(distance_sensor).state);
+                return std::string(b);
+              align: RIGHT_MID
+              x: -15
+              text_font: font_normal
+              text_color: 0x003366
+
+    # ── Zeile 2: SHT4x Temperatur ─────────────────────────
+    - obj:
+        id: row_sp_temp
+        width: 990
+        height: 65
+        align: TOP_LEFT
+        x: 15
+        y: 154
+        bg_opa: TRANSP
+        border_width: 0
+        radius: 10
+        scrollable: false
+        widgets:
+          - obj:
+              id: badge_sp_temp
+              width: 72
+              height: 53
+              align: LEFT_MID
+              x: 6
+              bg_color: 0xCC5500
+              radius: 8
+              border_width: 0
+              scrollable: false
+              widgets:
+                - label:
+                    text: "\uF2C9"
+                    align: CENTER
+                    text_font: font_icons
+                    text_color: 0xFFFFFF
+          - label:
+              text: "Temperatur"
+              align: LEFT_MID
+              x: 90
+              text_font: font_normal
+              text_color: 0x000000
+          - label:
+              text: "Umgebungstemperatur · SHT4x"
+              align: LEFT_MID
+              x: 380
+              text_font: font_small
+              text_color: 0x555555
+          - label:
+              id: temp_value_label
+              text: !lambda |-
+                if (isnan(id(sensor_sht4x_temp).state)) return std::string("---");
+                char b[12];
+                snprintf(b, sizeof(b), "%.2f°C", id(sensor_sht4x_temp).state);
+                return std::string(b);
+              align: RIGHT_MID
+              x: -15
+              text_font: font_normal
+              text_color: 0x003366
+
+    # ── Zeile 3: SHT4x Luftfeuchtigkeit ───────────────────
+    - obj:
+        id: row_sp_humi
+        width: 990
+        height: 65
+        align: TOP_LEFT
+        x: 15
+        y: 226
+        bg_color: 0xF0F4F8
+        border_width: 0
+        radius: 10
+        scrollable: false
+        widgets:
+          - obj:
+              id: badge_sp_humi
+              width: 72
+              height: 53
+              align: LEFT_MID
+              x: 6
+              bg_color: 0x008899
+              radius: 8
+              border_width: 0
+              scrollable: false
+              widgets:
+                - label:
+                    text: "\uF043"
+                    align: CENTER
+                    text_font: font_icons
+                    text_color: 0xFFFFFF
+          - label:
+              text: "Luftfeuchtigkeit"
+              align: LEFT_MID
+              x: 90
+              text_font: font_normal
+              text_color: 0x000000
+          - label:
+              text: "Relative Luftfeuchte · SHT4x"
+              align: LEFT_MID
+              x: 380
+              text_font: font_small
+              text_color: 0x555555
+          - label:
+              id: hum_value_label
+              text: !lambda |-
+                if (isnan(id(sensor_sht4x_humi).state)) return std::string("---");
+                char b[16];
+                snprintf(b, sizeof(b), "%.1f%% rel.", id(sensor_sht4x_humi).state);
+                return std::string(b);
+              align: RIGHT_MID
+              x: -15
+              text_font: font_normal
+              text_color: 0x003366
+
+    # ── Zeile 4: BMP581 Luftdruck ──────────────────────────
+    - obj:
+        id: row_sp_pressure
+        width: 990
+        height: 65
+        align: TOP_LEFT
+        x: 15
+        y: 298
+        bg_opa: TRANSP
+        border_width: 0
+        radius: 10
+        scrollable: false
+        widgets:
+          - obj:
+              id: badge_sp_pressure
+              width: 72
+              height: 53
+              align: LEFT_MID
+              x: 6
+              bg_color: 0x7744BB
+              radius: 8
+              border_width: 0
+              scrollable: false
+              widgets:
+                - label:
+                    text: "\uF72E"
+                    align: CENTER
+                    text_font: font_icons
+                    text_color: 0xFFFFFF
+          - label:
+              text: "Luftdruck"
+              align: LEFT_MID
+              x: 90
+              text_font: font_normal
+              text_color: 0x000000
+          - label:
+              text: "Barometrischer Druck · BMP581"
+              align: LEFT_MID
+              x: 380
+              text_font: font_small
+              text_color: 0x555555
+          - label:
+              id: pressure_value_label
+              text: !lambda |-
+                if (isnan(id(bmp_pressure).state)) return std::string("---");
+                char b[12];
+                snprintf(b, sizeof(b), "%.1fhPa", id(bmp_pressure).state);
+                return std::string(b);
+              align: RIGHT_MID
+              x: -15
+              text_font: font_normal
+              text_color: 0x003366
+
+    # ── Zeile 5: Höhe aus BMP581 ───────────────────────────
+    - obj:
+        id: row_sp_altitude
+        width: 990
+        height: 65
+        align: TOP_LEFT
+        x: 15
+        y: 370
+        bg_color: 0xF0F4F8
+        border_width: 0
+        radius: 10
+        scrollable: false
+        widgets:
+          - obj:
+              id: badge_sp_altitude
+              width: 72
+              height: 53
+              align: LEFT_MID
+              x: 6
+              bg_color: 0x227733
+              radius: 8
+              border_width: 0
+              scrollable: false
+              widgets:
+                - label:
+                    text: "\uF6FC"
+                    align: CENTER
+                    text_font: font_icons
+                    text_color: 0xFFFFFF
+          - label:
+              text: "Höhe"
+              align: LEFT_MID
+              x: 90
+              text_font: font_normal
+              text_color: 0x000000
+          - label:
+              text: "Berechnet aus Luftdruck · hypsometrisch"
+              align: LEFT_MID
+              x: 380
+              text_font: font_small
+              text_color: 0x555555
+          - label:
+              id: height_value_label
+              text: !lambda |-
+                if (isnan(id(indoor_altitude).state)) return std::string("---");
+                char b[12];
+                snprintf(b, sizeof(b), "%.2fm", id(indoor_altitude).state);
+                return std::string(b);
+              align: RIGHT_MID
+              x: -15
+              text_font: font_normal
+              text_color: 0x003366
+
+    # ── Zeile 6: VEML7700 Licht ────────────────────────────
+    - obj:
+        id: row_sp_light
+        width: 990
+        height: 65
+        align: TOP_LEFT
+        x: 15
+        y: 442
+        bg_opa: TRANSP
+        border_width: 0
+        radius: 10
+        scrollable: false
+        widgets:
+          - obj:
+              id: badge_sp_light
+              width: 72
+              height: 53
+              align: LEFT_MID
+              x: 6
+              bg_color: 0xBB8800
+              radius: 8
+              border_width: 0
+              scrollable: false
+              widgets:
+                - label:
+                    text: "\uF185"
+                    align: CENTER
+                    text_font: font_icons
+                    text_color: 0xFFFFFF
+          - label:
+              text: "Helligkeit"
+              align: LEFT_MID
+              x: 90
+              text_font: font_normal
+              text_color: 0x000000
+          - label:
+              text: "Umgebungslicht · VEML7700"
+              align: LEFT_MID
+              x: 380
+              text_font: font_small
+              text_color: 0x555555
+          - label:
+              id: light_value_label
+              text: !lambda |-
+                if (isnan(id(sensor_veml7700_lux).state)) return std::string("---");
+                char b[12];
+                snprintf(b, sizeof(b), "%.2flx", id(sensor_veml7700_lux).state);
+                return std::string(b);
+              align: RIGHT_MID
+              x: -15
+              text_font: font_normal
+              text_color: 0x003366
+
+    # ── Zeile 7: MLX90632 IR-Temperatur ───────────────────
+    - obj:
+        id: row_sp_mlx
+        width: 990
+        height: 65
+        align: TOP_LEFT
+        x: 15
+        y: 514
+        bg_color: 0xF0F4F8
+        border_width: 0
+        radius: 10
+        scrollable: false
+        widgets:
+          - obj:
+              id: badge_sp_mlx
+              width: 72
+              height: 53
+              align: LEFT_MID
+              x: 6
+              bg_color: 0xCC2200
+              radius: 8
+              border_width: 0
+              scrollable: false
+              widgets:
+                - label:
+                    text: "\uF05B"
+                    align: CENTER
+                    text_font: font_icons
+                    text_color: 0xFFFFFF
+          - label:
+              text: "IR Temperatur"
+              align: LEFT_MID
+              x: 90
+              text_font: font_normal
+              text_color: 0x000000
+          - label:
+              text: "Objekt berührungslos · MLX90632"
+              align: LEFT_MID
+              x: 380
+              text_font: font_small
+              text_color: 0x555555
+          - label:
+              id: mlx_value_label
+              text: !lambda |-
+                if (isnan(id(sensor_Temp_OBJECT).state)) return std::string("---");
+                char b[16];
+                snprintf(b, sizeof(b), "IR: %.1f°C", id(sensor_Temp_OBJECT).state);
+                return std::string(b);
+              align: RIGHT_MID
+              x: -15
+              text_font: font_normal
+              text_color: 0x003366
+
+================================
+OVERLAY: Temperatur-Messung (ToF-getriggert)
+================================

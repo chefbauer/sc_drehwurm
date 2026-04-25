@@ -1,0 +1,64 @@
+obj:
+  id: overlay_amg8833
+  width: 100%
+  height: 100%
+  bg_color: 0xFFFFFF
+  bg_opa: 90%
+  hidden: true
+  clickable: true
+  pad_all: 0
+  scrollable: false
+  widgets:
+    # 8×8 Grid Container (496×496 px, leicht links zentriert)
+    # Zellen werden per amg_create_grid() beim ersten Öffnen erstellt
+    - obj:
+        id: amg_grid_container
+        width: 496
+        height: 496
+        align: CENTER
+        x: -50
+        bg_opa: TRANSP
+        border_width: 0
+        pad_all: 0
+        scrollable: false
+
+    # Exit-Button (rechts oben)
+    - button:
+        id: btn_amg_exit
+        width: 80
+        height: 60
+        align: TOP_RIGHT
+        x: -10
+        y: 10
+        bg_color: 0xCC3333
+        widgets:
+          - label:
+              text: "X"
+              align: CENTER
+              text_font: font_normal
+              text_color: 0xFFFFFF
+        on_click:
+          - lvgl.widget.hide: overlay_amg8833
+
+    # Modus-Umschalter (rechts mitte): Normal ↔ Kalt
+    - button:
+        id: btn_amg_mode
+        width: 80
+        height: 80
+        align: RIGHT_MID
+        x: -10
+        bg_color: 0x225599
+        widgets:
+          - label:
+              id: lbl_amg_mode
+              text: "Normal"
+              align: CENTER
+              text_font: font_small
+              text_color: 0xFFFFFF
+        on_click:
+          - lambda: |-
+              amg_cold_mode = !amg_cold_mode;
+              lv_label_set_text(id(lbl_amg_mode), amg_cold_mode ? "Kalt" : "Normal");
+              lv_obj_set_style_bg_color(id(btn_amg_mode),
+                amg_cold_mode ? lv_color_hex(0x0088CC) : lv_color_hex(0x225599), 0);
+              amg_refresh_cells();

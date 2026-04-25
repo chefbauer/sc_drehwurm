@@ -1,0 +1,587 @@
+obj:
+  id: overlay_temp_messung
+  width: 100%
+  height: 100%
+  bg_color: 0x111111
+  bg_opa: 88%
+  hidden: true
+  clickable: true
+  pad_all: 0
+  scrollable: false
+  widgets:
+    # Exit-Button rechts oben
+    - button:
+        id: btn_temp_messung_exit
+        width: 80
+        height: 60
+        align: TOP_RIGHT
+        x: -10
+        y: 10
+        bg_color: 0xCC3333
+        widgets:
+          - label:
+              text: "X"
+              align: CENTER
+              text_font: font_normal
+              text_color: 0xFFFFFF
+        on_click:
+          - script.execute: script_close_temp_overlay
+
+    # Distanz-Bar links (10mm unten = nah, 100mm oben = weit)
+    - obj:
+        id: obj_dist_bar_container
+        width: 120
+        height: 440
+        align: LEFT_MID
+        x: 40
+        bg_color: 0x222222
+        radius: 12
+        border_width: 0
+        pad_all: 0
+        scrollable: false
+        widgets:
+          # Min/Max/Optimal Beschriftungen
+          - label:
+              text: "100mm"
+              text_font: font_small
+              text_color: 0x888888
+              align: TOP_MID
+              y: 8
+          - label:
+              text: "45mm"
+              text_font: font_small
+              text_color: 0x00FF88
+              align: CENTER
+              y: -56
+          - label:
+              id: lbl_dist_messung
+              text: "---"
+              text_font: font_normal
+              text_color: 0xFFFFFF
+              align: BOTTOM_MID
+              y: -4
+          - label:
+              text: "10mm"
+              text_font: font_small
+              text_color: 0x888888
+              align: BOTTOM_MID
+              y: -28
+          # Optimal-Linie bei 45mm
+          - obj:
+              width: 120
+              height: 3
+              align: CENTER
+              y: -44
+              bg_color: 0x00FF88
+              radius: 0
+              border_width: 0
+          # Dynamische Bar (nah = oben: Wert wird in Lambda gespiegelt)
+          - bar:
+              id: bar_distanz
+              width: 60
+              height: 400
+              align: CENTER
+              min_value: 10
+              max_value: 100
+              value: 60
+              mode: NORMAL
+              indicator:
+                bg_color: 0x2299FF
+              bg_color: 0x333333
+              radius: 6
+
+    # IR-FOV-Kreis Dosen-RAND (blau, dahinter = unter rotem Kreis)
+    # Physik: Dose Ø67mm → Radius 33,5mm
+    # Schrägdistanz Sensor→Dosenrand: d_rand = sqrt(d² + 33,5²)
+    # Kreisdurchmesser: 2 * d_rand * tan(25°) * 6,674 px/mm
+    # Initialgröße Sweetspot 45mm: sqrt(45²+33,5²)≈56mm → 349px
+    - obj:
+        id: obj_ir_circle_blue
+        width: 349
+        height: 349
+        align: CENTER
+        x: 0
+        y: 0
+        bg_opa: TRANSP
+        border_color: 0x4488FF
+        border_width: 3
+        radius: 175
+        pad_all: 0
+        scrollable: false
+
+    # IR-FOV-Kreis: HINTERGRUND (zuerst = unten in Z-Order)
+    # Durchmesser = 2 * dist * tan(25°) * 6.674 px/mm
+    # MLX90632 FOV 50°, tan(25°)=0.46631, Display 7"/1024x600 → 6.674 px/mm
+    # Initialgröße für Sweetspot 45mm: 2*45*0.46631*6.674 ≈ 280px
+    - obj:
+        id: obj_ir_circle
+        width: 280
+        height: 280
+        align: CENTER
+        x: 0
+        y: 0
+        bg_opa: TRANSP
+        border_color: 0xFF4444
+        border_width: 5
+        radius: 140
+        pad_all: 0
+        scrollable: false
+        widgets:
+          # Horizontale Kreuzlinie
+          - obj:
+              id: obj_cross_h
+              width: 280
+              height: 5
+              align: CENTER
+              bg_color: 0xFF4444
+              bg_opa: COVER
+              border_width: 0
+              radius: 0
+          # Vertikale Kreuzlinie
+          - obj:
+              id: obj_cross_v
+              width: 5
+              height: 280
+              align: CENTER
+              bg_color: 0xFF4444
+              bg_opa: COVER
+              border_width: 0
+              radius: 0
+
+    # Temperatur: absolut mittig, über dem Kreis (zuletzt = vorne in Z-Order)
+    # Touch auf Temp-Label → Overlay sofort schließen
+    - label:
+        id: lbl_ts_temp
+        clickable: true
+        on_click:
+          - script.execute: script_close_temp_overlay
+        text: !lambda |-
+          if (isnan(id(sensor_Temp_OBJECT).state)) return std::string("--,- °C");
+          float t = id(sensor_Temp_OBJECT).state;
+          int vor = (int)t;
+          int nach = (int)(fabs(t - vor) * 10 + 0.5f);
+          char b[16];
+          snprintf(b, sizeof(b), "%d,%d °C", vor, nach);
+          return std::string(b);
+        text_font: font_ts_xl
+        text_color: 0xFFFFFF
+        align: CENTER
+        x: 0
+        y: 0
+
+    # (Distanzwert wird direkt in der Bar angezeigt via lbl_dist_messung)
+
+    # ── Emissivitäts-Slider rechts (symmetrisch zum ToF-Bar) ──────────────
+    # Physik: Slider 340px hoch, Container 440px, beide zentriert
+    #   v=94 → y=-149 | v=91 → y=-139 | v=82 → y=-108 | v=6 → y=+153
+    - obj:
+        id: obj_emissivity_container
+        width: 200
+        height: 440
+        align: RIGHT_MID
+        x: -20
+        bg_color: 0x1A1E2C
+        bg_opa: 90%
+        radius: 12
+        border_width: 0
+        pad_all: 0
+        scrollable: false
+        widgets:
+          - label:
+              text: "Emissiv."
+              text_font: font_small
+              text_color: 0xAAAAAA
+              align: TOP_MID
+              y: 4
+          - label:
+              id: lbl_emissivity_val
+              text: "0.90"
+              text_font: font_normal
+              text_color: 0xFFFF88
+              align: TOP_MID
+              y: 24
+
+          # Range-Balken links vom Slider (Fleissaufgabe)
+          # Glas (0.88–0.94): grün, align LEFT_MID, y=-132 (center), h=28
+          - obj:
+              width: 6
+              height: 28
+              align: LEFT_MID
+              x: 4
+              y: -132
+              bg_color: 0x22CC66
+              bg_opa: 80%
+              border_width: 0
+              radius: 2
+          # Dose matt (0.75–0.94): orange, y=-117 (center), h=65
+          - obj:
+              width: 6
+              height: 65
+              align: LEFT_MID
+              x: 12
+              y: -117
+              bg_color: 0xFF8833
+              bg_opa: 80%
+              border_width: 0
+              radius: 2
+          # Dose glänzend (0.04–0.10): blau, y=150 (center), h=22
+          - obj:
+              width: 6
+              height: 22
+              align: LEFT_MID
+              x: 4
+              y: 150
+              bg_color: 0x6699FF
+              bg_opa: 80%
+              border_width: 0
+              radius: 2
+
+          # Tick-Linien + Labels
+          - obj:
+              width: 32
+              height: 2
+              align: LEFT_MID
+              x: 52
+              y: -139
+              bg_color: 0x22CC66
+              border_width: 0
+              radius: 0
+          - label:
+              text: "Glas"
+              text_font: font_small
+              text_color: 0x22CC66
+              align: LEFT_MID
+              x: 88
+              y: -148
+          - label:
+              text: "0.88-0.94"
+              text_font: font_small
+              text_color: 0x22CC66
+              align: LEFT_MID
+              x: 88
+              y: -132
+
+          - obj:
+              width: 32
+              height: 2
+              align: LEFT_MID
+              x: 52
+              y: -108
+              bg_color: 0xFF8833
+              border_width: 0
+              radius: 0
+          - label:
+              text: "Dose m."
+              text_font: font_small
+              text_color: 0xFF8833
+              align: LEFT_MID
+              x: 88
+              y: -117
+          - label:
+              text: "0.75-0.94"
+              text_font: font_small
+              text_color: 0xFF8833
+              align: LEFT_MID
+              x: 88
+              y: -101
+
+          - obj:
+              width: 32
+              height: 2
+              align: LEFT_MID
+              x: 52
+              y: 153
+              bg_color: 0x6699FF
+              border_width: 0
+              radius: 0
+          - label:
+              text: "Alu gl."
+              text_font: font_small
+              text_color: 0x6699FF
+              align: LEFT_MID
+              x: 88
+              y: 144
+          - label:
+              text: "0.04-0.10"
+              text_font: font_small
+              text_color: 0x6699FF
+              align: LEFT_MID
+              x: 88
+              y: 160
+
+          # Vertikaler Slider (LVGL 8: height > width → vertikal, unten=min, oben=max)
+          - slider:
+              id: slider_emissivity
+              width: 28
+              height: 340
+              align: LEFT_MID
+              x: 22
+              min_value: 1
+              max_value: 100
+              value: 90
+              on_value:
+                - lambda: |-
+                    id(global_emissivity) = x / 100.0f;
+                    lv_label_set_text_fmt(id(lbl_emissivity_val), "%.2f", x / 100.0f);
+
+    # ── Material & Farb-Auswahl (unten) ───────────────────────────────────
+    # Emissivitätstabelle (3 Materialien × 6 Farben):
+    #   Farben:  0=schwarz, 1=dunkel(grün), 2=mitte(blau), 3=hell(rot/gelb), 4=weiß, 5=silber
+    #   Glas:    0.93  0.92  0.91  0.90  0.89  0.87
+    #   Dose m:  0.94  0.90  0.86  0.82  0.78  0.25
+    #   Dose gl: 0.09  0.08  0.07  0.06  0.05  0.04
+    - obj:
+        id: obj_material_selector
+        width: 860
+        height: 64
+        align: BOTTOM_MID
+        y: -6
+        bg_color: 0x12162A
+        bg_opa: 92%
+        radius: 10
+        border_color: 0x334466
+        border_width: 1
+        pad_all: 0
+        scrollable: false
+        widgets:
+          - label:
+              text: "Typ:"
+              text_font: font_small
+              text_color: 0x888888
+              align: LEFT_MID
+              x: 8
+
+          # [Glas] – initial ausgewählt (grün)
+          - button:
+              id: btn_mat_glas
+              width: 86
+              height: 54
+              align: LEFT_MID
+              x: 44
+              bg_color: 0x226644
+              radius: 8
+              border_width: 0
+              widgets:
+                - label:
+                    text: "Glas"
+                    text_font: font_small
+                    text_color: 0xFFFFFF
+                    align: CENTER
+                    y: -8
+                - label:
+                    text: "0.88-0.94"
+                    text_font: font_small
+                    text_color: 0xCCFFCC
+                    align: CENTER
+                    y: 10
+              on_click:
+                - lambda: |-
+                    id(global_mat_type) = 0;
+                    static const float tbl[6] = {0.93f,0.92f,0.91f,0.90f,0.89f,0.87f};
+                    float e = tbl[id(global_mat_color)];
+                    id(global_emissivity) = e;
+                    lv_slider_set_value(id(slider_emissivity),(int)(e*100.0f+0.5f),LV_ANIM_ON);
+                    lv_label_set_text_fmt(id(lbl_emissivity_val),"%.2f",e);
+                    lv_obj_set_style_bg_color(id(btn_mat_glas),lv_color_hex(0x226644),LV_STATE_DEFAULT);
+                    lv_obj_set_style_bg_color(id(btn_mat_dose_matt),lv_color_hex(0x333333),LV_STATE_DEFAULT);
+                    lv_obj_set_style_bg_color(id(btn_mat_dose_glaenzend),lv_color_hex(0x333333),LV_STATE_DEFAULT);
+
+          # [Dose matt]
+          - button:
+              id: btn_mat_dose_matt
+              width: 86
+              height: 54
+              align: LEFT_MID
+              x: 138
+              bg_color: 0x333333
+              radius: 8
+              border_width: 0
+              widgets:
+                - label:
+                    text: "Dose matt"
+                    text_font: font_small
+                    text_color: 0xFFFFFF
+                    align: CENTER
+                    y: -8
+                - label:
+                    text: "0.75-0.94"
+                    text_font: font_small
+                    text_color: 0xFFCCAA
+                    align: CENTER
+                    y: 10
+              on_click:
+                - lambda: |-
+                    id(global_mat_type) = 1;
+                    static const float tbl[6] = {0.94f,0.90f,0.86f,0.82f,0.78f,0.25f};
+                    float e = tbl[id(global_mat_color)];
+                    id(global_emissivity) = e;
+                    lv_slider_set_value(id(slider_emissivity),(int)(e*100.0f+0.5f),LV_ANIM_ON);
+                    lv_label_set_text_fmt(id(lbl_emissivity_val),"%.2f",e);
+                    lv_obj_set_style_bg_color(id(btn_mat_glas),lv_color_hex(0x333333),LV_STATE_DEFAULT);
+                    lv_obj_set_style_bg_color(id(btn_mat_dose_matt),lv_color_hex(0x664422),LV_STATE_DEFAULT);
+                    lv_obj_set_style_bg_color(id(btn_mat_dose_glaenzend),lv_color_hex(0x333333),LV_STATE_DEFAULT);
+
+          # [Dose glänzend]
+          - button:
+              id: btn_mat_dose_glaenzend
+              width: 86
+              height: 54
+              align: LEFT_MID
+              x: 232
+              bg_color: 0x333333
+              radius: 8
+              border_width: 0
+              widgets:
+                - label:
+                    text: "Dose gl."
+                    text_font: font_small
+                    text_color: 0xFFFFFF
+                    align: CENTER
+                    y: -8
+                - label:
+                    text: "0.04-0.10"
+                    text_font: font_small
+                    text_color: 0xAABBFF
+                    align: CENTER
+                    y: 10
+              on_click:
+                - lambda: |-
+                    id(global_mat_type) = 2;
+                    static const float tbl[6] = {0.09f,0.08f,0.07f,0.06f,0.05f,0.04f};
+                    float e = tbl[id(global_mat_color)];
+                    id(global_emissivity) = e;
+                    lv_slider_set_value(id(slider_emissivity),(int)(e*100.0f+0.5f),LV_ANIM_ON);
+                    lv_label_set_text_fmt(id(lbl_emissivity_val),"%.2f",e);
+                    lv_obj_set_style_bg_color(id(btn_mat_glas),lv_color_hex(0x333333),LV_STATE_DEFAULT);
+                    lv_obj_set_style_bg_color(id(btn_mat_dose_matt),lv_color_hex(0x333333),LV_STATE_DEFAULT);
+                    lv_obj_set_style_bg_color(id(btn_mat_dose_glaenzend),lv_color_hex(0x224466),LV_STATE_DEFAULT);
+
+          # Trennlinie
+          - obj:
+              width: 2
+              height: 50
+              align: LEFT_MID
+              x: 325
+              bg_color: 0x445566
+              border_width: 0
+              radius: 0
+
+          - label:
+              text: "Farbe:"
+              text_font: font_small
+              text_color: 0x888888
+              align: LEFT_MID
+              x: 334
+
+          # Farb-Swatches – Lambda je: mat_color setzen + Emissivität berechnen
+          # 0 = Schwarz
+          - button:
+              id: btn_col_0
+              width: 50
+              height: 50
+              align: LEFT_MID
+              x: 383
+              bg_color: 0x111111
+              radius: 25
+              border_color: 0x666666
+              border_width: 2
+              on_click:
+                - lambda: |-
+                    id(global_mat_color) = 0;
+                    static const float t[3][6] = {{0.93f,0.92f,0.91f,0.90f,0.89f,0.87f},{0.94f,0.90f,0.86f,0.82f,0.78f,0.25f},{0.09f,0.08f,0.07f,0.06f,0.05f,0.04f}};
+                    float e = t[id(global_mat_type)][0];
+                    id(global_emissivity) = e;
+                    lv_slider_set_value(id(slider_emissivity),(int)(e*100.0f+0.5f),LV_ANIM_ON);
+                    lv_label_set_text_fmt(id(lbl_emissivity_val),"%.2f",e);
+          # 1 = Dunkelgrün
+          - button:
+              id: btn_col_1
+              width: 50
+              height: 50
+              align: LEFT_MID
+              x: 441
+              bg_color: 0x1A5C2A
+              radius: 25
+              border_width: 0
+              on_click:
+                - lambda: |-
+                    id(global_mat_color) = 1;
+                    static const float t[3][6] = {{0.93f,0.92f,0.91f,0.90f,0.89f,0.87f},{0.94f,0.90f,0.86f,0.82f,0.78f,0.25f},{0.09f,0.08f,0.07f,0.06f,0.05f,0.04f}};
+                    float e = t[id(global_mat_type)][1];
+                    id(global_emissivity) = e;
+                    lv_slider_set_value(id(slider_emissivity),(int)(e*100.0f+0.5f),LV_ANIM_ON);
+                    lv_label_set_text_fmt(id(lbl_emissivity_val),"%.2f",e);
+          # 2 = Dunkelblau
+          - button:
+              id: btn_col_2
+              width: 50
+              height: 50
+              align: LEFT_MID
+              x: 499
+              bg_color: 0x1A3A99
+              radius: 25
+              border_width: 0
+              on_click:
+                - lambda: |-
+                    id(global_mat_color) = 2;
+                    static const float t[3][6] = {{0.93f,0.92f,0.91f,0.90f,0.89f,0.87f},{0.94f,0.90f,0.86f,0.82f,0.78f,0.25f},{0.09f,0.08f,0.07f,0.06f,0.05f,0.04f}};
+                    float e = t[id(global_mat_type)][2];
+                    id(global_emissivity) = e;
+                    lv_slider_set_value(id(slider_emissivity),(int)(e*100.0f+0.5f),LV_ANIM_ON);
+                    lv_label_set_text_fmt(id(lbl_emissivity_val),"%.2f",e);
+          # 3 = Rot/Orange
+          - button:
+              id: btn_col_3
+              width: 50
+              height: 50
+              align: LEFT_MID
+              x: 557
+              bg_color: 0xCC4400
+              radius: 25
+              border_width: 0
+              on_click:
+                - lambda: |-
+                    id(global_mat_color) = 3;
+                    static const float t[3][6] = {{0.93f,0.92f,0.91f,0.90f,0.89f,0.87f},{0.94f,0.90f,0.86f,0.82f,0.78f,0.25f},{0.09f,0.08f,0.07f,0.06f,0.05f,0.04f}};
+                    float e = t[id(global_mat_type)][3];
+                    id(global_emissivity) = e;
+                    lv_slider_set_value(id(slider_emissivity),(int)(e*100.0f+0.5f),LV_ANIM_ON);
+                    lv_label_set_text_fmt(id(lbl_emissivity_val),"%.2f",e);
+          # 4 = Weiß/Hell
+          - button:
+              id: btn_col_4
+              width: 50
+              height: 50
+              align: LEFT_MID
+              x: 615
+              bg_color: 0xDDDDDD
+              radius: 25
+              border_width: 0
+              on_click:
+                - lambda: |-
+                    id(global_mat_color) = 4;
+                    static const float t[3][6] = {{0.93f,0.92f,0.91f,0.90f,0.89f,0.87f},{0.94f,0.90f,0.86f,0.82f,0.78f,0.25f},{0.09f,0.08f,0.07f,0.06f,0.05f,0.04f}};
+                    float e = t[id(global_mat_type)][4];
+                    id(global_emissivity) = e;
+                    lv_slider_set_value(id(slider_emissivity),(int)(e*100.0f+0.5f),LV_ANIM_ON);
+                    lv_label_set_text_fmt(id(lbl_emissivity_val),"%.2f",e);
+          # 5 = Silber/Metallic
+          - button:
+              id: btn_col_5
+              width: 50
+              height: 50
+              align: LEFT_MID
+              x: 673
+              bg_color: 0xAAAAAA
+              radius: 25
+              border_color: 0x888888
+              border_width: 2
+              on_click:
+                - lambda: |-
+                    id(global_mat_color) = 5;
+                    static const float t[3][6] = {{0.93f,0.92f,0.91f,0.90f,0.89f,0.87f},{0.94f,0.90f,0.86f,0.82f,0.78f,0.25f},{0.09f,0.08f,0.07f,0.06f,0.05f,0.04f}};
+                    float e = t[id(global_mat_type)][5];
+                    id(global_emissivity) = e;
+                    lv_slider_set_value(id(slider_emissivity),(int)(e*100.0f+0.5f),LV_ANIM_ON);
+                    lv_label_set_text_fmt(id(lbl_emissivity_val),"%.2f",e);
+
