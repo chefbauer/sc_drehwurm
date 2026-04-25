@@ -407,7 +407,3 @@ obj:
               x: -15
               text_font: font_normal
               text_color: 0x003366
-
-================================
-OVERLAY: Temperatur-Messung (ToF-getriggert)
-================================
