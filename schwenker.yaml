@@ -252,6 +252,11 @@ globals:
     restore_value: no
     initial_value: '0'
 
+  - id: pumpe_vor_drehen_level  # DAC-Level vor Drehen (-1 = Pumpe war aus)
+    type: float
+    restore_value: no
+    initial_value: '-1.0'
+
   # ── Drehe-Presets ─────────────────────────────────────────
   - id: drp1_rpm
     type: int
@@ -368,6 +373,8 @@ script:
           else if(a>=35) sh="/___\\";
           else           sh="/_____\\";
           lv_label_set_text(id(lbl_trapez_shape), sh);
+          // Tab auf gespeicherten Modus setzen (0=Schwenken, 1=Drehen)
+          lv_tabview_set_act(id(tabview_schwenker), id(dr_modus) ? 1 : 0, LV_ANIM_OFF);
       - lvgl.widget.show: overlay_schwenker_settings
 
   # ── Starten ──────────────────────────────────────────────
@@ -408,6 +415,7 @@ script:
           ESP_LOGI("schwenker", "START  halbperiode=%u ms  max=%d RPM",
                    id(sw_halbperiode_ms), id(sw_max_speed_rpm));
           id(sw_aktiv)     = true;
+          id(dr_modus)     = false;   // Modus auf Schwenken speichern (NVS)
           lv_obj_set_style_bg_color(id(btn_schwenker_main), lv_color_hex(0x229933), 0);
           lv_obj_set_style_bg_color(id(btn_schwenker_overlay_toggle), lv_color_hex(0x229933), 0);
           // Auto-Stop: Flag setzen wenn mindestens ein Slot läuft
@@ -691,7 +699,15 @@ script:
           id(dr_current_rpm)  = 0;
           id(dr_ramp_last_ms) = millis();
           id(dr_aktiv)        = true;
-          id(dr_modus)        = true;
+          id(dr_modus)        = true;   // Modus auf Drehen speichern (NVS)
+          // Pumpe auf 100% wenn sie läuft
+          if (id(pumpe_a_aktiv)) {
+            id(pumpe_vor_drehen_level) = lv_slider_get_value(id(slider_turmpumpe)) / 100.0f;
+            id(output_pumpe_dacA).set_level(1.0f);
+            ESP_LOGI("drehen", "Pumpe → 100%% (war %.2f)", id(pumpe_vor_drehen_level));
+          } else {
+            id(pumpe_vor_drehen_level) = -1.0f;
+          }
           lv_obj_set_style_bg_color(id(btn_dr_start_stop), lv_color_hex(0x229933), 0);
           lv_obj_set_style_bg_color(id(btn_schwenker_main), lv_color_hex(0x229933), 0);
           ESP_LOGI("drehen", "START  speed=%d UPM  ramp_step=%d×100ms  dir=%+d  mode=%d",
@@ -710,6 +726,13 @@ script:
           }
           id(dr_aktiv)       = false;
           id(dr_current_rpm) = 0;
+          // Pumpe zurück auf gespeicherten Level
+          if (id(pumpe_vor_drehen_level) >= 0.0f) {
+            id(output_pumpe_dacA).set_level(id(pumpe_vor_drehen_level));
+            lv_slider_set_value(id(slider_turmpumpe), (int)(id(pumpe_vor_drehen_level)*100.0f+0.5f), LV_ANIM_OFF);
+            ESP_LOGI("drehen", "Pumpe zurück: %.2f", id(pumpe_vor_drehen_level));
+            id(pumpe_vor_drehen_level) = -1.0f;
+          }
           uint8_t acc_b =  0x01;  // Motor-acc fest 1 (minimales Hardware-Ramping)
           int32_t stgt  = (int32_t)(id(dr_richtung)) * 8000000;
           uint32_t sv   = (uint32_t)(stgt) & 0x00FFFFFFU;
@@ -774,7 +797,7 @@ interval:
             uint32_t _val = (uint32_t)(_tgt) & 0x00FFFFFFU;
             id(can_bus)->send_data(${motor_can_id}, false,
                 add_crc(${motor_can_id}, { 0xF5,
-                    (uint8_t)(_spd >> 8), (uint8_t)(_spd & 0xFF), 0x01,
+                    (uint8_t)(_spd >> 8), (uint8_t)(_spd & 0xFF), 0x02,
                     (uint8_t)((_val>>16)&0xFF), (uint8_t)((_val>>8)&0xFF), (uint8_t)(_val&0xFF) }));
             return;
           }
