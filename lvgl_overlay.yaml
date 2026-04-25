@@ -134,7 +134,7 @@ lvgl:
                   text_color: 0x003366
                 on_value:
                   - lambda: |-
-                      if (x == 1) {
+                      if (lv_tabview_get_tab_act(id(tabview_schwenker)) == 1) {
                         id(script_drehen_settings_open).execute();
                       }
                 tabs:
