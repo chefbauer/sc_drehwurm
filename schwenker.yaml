@@ -252,6 +252,11 @@ globals:
     restore_value: no
     initial_value: '0'
 
+  - id: dr_last_sent_rpm     # zuletzt per F5 gesendete Drehzahl (-1 = noch nie)
+    type: int
+    restore_value: no
+    initial_value: '-1'
+
   - id: pumpe_vor_drehen_level  # DAC-Level vor Drehen (-1 = Pumpe war aus)
     type: float
     restore_value: no
@@ -697,7 +702,8 @@ script:
           id(dr_speed_rpm)    = std::max(5, std::min(400, id(dr_speed_rpm)));
           id(dr_acc)          = std::max(1, std::min(30, id(dr_acc)));
           id(dr_current_rpm)  = 0;
-          id(dr_ramp_last_ms) = millis();
+          id(dr_last_sent_rpm) = -1;  // erstes Senden erzwingen
+          id(dr_ramp_last_ms) = millis() - (uint32_t)std::max(1, std::min(30, id(dr_acc))) * 100;  // sofort ersten Schritt senden
           id(dr_aktiv)        = true;
           id(dr_modus)        = true;   // Modus auf Drehen speichern (NVS)
           // Pumpe auf 100% wenn sie läuft
@@ -726,6 +732,7 @@ script:
           }
           id(dr_aktiv)       = false;
           id(dr_current_rpm) = 0;
+          id(dr_last_sent_rpm) = -1;
           // Pumpe zurück auf gespeicherten Level
           if (id(pumpe_vor_drehen_level) >= 0.0f) {
             id(output_pumpe_dacA).set_level(id(pumpe_vor_drehen_level));
@@ -779,7 +786,7 @@ interval:
             }
           }
 
-          // ── Drehmodus: Software-Rampe alle dr_acc × 100 ms um 10 UPM ─────────────
+          // ── Drehmodus: F5 NUR bei Ramp-Schritt senden (nicht jede 50ms!) ─────────
           if (id(dr_aktiv)) {
             int _target = std::max(5, std::min(400, id(dr_speed_rpm)));
             if (id(dr_current_rpm) < _target) {
@@ -790,15 +797,19 @@ interval:
                 ESP_LOGI("drehen", "Ramp: %d UPM (Schritt %u ms)", id(dr_current_rpm), _step_ms);
               }
             } else {
-              id(dr_current_rpm) = _target;  // Absenkung wird sofort übernommen
+              id(dr_current_rpm) = _target;  // Absenkung sofort
             }
-            int _spd = std::max(0, id(dr_current_rpm));
-            int32_t _tgt = (int32_t)(id(dr_richtung)) * 8000000;
-            uint32_t _val = (uint32_t)(_tgt) & 0x00FFFFFFU;
-            id(can_bus)->send_data(${motor_can_id}, false,
-                add_crc(${motor_can_id}, { 0xF5,
-                    (uint8_t)(_spd >> 8), (uint8_t)(_spd & 0xFF), 0x02,
-                    (uint8_t)((_val>>16)&0xFF), (uint8_t)((_val>>8)&0xFF), (uint8_t)(_val&0xFF) }));
+            // F5 nur senden wenn sich die Sollgeschwindigkeit geändert hat
+            if (id(dr_current_rpm) != id(dr_last_sent_rpm)) {
+              id(dr_last_sent_rpm) = id(dr_current_rpm);
+              int _spd = std::max(0, id(dr_current_rpm));
+              int32_t _tgt = (int32_t)(id(dr_richtung)) * 8000000;
+              uint32_t _val = (uint32_t)(_tgt) & 0x00FFFFFFU;
+              id(can_bus)->send_data(${motor_can_id}, false,
+                  add_crc(${motor_can_id}, { 0xF5,
+                      (uint8_t)(_spd >> 8), (uint8_t)(_spd & 0xFF), 0x01,
+                      (uint8_t)((_val>>16)&0xFF), (uint8_t)((_val>>8)&0xFF), (uint8_t)(_val&0xFF) }));
+            }
             return;
           }
 
