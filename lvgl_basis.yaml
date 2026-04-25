@@ -508,8 +508,12 @@ lvgl:
                         pad_all: 0
                         on_short_click:
                           - lambda: |-
-                              if (id(sw_aktiv)) {
+                              if (id(dr_aktiv)) {
+                                id(script_drehen_stop).execute();
+                              } else if (id(sw_aktiv)) {
                                 id(script_schwenker_stop).execute();
+                              } else if (id(dr_modus)) {
+                                id(script_drehen_start).execute();
                               } else {
                                 id(script_schwenker_start).execute();
                               }

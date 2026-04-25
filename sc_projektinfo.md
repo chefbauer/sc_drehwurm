@@ -388,20 +388,31 @@ Tab-Reihenfolge: **System · Schwenker · Licht · Bildschirm · Kühler · Test
 
 ## Overlays (`lvgl_overlay.yaml`, `top_layer`)
 
-### `overlay_schwenker_settings` — Schwenker-Einstellungen
+### `overlay_schwenker_settings` — Schwenker-Einstellungen (TabView)
 - Vollflächig (100%×100%), weiß, `bg_opa: 97%`, initial `hidden: true`
-- **Start/Stop-Button** `btn_schwenker_overlay_toggle` (TOP_LEFT 80×55, grau, U+F021): `on_press` → Schwenker start/stop
-- **Exit-Button** `btn_schwenker_settings_exit` (TOP_RIGHT 80×55, rot `#CC3333`)
-- **3 Arcs** (y=145, je 320×340 px), nebeneinander:
-  - `arc_schwenkzeit` (blau, min=10 max=200, Einheit ×100ms → 1–20 s) → `lbl_arc_zeit_val`
-  - `arc_acc` (orange, min=10 max=100, Einheit %) → `lbl_arc_acc_val` + `lbl_trapez_shape` (ASCII: `/\` bis `/___\`)
+- **Exit-Button** `btn_schwenker_settings_exit` (TOP_RIGHT 80×55, rot `#CC3333`) — außerhalb TabView, liegt oben drüber
+- **`tabview_schwenker`** (1024×600 px, gesamte Overlay-Fläche), 2 Tabs:
+
+**Tab 1 „Schwenken"** (`tab_schwenken`):
+- `btn_schwenker_overlay_toggle` (TOP_LEFT 80×55): `on_press` → Schwenker start/stop
+- **3 Arcs** (y=80), nebeneinander (320×340 px):
+  - `arc_schwenkzeit` (blau, min=10 max=200, ×100ms → 1–20 s) → `lbl_arc_zeit_val`
+  - `arc_acc` (orange, min=10 max=100, Einheit %) → `lbl_arc_acc_val` + `lbl_trapez_shape`
   - `arc_rpm` (grün, min=1 max=100) → `lbl_arc_rpm_val`
-- **Trapez-Form ASCII** (kein Unicode – nicht in Roboto): `a≥80` → `/\`, `a≥55` → `/_\`, `a≥35` → `/___\`, sonst → `/_____\`
-- **5 Preset-Buttons** `btn_preset[1..5]` (178×80 px, je ①–⑤ via `font_preset_num`):
-  - `on_short_click`: lädt hp_ms + rpm + acc, setzt alle 3 Arcs + Labels
-  - `on_long_press`: speichert aktuelle Globals in preset[N]_*, aktualisiert `lbl_preset[N]_vals`
-- **Öffnen:** `script_schwenker_settings_open` (zentral, von Long-Press Hauptbutton + Einstellungen-Tab)
-- **Start/Stop Hauptseite:** `btn_schwenker_main` → `on_short_click` (Long-Press öffnet nur Overlay, startet/stoppt **nicht**)
+- **5 Preset-Buttons** `btn_preset[1..5]` (178×80 px, BOTTOM): Short → laden, Long → speichern
+
+**Tab 2 „Drehen"** (`tab_drehen`):
+- `btn_dr_start_stop` (TOP_LEFT 80×55): `on_press` → `script_drehen_start/stop`
+- **Arc Geschwindigkeit** `arc_dr_rpm` (grün, min=5 max=400, links) → `lbl_dr_rpm_val` (Upm)
+- **Arc Beschleunigung** `arc_dr_acc` (orange, min=1 max=254, rechts) → `lbl_dr_acc_val`
+- **`arc_dr_controls`** (CENTER x:0 y:165, 320×160):
+  - `btn_dr_richtung` → togglet `dr_richtung` (+1=CW / -1=CCW), Farbe grün/blau
+  - `btn_dr_mode` → togglet `dr_motor_mode` (4=Closed Loop / 5=FOC), Farbe lila/stahlblau
+- **5 Preset-Buttons** `btn_drp[1..5]` (BOTTOM): Short → laden, Long → speichern (UPM·acc·CW/CCW·CL/FOC)
+- `on_value` (tab=1): `script_drehen_settings_open` synchronisiert Arcs + Buttons
+
+**`btn_schwenker_main` (Startseite):** `dr_aktiv` → drehen_stop | `sw_aktiv` → schwenken_stop | `dr_modus` → drehen_start | sonst → schwenken_start
+- **Öffnen:** `script_schwenker_settings_open` (Long-Press Hauptbutton + Einstellungen-Tab)
 
 ### `overlay_amg8833` — AMG8833 Live-Ansicht- Vollflächig (100%×100%), weiß, `bg_opa: 90%`, initial `hidden: true`
 - `amg_grid_container` (496×496 px, leicht links): 8×8 Pixel-Zellen via `amg_create_grid()`
@@ -653,13 +664,32 @@ Alle Sensoren auf `i2c_id: i2c_bus` (fremdkonfiguriert in main_config).
 | `script_schwenker_start` | Motor-Init (Closed Loop 0x04 hardcoded, 64 Steps, `sw_work_current_mA`, idle min) → Sinus starten |
 | `script_schwenker_stop` | Setzt `sw_stop_pending=true` + Buttons orange → Stop erfolgt am nächsten Richtungswechsel |
 | `script_system_ein` | system_ein=true → Power-Button grün → Thermostat COOL |
-| `script_system_aus` | system_ein=false → Power-Button rot → Schwenker stopp → Thermostat OFF → Pumpen aus |
-| `script_schwenker_goto_slot` | Stoppt Schwenker geordnet (F5 speed=0 + 800ms), dann fährt Motor zu Slot-Position |
+| `script_system_aus` | system_ein=false → Power-Button rot → Schwenker+Drehen stopp → Thermostat OFF → Pumpen aus |
+| `script_schwenker_goto_slot` | Stoppt Drehen sofort (F5+500ms) ODER Schwenker geordnet, dann fährt Motor zu Slot-Position |
+| `script_drehen_settings_open` | Synct arc_dr_rpm + arc_dr_acc + btn_dr_richtung/mode-Labels/Farben aus Globals |
+| `script_drehen_start` | Motor-Init (Mode aus `dr_motor_mode`, 64 Steps, `sw_work_current_mA`) → `dr_aktiv=true`, `dr_modus=true` |
+| `script_drehen_stop` | F5 speed=0 direkt, `dr_aktiv=false`, Idle-Timeout → prüft Blink-Slots für goto_slot |
 
 **Motor Idle-Timeout (50ms-Interval):**
 - Nach jedem Stopp: `sw_motor_last_move_ms = millis()`
-- 10 s ohne Bewegung (wenn !sw_aktiv && !sw_motor_busy): → Mode 5 (FOC) + Strom auf 500 mA
+- 10 s ohne Bewegung (wenn !sw_aktiv && !dr_aktiv && !sw_motor_busy): → Mode 5 (FOC) + Strom auf 500 mA
 - `sw_motor_busy` wird während goto_slot und trim_slider aktiv gesetzt
+
+**Drehmodus (50ms-Interval):**
+- Wenn `dr_aktiv`: F5 mit `dr_speed_rpm`, `dr_acc`, `dr_richtung * 8.000.000` → return (kein Sinus)
+- Live-Änderung: arc_dr_rpm/arc_dr_acc `on_value` schreibt Global → nächster 50ms-Tick ohne Neustart
+
+**Drehmodus-Globals:**
+
+| ID | Typ | Bedeutung |
+|---|---|---|
+| `dr_aktiv` | bool | Drehmodus läuft |
+| `dr_modus` | bool (NVS) | letzter Modus: false=Schwenken, true=Drehen |
+| `dr_speed_rpm` | int (NVS) | Drehgeschwindigkeit 5–400 UPM |
+| `dr_acc` | int (NVS) | Motor-acc-Byte 1–254 (nie 0/255) |
+| `dr_richtung` | int (NVS) | +1=CW, -1=CCW |
+| `dr_motor_mode` | int (NVS) | 4=Closed Loop, 5=FOC |
+| `drp[1..5]_rpm/acc/richtung/mode` | int (NVS) | Drehen-Presets (5 Stück) |
 
 **Sanfter Stop (`sw_stop_pending`):**
 - Stop-Button setzt `sw_stop_pending=true`, Buttons orange
@@ -755,6 +785,12 @@ Alle Sensoren auf `i2c_id: i2c_bus` (fremdkonfiguriert in main_config).
 | 2026-03-27 (session) | — | `lvgl_overlay.yaml`: `obj_emissivity_container` (Slider + Range-Balken) + `obj_material_selector` (3 Buttons + 6 Farb-Swatches) |
 | 2026-03-27 (session) | — | `sensorphalanx.yaml`: `sensor_Temp_OBJECT` liest `global_emissivity` statt hardcoded 0.90 |
 | 2026-03-27 (session) | — | `ui/overlay_temp_messung.xml` erstellt: LVGL XML-Layout-Export für viewer.lvgl.io |
+| 2026-04-25 (session) | — | `overlay_schwenker_settings` auf TabView umgebaut: Tab 1=Schwenken (unverändert), Tab 2=Drehen |
+| 2026-04-25 (session) | — | Tab Drehen: arc_dr_rpm (5–400 UPM), arc_dr_acc (1–254), btn_dr_richtung (CW/CCW), btn_dr_mode (CL/FOC), 5 Presets |
+| 2026-04-25 (session) | — | `schwenker.yaml`: Drehmodus-Globals (dr_aktiv, dr_modus, dr_speed_rpm, dr_acc, dr_richtung, dr_motor_mode, drp1..5_*) |
+| 2026-04-25 (session) | — | `schwenker.yaml`: script_drehen_start/stop/settings_open; script_system_aus+goto_slot stoppen Drehen |
+| 2026-04-25 (session) | — | 50ms-Interval: dr_aktiv-Block (konstante F5) vor Sinus; Idle-Timeout-Guard um `!dr_aktiv` erweitert |
+| 2026-04-25 (session) | — | `btn_schwenker_main` + `btn_schwenker_toggle`: Drehmodus-aware (dr_aktiv/sw_aktiv/dr_modus) |
 | 2026-03-27 (session) | — | `display_7z_settings.yaml`: Substitutionen c_standby_*, c_tof_update_interval*, c_ir_update_interval* |
 - [x] Interval 500ms (alle 6 Slots)
 - [x] Hauptseite Titel

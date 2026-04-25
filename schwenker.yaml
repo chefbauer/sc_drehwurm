@@ -27,10 +27,13 @@
 #            sw_motor_last_move_ms, sw_motor_busy, sw_stop_pending,
 #            slider_trim_last, pumpe_a_aktiv,
 #            preset[1..5]_hp_ms / _rpm / _acc
+#            dr_aktiv, dr_modus, dr_speed_rpm, dr_acc, dr_richtung, dr_motor_mode
+#            drp[1..5]_rpm / _acc / _richtung / _mode
 #  script:   script_schwenker_settings_open, script_schwenker_start,
 #            script_schwenker_stop, script_schwenker_goto_slot,
 #            script_motor_reboot, script_pumpe_a_kurz, script_pumpe_a_lang,
-#            script_pumpe_a_aus, script_system_ein, script_system_aus
+#            script_pumpe_a_aus, script_system_ein, script_system_aus,
+#            script_drehen_start, script_drehen_stop, script_drehen_settings_open
 #  button:   btn_schwenker_toggle
 #  interval: (kein id)
 # ─────────────────────────────────────────────────────────────────────────────────
@@ -208,6 +211,123 @@ globals:
     restore_value: yes
     initial_value: '50'
 
+  # ── Drehmodus ──────────────────────────────────────────────
+  - id: dr_aktiv             # true = Drehmodus läuft
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+
+  - id: dr_modus             # letzter aktiver Modus: false=Schwenken, true=Drehen
+    type: bool
+    restore_value: yes
+    initial_value: 'false'
+
+  - id: dr_speed_rpm         # Drehgeschwindigkeit 5–400 UPM
+    type: int
+    restore_value: yes
+    initial_value: '30'
+
+  - id: dr_acc               # Motor-Beschleunigung 1–254 (nie 0/255!)
+    type: int
+    restore_value: yes
+    initial_value: '50'
+
+  - id: dr_richtung          # +1 = CW, -1 = CCW
+    type: int
+    restore_value: yes
+    initial_value: '1'
+
+  - id: dr_motor_mode        # 4 = Closed Loop, 5 = FOC
+    type: int
+    restore_value: yes
+    initial_value: '4'
+
+  # ── Drehe-Presets ─────────────────────────────────────────
+  - id: drp1_rpm
+    type: int
+    restore_value: yes
+    initial_value: '30'
+  - id: drp1_acc
+    type: int
+    restore_value: yes
+    initial_value: '50'
+  - id: drp1_richtung
+    type: int
+    restore_value: yes
+    initial_value: '1'
+  - id: drp1_mode
+    type: int
+    restore_value: yes
+    initial_value: '4'
+
+  - id: drp2_rpm
+    type: int
+    restore_value: yes
+    initial_value: '60'
+  - id: drp2_acc
+    type: int
+    restore_value: yes
+    initial_value: '80'
+  - id: drp2_richtung
+    type: int
+    restore_value: yes
+    initial_value: '1'
+  - id: drp2_mode
+    type: int
+    restore_value: yes
+    initial_value: '4'
+
+  - id: drp3_rpm
+    type: int
+    restore_value: yes
+    initial_value: '120'
+  - id: drp3_acc
+    type: int
+    restore_value: yes
+    initial_value: '100'
+  - id: drp3_richtung
+    type: int
+    restore_value: yes
+    initial_value: '1'
+  - id: drp3_mode
+    type: int
+    restore_value: yes
+    initial_value: '4'
+
+  - id: drp4_rpm
+    type: int
+    restore_value: yes
+    initial_value: '200'
+  - id: drp4_acc
+    type: int
+    restore_value: yes
+    initial_value: '150'
+  - id: drp4_richtung
+    type: int
+    restore_value: yes
+    initial_value: '-1'
+  - id: drp4_mode
+    type: int
+    restore_value: yes
+    initial_value: '5'        # FOC
+
+  - id: drp5_rpm
+    type: int
+    restore_value: yes
+    initial_value: '400'
+  - id: drp5_acc
+    type: int
+    restore_value: yes
+    initial_value: '200'
+  - id: drp5_richtung
+    type: int
+    restore_value: yes
+    initial_value: '1'
+  - id: drp5_mode
+    type: int
+    restore_value: yes
+    initial_value: '5'        # FOC
+
 # ============================================================
 # Scripts
 # ============================================================
@@ -333,6 +453,23 @@ script:
     then:
       - lambda: |-
           id(sw_motor_busy) = true;
+      # ── Drehen stoppen falls es läuft ───────────────────
+      - if:
+          condition:
+            lambda: return id(dr_aktiv);
+          then:
+            - lambda: |-
+                id(dr_aktiv) = false;
+                uint8_t _acc_b = (uint8_t)std::max(1, std::min(254, id(dr_acc)));
+                int32_t _stgt  = (int32_t)(id(dr_richtung)) * 8000000;
+                uint32_t _sv   = (uint32_t)(_stgt) & 0x00FFFFFFU;
+                id(can_bus)->send_data(${motor_can_id}, false,
+                    add_crc(${motor_can_id}, { 0xF5, 0x00, 0x00, _acc_b,
+                        (uint8_t)((_sv>>16)&0xFF), (uint8_t)((_sv>>8)&0xFF), (uint8_t)(_sv&0xFF) }));
+                lv_obj_set_style_bg_color(id(btn_dr_start_stop), lv_color_hex(0x666666), 0);
+                lv_obj_set_style_bg_color(id(btn_schwenker_main), lv_color_hex(0x666666), 0);
+                ESP_LOGI("goto_slot", "Drehen gestoppt fuer Slot-Fahrt");
+            - delay: 500ms
       # ── Schwenker sanft stoppen falls er läuft ───────────
       - if:
           condition:
@@ -485,8 +622,104 @@ script:
           id(output_pumpe_dacA).turn_off();
           id(pumpe_a_aktiv) = false;
           lv_obj_set_style_bg_color(id(btn_beckenfuellung), lv_color_hex(0x555555), 0);
+          if (id(dr_aktiv)) id(script_drehen_stop).execute();
           id(output_pumpe_dacB).turn_off();
           ESP_LOGI("system", "AUS");
+
+  # ── Drehen: Einstellungs-Overlay syncen ──────────────────
+  - id: script_drehen_settings_open
+    mode: restart
+    then:
+      - lambda: |-
+          lv_arc_set_value(id(arc_dr_rpm), std::max(5, std::min(400, id(dr_speed_rpm))));
+          lv_arc_set_value(id(arc_dr_acc), std::max(1, std::min(254, id(dr_acc))));
+          char b1[8]; snprintf(b1, sizeof(b1), "%d", id(dr_speed_rpm));
+          lv_label_set_text(id(lbl_dr_rpm_val), b1);
+          char b2[6]; snprintf(b2, sizeof(b2), "%d", id(dr_acc));
+          lv_label_set_text(id(lbl_dr_acc_val), b2);
+          if (id(dr_richtung) > 0) {
+            lv_label_set_text(id(lbl_dr_richtung), "Rechts \xef\x81\x8b");
+            lv_obj_set_style_bg_color(id(btn_dr_richtung), lv_color_hex(0x1a6b4a), 0);
+          } else {
+            lv_label_set_text(id(lbl_dr_richtung), "Links \xef\x81\x8b");
+            lv_obj_set_style_bg_color(id(btn_dr_richtung), lv_color_hex(0x1a4a6b), 0);
+          }
+          if (id(dr_motor_mode) == 4) {
+            lv_label_set_text(id(lbl_dr_mode), "Closed Loop");
+            lv_obj_set_style_bg_color(id(btn_dr_mode), lv_color_hex(0x553388), 0);
+          } else {
+            lv_label_set_text(id(lbl_dr_mode), "FOC");
+            lv_obj_set_style_bg_color(id(btn_dr_mode), lv_color_hex(0x336688), 0);
+          }
+          lv_obj_set_style_bg_color(id(btn_dr_start_stop),
+            id(dr_aktiv) ? lv_color_hex(0x229933) : lv_color_hex(0x666666), 0);
+
+  # ── Drehen starten ────────────────────────────────────────
+  - id: script_drehen_start
+    mode: single
+    then:
+      - lambda: |-
+          id(sw_motor_busy) = true;
+          uint8_t mode_byte = (id(dr_motor_mode) == 5) ? 0x05 : 0x04;
+          id(can_bus)->send_data(${motor_can_id}, false,
+              add_crc(${motor_can_id}, { 0x82, mode_byte }));
+          ESP_LOGI("drehen", "Motor-Modus: %d", (int)mode_byte);
+          id(can_bus)->send_data(${motor_can_id}, false,
+              add_crc(${motor_can_id}, { 0x84, 0x40 }));
+          int cur_ma = std::max(500, std::min(2000, id(sw_work_current_mA)));
+          uint8_t cur_h = (uint8_t)(cur_ma >> 8);
+          uint8_t cur_l = (uint8_t)(cur_ma & 0xFF);
+          id(can_bus)->send_data(${motor_can_id}, false,
+              add_crc(${motor_can_id}, { 0x83, cur_h, cur_l }));
+          id(can_bus)->send_data(${motor_can_id}, false,
+              add_crc(${motor_can_id}, { 0x9B, 0x00 }));
+          ESP_LOGI("drehen", "Strom: %d mA", cur_ma);
+      - delay: 150ms
+      - lambda: |-
+          id(dr_speed_rpm) = std::max(5, std::min(400, id(dr_speed_rpm)));
+          id(dr_acc)       = std::max(1, std::min(254, id(dr_acc)));
+          id(dr_aktiv)     = true;
+          id(dr_modus)     = true;
+          lv_obj_set_style_bg_color(id(btn_dr_start_stop), lv_color_hex(0x229933), 0);
+          lv_obj_set_style_bg_color(id(btn_schwenker_main), lv_color_hex(0x229933), 0);
+          ESP_LOGI("drehen", "START  speed=%d UPM  acc=%d  dir=%+d  mode=%d",
+                   id(dr_speed_rpm), id(dr_acc), id(dr_richtung), id(dr_motor_mode));
+
+  # ── Drehen stoppen ────────────────────────────────────────
+  - id: script_drehen_stop
+    mode: single
+    then:
+      - lambda: |-
+          if (!id(dr_aktiv)) {
+            id(sw_motor_busy) = false;
+            id(sw_motor_last_move_ms) = millis();
+            ESP_LOGI("drehen", "STOP: war bereits inaktiv");
+            return;
+          }
+          id(dr_aktiv) = false;
+          uint8_t acc_b = (uint8_t)std::max(1, std::min(254, id(dr_acc)));
+          int32_t stgt  = (int32_t)(id(dr_richtung)) * 8000000;
+          uint32_t sv   = (uint32_t)(stgt) & 0x00FFFFFFU;
+          id(can_bus)->send_data(${motor_can_id}, false,
+              add_crc(${motor_can_id}, { 0xF5, 0x00, 0x00, acc_b,
+                  (uint8_t)((sv>>16)&0xFF), (uint8_t)((sv>>8)&0xFF), (uint8_t)(sv&0xFF) }));
+          lv_obj_set_style_bg_color(id(btn_dr_start_stop), lv_color_hex(0x666666), 0);
+          lv_obj_set_style_bg_color(id(btn_schwenker_main), lv_color_hex(0x666666), 0);
+          id(sw_motor_busy) = false;
+          id(sw_motor_last_move_ms) = millis();
+          ESP_LOGI("drehen", "STOP: Bremsbefehl gesendet");
+          // Prüfe blinkende Slots -> Slot anfahren wie beim Schwenken
+          esphome::binary_sensor::BinarySensor* blink_s[6] = {
+            id(bin_slot1_blink), id(bin_slot2_blink), id(bin_slot3_blink),
+            id(bin_slot4_blink), id(bin_slot5_blink), id(bin_slot6_blink),
+          };
+          for (int _b = 0; _b < 6; _b++) {
+            if (blink_s[_b]->state) {
+              ESP_LOGI("drehen", "STOP: Slot %d blinkt, fahre an", _b+1);
+              id(script_schwenker_goto_slot)->execute(_b+1);
+              return;
+            }
+          }
 
 # ============================================================
 # 50 ms Takt – Sinus-Regelschleife
@@ -499,7 +732,7 @@ interval:
           id(can_bus)->send_data(${motor_can_id}, false, add_crc(${motor_can_id}, { 0x30 }));
 
           // ── Motor-Idle-Timeout: 10 s nach letzter Bewegung → FOC + 500 mA ──────
-          if (!id(sw_aktiv) && !id(sw_motor_busy)) {
+          if (!id(sw_aktiv) && !id(dr_aktiv) && !id(sw_motor_busy)) {
             if (id(sw_motor_last_move_ms) != 0 &&
                 (millis() - id(sw_motor_last_move_ms) > 10000)) {
               id(sw_motor_last_move_ms) = 0;
@@ -508,6 +741,19 @@ interval:
               id(script_motor_set_work_current_mA)->execute(500);
               ESP_LOGI("motor", "Idle-Timeout: FOC + 500 mA");
             }
+          }
+
+          // ── Drehmodus: konstante F5-Ausgabe alle 50 ms ──────────────────────
+          if (id(dr_aktiv)) {
+            int _spd = std::max(5, std::min(400, id(dr_speed_rpm)));
+            uint8_t _a = (uint8_t)std::max(1, std::min(254, id(dr_acc)));
+            int32_t _tgt = (int32_t)(id(dr_richtung)) * 8000000;
+            uint32_t _val = (uint32_t)(_tgt) & 0x00FFFFFFU;
+            id(can_bus)->send_data(${motor_can_id}, false,
+                add_crc(${motor_can_id}, { 0xF5,
+                    (uint8_t)(_spd >> 8), (uint8_t)(_spd & 0xFF), _a,
+                    (uint8_t)((_val>>16)&0xFF), (uint8_t)((_val>>8)&0xFF), (uint8_t)(_val&0xFF) }));
+            return;
           }
 
           if (!id(sw_aktiv)) return;
@@ -576,8 +822,12 @@ button:
     id: btn_schwenker_toggle
     on_press:
       - lambda: |-
-          if (id(sw_aktiv)) {
+          if (id(dr_aktiv)) {
+            id(script_drehen_stop).execute();
+          } else if (id(sw_aktiv)) {
             id(script_schwenker_stop).execute();
+          } else if (id(dr_modus)) {
+            id(script_drehen_start).execute();
           } else {
             id(script_schwenker_start).execute();
           }
