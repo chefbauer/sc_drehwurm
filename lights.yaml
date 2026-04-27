@@ -143,8 +143,12 @@ light:
           name: "Slot Colors Mix"
           update_interval: 10ms
           lambda: |-
-            // Vollring-Effekt: 6 Farben füllen den ganzen Ring, je 3 LED-Überblendzone an Grenzen.
-            // Jede LED bekommt eine Farbe aus ihrer Ringposition relativ zum Motor.
+            // Zwei Modi je nach Slot-Breite (sensor_leds_per_slot):
+            //   Volle Breite (lps == total/6): Vollring-Gradient, 3-LED-Überblendzone
+            //   < volle Breite: Spot-Modus mit distanzbasiertem Fade am Rand:
+            //     lps >= 5: Randled-2=33%, Randled-1=66%, Rest=100%
+            //     lps >= 3: Randled=50%, Rest=100%
+            //     lps < 3:  nur Volllicht
             const Color slot_colors[6] = {
               Color(255,   0,   0),   // Slot 1: Rot
               Color(255, 255,   0),   // Slot 2: Gelb
@@ -153,18 +157,21 @@ light:
               Color(  0,   0, 255),   // Slot 5: Blau
               Color(255,   0, 255),   // Slot 6: Magenta
             };
-            const int total     = ${c_led_strip_outer_led_num};
-            const int led0deg   = ${c_led_strip_outer_led_0deg};
-            const int dir       = ${c_led_strip_outer_direction};
-            const int fade_leds = 3;   // Überblendzone je Seite in LEDs (fix)
+            const int total   = ${c_led_strip_outer_led_num};
+            const int led0deg = ${c_led_strip_outer_led_0deg};
+            const int dir     = ${c_led_strip_outer_direction};
+            const int lps_max = total / 6;   // maximale Slot-Breite (172/6=28)
+
+            float lps_f = id(sensor_leds_per_slot).state;
+            if (isnan(lps_f)) lps_f = ${c_led_strip_leds_per_slot};
+            if (lps_f < 1.0f)             lps_f = 1.0f;
+            if (lps_f > (float)lps_max)   lps_f = (float)lps_max;
+            int half = (int)(lps_f / 2.0f);
 
             float raw = id(sensor_motor_position).state;
             if (isnan(raw) || raw < 0.0f) raw = 0.0f;
             float motor_deg = raw * 360.0f / 16384.0f;
             if (${c_motor_direction} == 0) { motor_deg = 360.0f - motor_deg; }
-
-            float motor_offset = motor_deg / 360.0f * (float)total;
-            float origin       = (float)led0deg + (dir == 0 ? motor_offset : -motor_offset);
 
             const bool blink_s[6] = {
               id(bin_slot1_blink)->state, id(bin_slot2_blink)->state,
@@ -173,47 +180,81 @@ light:
             };
             bool blink_off = (millis() / 500u) % 2u == 0u;
 
-            float seg    = (float)total / 6.0f;    // LEDs pro Farbsegment (172/6 ≈ 28.7)
-            float fade_t = (float)fade_leds / seg; // Überblendanteil 0..1 im Segment
+            for (int i = 0; i < it.size(); i++) { it[i] = Color::BLACK; }
 
-            for (int i = 0; i < it.size(); i++) {
-              float pos = fmod((float)i - origin, (float)total);
-              if (pos < 0.0f) pos += (float)total;
+            if (lps_f >= (float)lps_max) {
+              // ── Vollring-Modus: 6 Farben füllen den Ring, 3-LED-Gradient an Grenzen ──
+              const int fade_leds = 3;
+              float motor_offset  = motor_deg / 360.0f * (float)total;
+              float origin        = (float)led0deg + (dir == 0 ? motor_offset : -motor_offset);
+              float seg    = (float)total / 6.0f;
+              float fade_t = (float)fade_leds / seg;
 
-              float frac = pos / seg;   // 0..6
-              if (${c_led_strip_color_mirror} == 1) {
-                frac = fmod(6.0f - fmod(frac, 6.0f), 6.0f);
+              for (int i = 0; i < it.size(); i++) {
+                float pos = fmod((float)i - origin, (float)total);
+                if (pos < 0.0f) pos += (float)total;
+                float frac = pos / seg;
+                if (${c_led_strip_color_mirror} == 1) {
+                  frac = fmod(6.0f - fmod(frac, 6.0f), 6.0f);
+                }
+                int   s0    = (int)frac % 6;
+                float t     = frac - floorf(frac);
+                int   sprev = (s0 + 5) % 6;
+                int   snext = (s0 + 1) % 6;
+                Color c0 = (blink_s[s0]    && blink_off) ? Color::BLACK : slot_colors[s0];
+                Color cp = (blink_s[sprev] && blink_off) ? Color::BLACK : slot_colors[sprev];
+                Color cn = (blink_s[snext] && blink_off) ? Color::BLACK : slot_colors[snext];
+                Color c;
+                if (t < fade_t) {
+                  float blend = t / fade_t;
+                  c = Color(
+                    (uint8_t)((float)cp.r + ((float)c0.r - (float)cp.r) * blend),
+                    (uint8_t)((float)cp.g + ((float)c0.g - (float)cp.g) * blend),
+                    (uint8_t)((float)cp.b + ((float)c0.b - (float)cp.b) * blend)
+                  );
+                } else if (t > 1.0f - fade_t) {
+                  float blend = (t - (1.0f - fade_t)) / fade_t;
+                  c = Color(
+                    (uint8_t)((float)c0.r + ((float)cn.r - (float)c0.r) * blend),
+                    (uint8_t)((float)c0.g + ((float)cn.g - (float)c0.g) * blend),
+                    (uint8_t)((float)c0.b + ((float)cn.b - (float)c0.b) * blend)
+                  );
+                } else {
+                  c = c0;
+                }
+                it[i] = c;
               }
-
-              int   s0    = (int)frac % 6;
-              float t     = frac - floorf(frac);   // 0=linker Rand, 1=rechter Rand im Segment
-              int   sprev = (s0 + 5) % 6;
-              int   snext = (s0 + 1) % 6;
-
-              // Blink: blinkende Slots in der Aus-Phase → schwarz
-              Color c0 = (blink_s[s0]    && blink_off) ? Color::BLACK : slot_colors[s0];
-              Color cp = (blink_s[sprev] && blink_off) ? Color::BLACK : slot_colors[sprev];
-              Color cn = (blink_s[snext] && blink_off) ? Color::BLACK : slot_colors[snext];
-
-              Color c;
-              if (t < fade_t) {
-                // Linker Rand: vorige Farbe → aktuelle
-                float blend = t / fade_t;
-                c = Color(
-                  (uint8_t)((float)cp.r + ((float)c0.r - (float)cp.r) * blend),
-                  (uint8_t)((float)cp.g + ((float)c0.g - (float)cp.g) * blend),
-                  (uint8_t)((float)cp.b + ((float)c0.b - (float)cp.b) * blend)
-                );
-              } else if (t > 1.0f - fade_t) {
-                // Rechter Rand: aktuelle → nächste Farbe
-                float blend = (t - (1.0f - fade_t)) / fade_t;
-                c = Color(
-                  (uint8_t)((float)c0.r + ((float)cn.r - (float)c0.r) * blend),
-                  (uint8_t)((float)c0.g + ((float)cn.g - (float)c0.g) * blend),
-                  (uint8_t)((float)c0.b + ((float)cn.b - (float)c0.b) * blend)
-                );
-              } else {
-                c = c0;
+            } else {
+              // ── Spot-Modus: Farbpunkte mit distanzbasiertem Rand-Fade ──
+              for (int s = 0; s < 6; s++) {
+                if (blink_s[s] && blink_off) continue;
+                float slot_step = (${c_led_strip_color_mirror} == 0) ? 60.0f : -60.0f;
+                float slot_deg  = fmod(motor_deg + s * slot_step, 360.0f);
+                if (slot_deg < 0.0f) slot_deg += 360.0f;
+                float offset = slot_deg * total / 360.0f;
+                int center = (int)(led0deg + (dir == 0 ? offset : -offset) + 0.5f);
+                center = ((center % total) + total) % total;
+                Color base = slot_colors[s];
+                for (int d = -half; d <= half; d++) {
+                  int dist_edge = half - abs(d);   // 0=äußerste LED, half=Mitte
+                  float br;
+                  if (lps_f >= 5.0f) {
+                    // 2-LED-Fade: 33% / 66% / 100%
+                    if      (dist_edge == 0) br = 0.33f;
+                    else if (dist_edge == 1) br = 0.66f;
+                    else                     br = 1.0f;
+                  } else if (lps_f >= 3.0f) {
+                    // 1-LED-Fade: 50% / 100%
+                    br = (dist_edge == 0) ? 0.5f : 1.0f;
+                  } else {
+                    br = 1.0f;
+                  }
+                  int idx = ((center + d) % total + total) % total;
+                  it[idx] = Color(
+                    (uint8_t)(base.r * br),
+                    (uint8_t)(base.g * br),
+                    (uint8_t)(base.b * br)
+                  );
+                }
               }
-              it[i] = c;
             }
