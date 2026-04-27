@@ -388,6 +388,25 @@ script:
     then:
       # Motor-Init: konfigurierbarer Modus, 64 Subdivisions, gespeicherter Strom, 5% Standby
       - lambda: |-
+          // ── Drehen sofort hard-stoppen falls es noch läuft ────────────────
+          // (Guard: btn_schwenker_overlay_toggle prüft dr_aktiv nicht)
+          if (id(dr_aktiv)) {
+            id(dr_aktiv)         = false;
+            id(dr_current_rpm)   = 0;
+            id(dr_last_sent_rpm) = -1;
+            uint8_t _acc_b = 0x01;
+            int32_t _stgt  = (int32_t)(id(dr_richtung)) * 8000000;
+            uint32_t _sv   = (uint32_t)(_stgt) & 0x00FFFFFFU;
+            id(can_bus)->send_data(${motor_can_id}, false,
+                add_crc(${motor_can_id}, { 0xF5, 0x00, 0x00, _acc_b,
+                    (uint8_t)((_sv>>16)&0xFF), (uint8_t)((_sv>>8)&0xFF), (uint8_t)(_sv&0xFF) }));
+            if (id(pumpe_vor_drehen_level) >= 0.0f) {
+              id(output_pumpe_dacA).set_level(id(pumpe_vor_drehen_level));
+              id(pumpe_vor_drehen_level) = -1.0f;
+            }
+            lv_obj_set_style_bg_color(id(btn_dr_start_stop), lv_color_hex(0x666666), 0);
+            ESP_LOGW("schwenker", "Drehen war aktiv – hard stop vor Schwenker-Start");
+          }
           id(sw_motor_busy) = true;
           std::vector<unsigned char> data;
           data = add_crc(${motor_can_id}, { 0x82, 0x04 });         // MODE: Closed Loop (4)
@@ -421,6 +440,7 @@ script:
                    id(sw_halbperiode_ms), id(sw_max_speed_rpm));
           id(sw_aktiv)     = true;
           id(dr_modus)     = false;   // Modus auf Schwenken speichern (NVS)
+          lv_label_set_text(id(lbl_schwenker_icon), "\xef\x80\xa1");  // U+F021 arrows-rotate (Schwenken)
           lv_obj_set_style_bg_color(id(btn_schwenker_main), lv_color_hex(0x229933), 0);
           lv_obj_set_style_bg_color(id(btn_schwenker_overlay_toggle), lv_color_hex(0x229933), 0);
           // Auto-Stop: Flag setzen wenn mindestens ein Slot läuft
@@ -682,6 +702,20 @@ script:
     mode: single
     then:
       - lambda: |-
+          // ── Schwenker sofort hard-stoppen falls er noch läuft ─────────────
+          // (Bug-Guard: btn_dr_start_stop im Overlay prüft sw_aktiv nicht)
+          if (id(sw_aktiv)) {
+            id(sw_aktiv)       = false;
+            id(sw_stop_pending)= false;
+            uint8_t _sacc = (uint8_t)std::max(1, std::min(254, id(sw_motor_ramp)));
+            int32_t _stgt = (int32_t)(id(sw_richtung)) * 8000000;
+            uint32_t _sv  = (uint32_t)(_stgt) & 0x00FFFFFFU;
+            id(can_bus)->send_data(${motor_can_id}, false,
+                add_crc(${motor_can_id}, { 0xF5, 0x00, 0x00, _sacc,
+                    (uint8_t)((_sv>>16)&0xFF), (uint8_t)((_sv>>8)&0xFF), (uint8_t)(_sv&0xFF) }));
+            lv_obj_set_style_bg_color(id(btn_schwenker_overlay_toggle), lv_color_hex(0x666666), 0);
+            ESP_LOGW("drehen", "Schwenker war aktiv – hard stop vor Drehen-Start");
+          }
           id(sw_motor_busy) = true;
           uint8_t mode_byte = (id(dr_motor_mode) == 5) ? 0x05 : 0x04;
           id(can_bus)->send_data(${motor_can_id}, false,
@@ -706,6 +740,7 @@ script:
           id(dr_ramp_last_ms) = millis() - (uint32_t)std::max(1, std::min(30, id(dr_acc))) * 100;  // sofort ersten Schritt senden
           id(dr_aktiv)        = true;
           id(dr_modus)        = true;   // Modus auf Drehen speichern (NVS)
+          lv_label_set_text(id(lbl_schwenker_icon), "\xef\x8b\xb9");  // U+F2F9 rotate-right (Drehen)
           // Pumpe auf 100% wenn sie läuft
           if (id(pumpe_a_aktiv)) {
             id(pumpe_vor_drehen_level) = lv_slider_get_value(id(slider_turmpumpe)) / 100.0f;

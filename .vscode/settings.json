@@ -3,6 +3,10 @@
         "/^cd /workspaces/display_drehwurm && python3 -c \"\nimport yaml, sys\nclass L\\(yaml\\.SafeLoader\\): pass\nyaml\\.add_multi_constructor\\('', lambda l,t,n: None, Loader=L\\)\nfor f in \\['schwenker\\.yaml', 'lvgl_overlay\\.yaml', 'lvgl_basis\\.yaml'\\]:\n    try:\n        yaml\\.load\\(open\\(f\\), L\\)\n        print\\(f'✓ \\{f\\}'\\)\n    except Exception as e:\n        print\\(f'✗ FEHLER \\{f\\}: \\{e\\}'\\)\n\"$/": {
             "approve": true,
             "matchCommandLine": true
+        },
+        "/^cd /workspaces/display_drehwurm && for f in \\*\\.yaml; do python3 -c \"\nimport yaml, sys\nclass L\\(yaml\\.SafeLoader\\): pass\nyaml\\.add_multi_constructor\\('', lambda l,t,n: None, Loader=L\\)\nyaml\\.load\\(open\\('\\$f'\\), L\\)\n\" 2>&1 && echo \"✓ \\$f\" \\|\\| echo \"✗ FEHLER: \\$f\"; done$/": {
+            "approve": true,
+            "matchCommandLine": true
         }
     }
 }

@@ -47,6 +47,12 @@ esphome:
             id(bin_slot4_blink).publish_state(false);
             id(bin_slot5_blink).publish_state(false);
             id(bin_slot6_blink).publish_state(false);
+            // Startbildschirm-Icon nach gespeichertem Modus setzen
+            if (id(dr_modus)) {
+              lv_label_set_text(id(lbl_schwenker_icon), "\xef\x8b\xb9");  // U+F2F9 rotate-right (Drehen)
+            } else {
+              lv_label_set_text(id(lbl_schwenker_icon), "\xef\x80\xa1");  // U+F021 arrows-rotate (Schwenken)
+            }
     - priority: -150        # System in sicheren Aus-Zustand (Not-Aus beim Booten)
       then:
         - script.execute: script_system_aus

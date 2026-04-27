@@ -110,7 +110,8 @@ font:
     size: 120
     bpp: 4
     glyphs:
-      - "\uF021"  # arrows-rotate (Drehsymbol)
+      - "\uF021"  # arrows-rotate (Schwenken, links+rechts)
+      - "\uF2F9"  # rotate-right  (Drehen, nur rechts)
 
   # IR-Temperatur-Overlay: Laser-Icon 80px (bewusst kleiner als Temp-Wert)
   - file: "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/webfonts/fa-solid-900.ttf"
