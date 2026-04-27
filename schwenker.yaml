@@ -816,16 +816,22 @@ script:
           }
 
 # ============================================================
-# 50 ms Takt – Sinus-Regelschleife
+# Interval-Blöcke
+#   25 ms – Motorposition (0x30)  → 40 Hz → LED-Ring immer frisch
+#   50 ms – Sinus-Regelschleife   → 20 Hz
 # ============================================================
 interval:
+  # ── Motorposition: 40 Hz – unabhängig vom 50ms-Regelzyklus ─────────────────
+  - interval: 25ms
+    then:
+      - lambda: |-
+          id(can_bus)->send_data(${motor_can_id}, false, add_crc(${motor_can_id}, { 0x30 }));
+
+  # ── Schwenker-Regelzyklus: 20 Hz ───────────────────────────────────────────
   - interval: 50ms
     then:
       - lambda: |-
-          // Winkelabfrage 20x/s – immer, auch wenn Schwenker inaktiv
-          id(can_bus)->send_data(${motor_can_id}, false, add_crc(${motor_can_id}, { 0x30 }));
-
-          // ── Motor-Idle-Timeout: 10 s nach letzter Bewegung → FOC + 500 mA ──────
+          // ── Motor-Idle-Timeout: 10 s nach letzter Bewegung → FOC + 100 mA ──────
           if (!id(sw_aktiv) && !id(dr_aktiv) && !id(sw_motor_busy)) {
             if (id(sw_motor_last_move_ms) != 0 &&
                 (millis() - id(sw_motor_last_move_ms) > 10000)) {
