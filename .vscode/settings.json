@@ -7,6 +7,10 @@
         "/^cd /workspaces/display_drehwurm && for f in \\*\\.yaml; do python3 -c \"\nimport yaml, sys\nclass L\\(yaml\\.SafeLoader\\): pass\nyaml\\.add_multi_constructor\\('', lambda l,t,n: None, Loader=L\\)\nyaml\\.load\\(open\\('\\$f'\\), L\\)\n\" 2>&1 && echo \"✓ \\$f\" \\|\\| echo \"✗ FEHLER: \\$f\"; done$/": {
             "approve": true,
             "matchCommandLine": true
+        },
+        "/^python3 -c \"\nimport pdfplumber\nwith pdfplumber\\.open\\('/workspaces/display_drehwurm/ui/docs/MKS SERVO42\\\\&57D_CAN User Manual V1\\.0\\.9\\.pdf'\\) as pdf:\n    print\\(f'Seiten: \\{len\\(pdf\\.pages\\)\\}'\\)\n    for i, page in enumerate\\(pdf\\.pages\\):\n        t = page\\.extract_text\\(\\)\n        if t and any\\(k in t for k in \\['mstep','MSTEP','microstep','Microstep','subdivision','Subdivision','0x84'\\]\\):\n            print\\(f'--- Seite \\{i\\+1\\} ---'\\)\n            print\\(t\\[:3000\\]\\)\n\" 2>&1 \\| head -200$/": {
+            "approve": true,
+            "matchCommandLine": true
         }
     }
 }

@@ -222,15 +222,15 @@ globals:
     restore_value: yes
     initial_value: 'false'
 
-  - id: dr_speed_rpm         # Drehgeschwindigkeit 5–400 UPM
+  - id: dr_speed_rpm         # Drehgeschwindigkeit 1–150 UPM (echte UPM; F5-Wert = ×8 wegen 128 Sub)
     type: int
     restore_value: yes
     initial_value: '30'
 
-  - id: dr_acc               # Ramp-Schritt: 1–30 (= 0.1–3.0 s pro 10-UPM-Stufe, Motor-acc fest 1)
+  - id: dr_acc               # Motor-acc 1–254 (0/255 = kein Ramping!); Hardware-Rampe im Motor
     type: int
     restore_value: yes
-    initial_value: '5'          # 5 = 0.5 s/Stufe
+    initial_value: '80'         # 80 ≈ ~3s auf 30 UPM; (256-80)*0.05ms×240steps=2.11s
 
   - id: dr_richtung          # +1 = CW, -1 = CCW
     type: int
@@ -266,11 +266,11 @@ globals:
   - id: drp1_rpm
     type: int
     restore_value: yes
-    initial_value: '30'
+    initial_value: '20'
   - id: drp1_acc
     type: int
     restore_value: yes
-    initial_value: '10'         # 1.0 s
+    initial_value: '50'         # ~4.0s auf 20 UPM: (256-50)*0.05ms×160steps=1.65s
   - id: drp1_richtung
     type: int
     restore_value: yes
@@ -283,11 +283,11 @@ globals:
   - id: drp2_rpm
     type: int
     restore_value: yes
-    initial_value: '60'
+    initial_value: '50'
   - id: drp2_acc
     type: int
     restore_value: yes
-    initial_value: '5'          # 0.5 s
+    initial_value: '100'        # ~3.1s auf 50 UPM: (256-100)*0.05ms×400steps=3.12s
   - id: drp2_richtung
     type: int
     restore_value: yes
@@ -300,11 +300,11 @@ globals:
   - id: drp3_rpm
     type: int
     restore_value: yes
-    initial_value: '120'
+    initial_value: '80'
   - id: drp3_acc
     type: int
     restore_value: yes
-    initial_value: '3'          # 0.3 s
+    initial_value: '140'        # ~3.0s auf 80 UPM: (256-140)*0.05ms×640steps=3.71s
   - id: drp3_richtung
     type: int
     restore_value: yes
@@ -317,11 +317,11 @@ globals:
   - id: drp4_rpm
     type: int
     restore_value: yes
-    initial_value: '200'
+    initial_value: '120'
   - id: drp4_acc
     type: int
     restore_value: yes
-    initial_value: '2'          # 0.2 s
+    initial_value: '180'        # ~3.5s auf 120 UPM: (256-180)*0.05ms×960steps=3.65s
   - id: drp4_richtung
     type: int
     restore_value: yes
@@ -329,16 +329,16 @@ globals:
   - id: drp4_mode
     type: int
     restore_value: yes
-    initial_value: '5'        # FOC
+    initial_value: '4'
 
   - id: drp5_rpm
     type: int
     restore_value: yes
-    initial_value: '400'
+    initial_value: '150'
   - id: drp5_acc
     type: int
     restore_value: yes
-    initial_value: '2'          # 0.2 s
+    initial_value: '220'        # ~3.7s auf 150 UPM: (256-220)*0.05ms×1200steps=2.16s
   - id: drp5_richtung
     type: int
     restore_value: yes
@@ -529,10 +529,11 @@ script:
                   lambda: return !id(sw_aktiv);
                 timeout: 10s
             - delay: 200ms   # kurze Beruhigungspause nach dem Stop
-      # Closed Loop + Work current aus NVS laden
+      # Closed Loop + 64 Sub (zurück von Drehen-128Sub!) + Work current aus NVS laden
       - lambda: |-
           id(can_bus)->send_data(${motor_can_id}, false, add_crc(${motor_can_id}, { 0x82, 0x04 }));
-          ESP_LOGI("schwenker", "goto_slot: Closed Loop (fix)");
+          id(can_bus)->send_data(${motor_can_id}, false, add_crc(${motor_can_id}, { 0x84, 0x40 }));  // 64 Sub zurücksetzen!
+          ESP_LOGI("schwenker", "goto_slot: Closed Loop + 64 Sub");
           id(script_motor_set_work_current_mA)->execute(id(sw_work_current_mA));
           ESP_LOGI("schwenker", "goto_slot: Work current = %d mA", id(sw_work_current_mA));
       # Relative Fahrt zur Zielposition
@@ -674,12 +675,18 @@ script:
     mode: restart
     then:
       - lambda: |-
-          lv_arc_set_value(id(arc_dr_rpm), std::max(5, std::min(400, id(dr_speed_rpm))));
-          lv_arc_set_value(id(arc_dr_acc), std::max(1, std::min(30, id(dr_acc))));
-          char b1[8]; snprintf(b1, sizeof(b1), "%d", id(dr_speed_rpm));
+          int rpm = std::max(1, std::min(150, id(dr_speed_rpm)));
+          int acc = std::max(1, std::min(254, id(dr_acc)));
+          lv_arc_set_value(id(arc_dr_rpm), rpm);
+          lv_arc_set_value(id(arc_dr_acc), acc);
+          char b1[8]; snprintf(b1, sizeof(b1), "%d", rpm);
           lv_label_set_text(id(lbl_dr_rpm_val), b1);
-          char b2[8]; snprintf(b2, sizeof(b2), "%.1fs", id(dr_acc) / 10.0f);
+          char b2[8]; snprintf(b2, sizeof(b2), "%d", acc);
           lv_label_set_text(id(lbl_dr_acc_val), b2);
+          // Rampzeit anzeigen: speed_val × (256-acc) × 50µs
+          float rt = (float)(rpm * 8) * (256 - acc) * 0.00005f;
+          char b3[10]; snprintf(b3, sizeof(b3), "%.1fs", rt);
+          lv_label_set_text(id(lbl_dr_ramp_info), b3);
           if (id(dr_richtung) > 0) {
             lv_label_set_text(id(lbl_dr_richtung), "Rechts \xef\x81\x8b");
             lv_obj_set_style_bg_color(id(btn_dr_richtung), lv_color_hex(0x1a6b4a), 0);
@@ -722,7 +729,7 @@ script:
               add_crc(${motor_can_id}, { 0x82, mode_byte }));
           ESP_LOGI("drehen", "Motor-Modus: %d", (int)mode_byte);
           id(can_bus)->send_data(${motor_can_id}, false,
-              add_crc(${motor_can_id}, { 0x84, 0x40 }));
+              add_crc(${motor_can_id}, { 0x84, 0x80 }));  // 128 Subdivisions (Feinrampe)
           int cur_ma = std::max(500, std::min(2000, id(sw_work_current_mA)));
           uint8_t cur_h = (uint8_t)(cur_ma >> 8);
           uint8_t cur_l = (uint8_t)(cur_ma & 0xFF);
@@ -733,13 +740,20 @@ script:
           ESP_LOGI("drehen", "Strom: %d mA", cur_ma);
       - delay: 150ms
       - lambda: |-
-          id(dr_speed_rpm)    = std::max(5, std::min(400, id(dr_speed_rpm)));
-          id(dr_acc)          = std::max(1, std::min(30, id(dr_acc)));
-          id(dr_current_rpm)  = 0;
-          id(dr_last_sent_rpm) = -1;  // erstes Senden erzwingen
-          id(dr_ramp_last_ms) = millis() - (uint32_t)std::max(1, std::min(30, id(dr_acc))) * 100;  // sofort ersten Schritt senden
-          id(dr_aktiv)        = true;
-          id(dr_modus)        = true;   // Modus auf Drehen speichern (NVS)
+          // 128 Subdivisions: echte UPM × 8 = F5-Speed-Wert
+          // acc 1–254: Motor-Hardware-Rampe; 0/255 = kein Ramping!
+          id(dr_speed_rpm) = std::max(1, std::min(150, id(dr_speed_rpm)));
+          id(dr_acc)       = std::max(1, std::min(254, id(dr_acc)));
+          int speed_val    = id(dr_speed_rpm) * 8;           // max 1200
+          uint8_t acc_b    = (uint8_t)id(dr_acc);
+          int32_t tgt      = (int32_t)(id(dr_richtung)) * 8000000;
+          uint32_t tgtv    = (uint32_t)(tgt) & 0x00FFFFFFU;
+          id(can_bus)->send_data(${motor_can_id}, false,
+              add_crc(${motor_can_id}, { 0xF5,
+                  (uint8_t)(speed_val >> 8), (uint8_t)(speed_val & 0xFF), acc_b,
+                  (uint8_t)((tgtv>>16)&0xFF), (uint8_t)((tgtv>>8)&0xFF), (uint8_t)(tgtv&0xFF) }));
+          id(dr_aktiv)  = true;
+          id(dr_modus)  = true;   // Modus auf Drehen speichern (NVS)
           lv_label_set_text(id(lbl_schwenker_icon), "\xef\x8b\xb9");  // U+F2F9 rotate-right (Drehen)
           // Pumpe auf 100% wenn sie läuft
           if (id(pumpe_a_aktiv)) {
@@ -751,8 +765,9 @@ script:
           }
           lv_obj_set_style_bg_color(id(btn_dr_start_stop), lv_color_hex(0x229933), 0);
           lv_obj_set_style_bg_color(id(btn_schwenker_main), lv_color_hex(0x229933), 0);
-          ESP_LOGI("drehen", "START  speed=%d UPM  ramp_step=%d×100ms  dir=%+d  mode=%d",
-                   id(dr_speed_rpm), id(dr_acc), id(dr_richtung), id(dr_motor_mode));
+          float ramp_s = (float)(id(dr_speed_rpm) * 8) * (256 - id(dr_acc)) * 0.00005f;
+          ESP_LOGI("drehen", "START  %d UPM (F5=%d)  acc=%d  ramp=%.1fs  dir=%+d  mode=%d",
+                   id(dr_speed_rpm), speed_val, id(dr_acc), ramp_s, id(dr_richtung), id(dr_motor_mode));
 
   # ── Drehen stoppen ────────────────────────────────────────
   - id: script_drehen_stop
@@ -775,7 +790,8 @@ script:
             ESP_LOGI("drehen", "Pumpe zurück: %.2f", id(pumpe_vor_drehen_level));
             id(pumpe_vor_drehen_level) = -1.0f;
           }
-          uint8_t acc_b =  0x01;  // Motor-acc fest 1 (minimales Hardware-Ramping)
+          // Stop: speed=0, gleicher acc wie beim Start → symmetrische Hardware-Bremse
+          uint8_t acc_b = (uint8_t)std::max(1, std::min(254, id(dr_acc)));
           int32_t stgt  = (int32_t)(id(dr_richtung)) * 8000000;
           uint32_t sv   = (uint32_t)(stgt) & 0x00FFFFFFU;
           id(can_bus)->send_data(${motor_can_id}, false,
@@ -821,30 +837,8 @@ interval:
             }
           }
 
-          // ── Drehmodus: F5 NUR bei Ramp-Schritt senden (nicht jede 50ms!) ─────────
+          // ── Drehmodus: F5 einmalig in script_drehen_start gesendet – hier nichts tun ──
           if (id(dr_aktiv)) {
-            int _target = std::max(5, std::min(400, id(dr_speed_rpm)));
-            if (id(dr_current_rpm) < _target) {
-              uint32_t _step_ms = (uint32_t)std::max(1, std::min(30, id(dr_acc))) * 100;
-              if (millis() - id(dr_ramp_last_ms) >= _step_ms) {
-                id(dr_ramp_last_ms) = millis();
-                id(dr_current_rpm)  = std::min(_target, id(dr_current_rpm) + 10);
-                ESP_LOGI("drehen", "Ramp: %d UPM (Schritt %u ms)", id(dr_current_rpm), _step_ms);
-              }
-            } else {
-              id(dr_current_rpm) = _target;  // Absenkung sofort
-            }
-            // F5 nur senden wenn sich die Sollgeschwindigkeit geändert hat
-            if (id(dr_current_rpm) != id(dr_last_sent_rpm)) {
-              id(dr_last_sent_rpm) = id(dr_current_rpm);
-              int _spd = std::max(0, id(dr_current_rpm));
-              int32_t _tgt = (int32_t)(id(dr_richtung)) * 8000000;
-              uint32_t _val = (uint32_t)(_tgt) & 0x00FFFFFFU;
-              id(can_bus)->send_data(${motor_can_id}, false,
-                  add_crc(${motor_can_id}, { 0xF5,
-                      (uint8_t)(_spd >> 8), (uint8_t)(_spd & 0xFF), 0x01,
-                      (uint8_t)((_val>>16)&0xFF), (uint8_t)((_val>>8)&0xFF), (uint8_t)(_val&0xFF) }));
-            }
             return;
           }
 

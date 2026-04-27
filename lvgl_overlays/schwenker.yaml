@@ -616,8 +616,8 @@ obj:
                         height: 260
                         align: TOP_MID
                         y: 35
-                        min_value: 5
-                        max_value: 400
+                        min_value: 1
+                        max_value: 150
                         value: 30
                         adjustable: true
                         arc_color: 0x226622
@@ -636,6 +636,10 @@ obj:
                               char buf[8];
                               snprintf(buf, sizeof(buf), "%d", (int)x);
                               lv_label_set_text(id(lbl_dr_rpm_val), buf);
+                              // Rampzeit neu berechnen und anzeigen
+                              float rt = (float)((int)x * 8) * (256 - id(dr_acc)) * 0.00005f;
+                              char rbuf[10]; snprintf(rbuf, sizeof(rbuf), "%.1fs", rt);
+                              lv_label_set_text(id(lbl_dr_ramp_info), rbuf);
                     - label:
                         id: lbl_dr_rpm_val
                         text: "30"
@@ -645,7 +649,7 @@ obj:
                         text_color: 0x226644
                         text_align: CENTER
                     - label:
-                        text: "Upm"
+                        text: "Upm (max 150)"
                         align: TOP_MID
                         y: 196
                         text_font: font_small
@@ -666,7 +670,7 @@ obj:
                   pad_all: 0
                   widgets:
                     - label:
-                        text: "Anlauf-Schrittzeit"
+                        text: "Anlauf (Motor-acc)"
                         align: TOP_MID
                         y: 0
                         text_font: font_normal
@@ -678,8 +682,8 @@ obj:
                         align: TOP_MID
                         y: 35
                         min_value: 1
-                        max_value: 30
-                        value: 5
+                        max_value: 254
+                        value: 80
                         adjustable: true
                         arc_color: 0x885500
                         arc_width: 15
@@ -694,23 +698,35 @@ obj:
                         on_value:
                           - lambda: |-
                               id(dr_acc) = (int)x;
-                              char buf[8];
-                              snprintf(buf, sizeof(buf), "%.1fs", x / 10.0f);
+                              // Rampzeit = speed_val × (256-acc) × 50µs
+                              float rt = (float)(id(dr_speed_rpm) * 8) * (256 - (int)x) * 0.00005f;
+                              char buf[10];
+                              snprintf(buf, sizeof(buf), "%d", (int)x);
                               lv_label_set_text(id(lbl_dr_acc_val), buf);
+                              char rbuf[10]; snprintf(rbuf, sizeof(rbuf), "%.1fs", rt);
+                              lv_label_set_text(id(lbl_dr_ramp_info), rbuf);
                     - label:
                         id: lbl_dr_acc_val
-                        text: "0.5s"
+                        text: "80"
                         align: TOP_MID
                         y: 138
                         text_font: font_arc_val
                         text_color: 0xCC7700
                         text_align: CENTER
                     - label:
-                        text: "Schrittzeit"
+                        text: "acc (1–254)"
                         align: TOP_MID
                         y: 196
                         text_font: font_small
                         text_color: 0x556677
+                    - label:
+                        id: lbl_dr_ramp_info
+                        text: "~2.1s"
+                        align: TOP_MID
+                        y: 220
+                        text_font: font_small
+                        text_color: 0xFFAA44
+                        text_align: CENTER
 
               # ── Steuerknöpfe: Richtung + Betriebsart (mitte) ─────────────
               - obj:
