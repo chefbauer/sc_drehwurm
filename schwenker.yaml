@@ -832,8 +832,9 @@ interval:
               id(sw_motor_last_move_ms) = 0;
               id(can_bus)->send_data(${motor_can_id}, false,
                   add_crc(${motor_can_id}, { 0x82, 0x05 }));
-              id(script_motor_set_work_current_mA)->execute(500);
-              ESP_LOGI("motor", "Idle-Timeout: FOC + 500 mA");
+              id(script_motor_set_work_current_mA)->execute(100);
+              id(script_motor_set_idle_current_perc)->execute(10);
+              ESP_LOGI("motor", "Idle-Timeout: FOC + 100 mA Arbeitsstrom + 10%% Idle-Strom (≈10 mA)");
             }
           }
 
