@@ -817,12 +817,12 @@ script:
 
 # ============================================================
 # Interval-Blöcke
-#   17 ms – Motorposition (0x30)  → 60 Hz → LED-Ring immer frisch
+#   10 ms – Motorposition (0x30)  → 100 Hz → LED-Ring immer frisch
 #   50 ms – Sinus-Regelschleife   → 20 Hz
 # ============================================================
 interval:
-  # ── Motorposition: 60 Hz – unabhängig vom 50ms-Regelzyklus ─────────────────
-  - interval: 17ms
+  # ── Motorposition: 100 Hz – unabhängig vom 50ms-Regelzyklus ─────────────────
+  - interval: 10ms
     then:
       - lambda: |-
           id(can_bus)->send_data(${motor_can_id}, false, add_crc(${motor_can_id}, { 0x30 }));
