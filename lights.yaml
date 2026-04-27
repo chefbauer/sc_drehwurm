@@ -189,10 +189,15 @@ light:
               float origin        = (float)led0deg + (dir == 0 ? motor_offset : -motor_offset);
               float seg    = (float)total / 6.0f;
               float fade_t = (float)fade_leds / seg;
+              // seg/2-Offset: Segment-Mitte auf origin legen (= Spot-Modus Referenz)
+              float origin_ring = origin - seg * 0.5f;
 
               for (int i = 0; i < it.size(); i++) {
-                float pos = fmod((float)i - origin, (float)total);
+                float pos = fmod((float)i - origin_ring, (float)total);
                 if (pos < 0.0f) pos += (float)total;
+                // dir==1: Slot-Indizes steigen in abnehmender LED-Richtung → pos umdrehen
+                // damit Vollring dieselbe Farbrichtung hat wie Spot-Modus (Referenz)
+                if (dir == 1) pos = fmod((float)total - pos, (float)total);
                 float frac = pos / seg;
                 if (${c_led_strip_color_mirror} == 1) {
                   frac = fmod(6.0f - fmod(frac, 6.0f), 6.0f);
