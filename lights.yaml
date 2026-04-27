@@ -55,7 +55,7 @@ light:
     effects:
       - addressable_lambda:
           name: "Slot Colors"
-          update_interval: 25ms
+          update_interval: 17ms
           lambda: |-
             // ── Slot-Farben (Reihenfolge: 1=Rot, 2=Gelb, 3=Grün, 4=Cyan, 5=Blau, 6=Magenta) ──
             const Color slot_colors[6] = {
