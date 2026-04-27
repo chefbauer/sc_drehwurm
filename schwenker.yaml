@@ -864,10 +864,13 @@ interval:
           }
           if (sinval < 0.0f) sinval = 0.0f;
           int speed  = (int)(id(sw_max_speed_rpm) * sinval);
-          target = (int32_t)(id(sw_richtung)) * 8000000;
-          ESP_LOGD("schwenker", "Dir:%+d spd:%3d RPM sin:%.3f",
-                   id(sw_richtung), speed, sinval);
-          if (id(sw_phase_ms) >= id(sw_halbperiode_ms)) {
+          ESP_LOGD("schwenker", "Dir:%+d spd:%3d RPM sin:%.3f phase:%u",
+                   id(sw_richtung), speed, sinval, id(sw_phase_ms));
+
+          // Flip-Trigger: sinval ist bereits seit halbperiode_ms = 0 (Abrampe beendet),
+          // die extra 250 ms geben dem Motor Zeit (acc=200 ≈ 280 ms Auslaufzeit) wirklich
+          // auf 0 abzubremsen, bevor die neue Richtung befohlen wird.
+          if (id(sw_phase_ms) >= id(sw_halbperiode_ms) + 250U) {
             if (id(sw_stop_pending)) {
               // Zyklus beendet: jetzt wirklich stoppen
               id(sw_stop_pending) = false;
@@ -885,10 +888,14 @@ interval:
               ESP_LOGI("schwenker", "STOP: Zyklus beendet, Motor bremst");
               return;
             }
-            id(sw_richtung) *= -1;
-            id(sw_phase_ms)  = 0;
+            id(sw_richtung) = -(id(sw_richtung));   // explizites Negieren (nicht *=)
+            id(sw_phase_ms) = 0;
             ESP_LOGI("schwenker", "Richtungswechsel → %+d", id(sw_richtung));
           }
+
+          // target NACH dem Flip berechnen → Flip-Tick schickt bereits neue Richtung
+          // mit speed=0 (sinval=0 für phase > halbperiode_ms durch Clamp oben)
+          target = (int32_t)(id(sw_richtung)) * 8000000;
 
           // ══ F5 CAN-Paket senden ════════════════════════════════════════
           uint8_t  spd_h = (uint8_t)(speed >> 8);
