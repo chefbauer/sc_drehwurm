@@ -434,8 +434,9 @@ script:
             ESP_LOGW("schwenker", "sw_halbperiode_ms korrigiert auf %u", id(sw_halbperiode_ms));
           }
 
-          id(sw_richtung) = 1;
-          id(sw_phase_ms) = 0;
+          id(sw_richtung)     = 1;
+          id(sw_phase_ms)     = 0;
+          id(sw_stop_pending) = false;  // goto_slot kann dieses Flag hinterlassen → explizit löschen
           ESP_LOGI("schwenker", "START  halbperiode=%u ms  max=%d RPM",
                    id(sw_halbperiode_ms), id(sw_max_speed_rpm));
           id(sw_aktiv)     = true;
