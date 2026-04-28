@@ -799,6 +799,9 @@ Alle Sensoren auf `i2c_id: i2c_bus` (fremdkonfiguriert in main_config).
 | 2026-04-25 (session) | — | `btn_schwenker_main` + `btn_schwenker_toggle`: Drehmodus-aware (dr_aktiv/sw_aktiv/dr_modus) |
 | 2026-03-27 (session) | — | `display_7z_settings.yaml`: Substitutionen c_standby_*, c_tof_update_interval*, c_ir_update_interval* |
 | 2026-04-28 (session) | — | `lvgl_overlays/schwenker.yaml`: `arc_dr_rpm` + `arc_dr_acc` on_value senden bei `dr_aktiv` sofort F5-Befehl an Motor (Live-UPM/Acc-Änderung ohne Neustart) |
+| 2026-04-28 (session) | — | `hardware.yaml` on_boot: `lv_obj_set_scroll_dir(lv_tabview_get_content(settings_tabs), LV_DIR_NONE)` → Einstellungs-TabView: horizontales Wischen/Tab-Wechsel deaktiviert, vertikales Scrollen in Tabs bleibt erhalten |
+| 2026-04-28 (session) | — | `schwenker.yaml`: Global `dr_pumpe_auto` (bool, NVS, default true); `script_drehen_start` wraps Pumpe-100%-Block; `script_drehen_settings_open` synct `btn_dr_pumpe_auto` |
+| 2026-04-28 (session) | — | `lvgl_overlays/schwenker.yaml`: `btn_dr_pumpe_auto` (180×55, TOP_LEFT x:100) im Drehen-Tab — EIN=Pumpe 100% beim Drehmodus, AUS=manuell; Live-Toggle bei laufendem Drehmodus |
 | (session) | — | `schwenker.yaml`: Idle-Timeout → `script_motor_set_work_current_mA(100)` + `script_motor_set_idle_current_perc(10)` statt 500 mA (verhindert FOC-Schwingung) |
 | (session) | — | `schwenker.yaml`: `script_schwenker_start` setzt `sw_stop_pending = false` (Bug: nach goto_slot startete Schwenker und stoppte sofort) |
 | (session) | — | `schwenker.yaml`: Interval aufgeteilt — `10ms`-Block nur für 0x30 CAN-Positionsabfrage (100 Hz); `50ms`-Block für Sinus-Regelschleife |

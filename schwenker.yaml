@@ -28,6 +28,7 @@
 #            slider_trim_last, pumpe_a_aktiv,
 #            preset[1..5]_hp_ms / _rpm / _acc
 #            dr_aktiv, dr_modus, dr_speed_rpm, dr_acc, dr_richtung, dr_motor_mode
+#            dr_pumpe_auto
 #            drp[1..5]_rpm / _acc / _richtung / _mode
 #  script:   script_schwenker_settings_open, script_schwenker_start,
 #            script_schwenker_stop, script_schwenker_goto_slot,
@@ -261,6 +262,11 @@ globals:
     type: float
     restore_value: no
     initial_value: '-1.0'
+
+  - id: dr_pumpe_auto          # true = Beckenpumpe beim Drehmodus auf 100% setzen
+    type: bool
+    restore_value: yes
+    initial_value: 'true'
 
   # ── Drehe-Presets ─────────────────────────────────────────
   - id: drp1_rpm
@@ -704,6 +710,14 @@ script:
           }
           lv_obj_set_style_bg_color(id(btn_dr_start_stop),
             id(dr_aktiv) ? lv_color_hex(0x229933) : lv_color_hex(0x666666), 0);
+          // Pumpen-Auto-Button synchronisieren
+          if (id(dr_pumpe_auto)) {
+            lv_label_set_text(id(lbl_dr_pumpe_auto), "Pumpe 100%");
+            lv_obj_set_style_bg_color(id(btn_dr_pumpe_auto), lv_color_hex(0x1a5a8a), 0);
+          } else {
+            lv_label_set_text(id(lbl_dr_pumpe_auto), "Pumpe: manuell");
+            lv_obj_set_style_bg_color(id(btn_dr_pumpe_auto), lv_color_hex(0x555555), 0);
+          }
 
   # ── Drehen starten ────────────────────────────────────────
   - id: script_drehen_start
@@ -756,8 +770,8 @@ script:
           id(dr_aktiv)  = true;
           id(dr_modus)  = true;   // Modus auf Drehen speichern (NVS)
           lv_label_set_text(id(lbl_schwenker_icon), "\xef\x8b\xb9");  // U+F2F9 rotate-right (Drehen)
-          // Pumpe auf 100% wenn sie läuft
-          if (id(pumpe_a_aktiv)) {
+          // Pumpe auf 100% wenn AUTO-Modus aktiv und sie gerade läuft
+          if (id(dr_pumpe_auto) && id(pumpe_a_aktiv)) {
             id(pumpe_vor_drehen_level) = lv_slider_get_value(id(slider_turmpumpe)) / 100.0f;
             id(output_pumpe_dacA).set_level(1.0f);
             ESP_LOGI("drehen", "Pumpe → 100%% (war %.2f)", id(pumpe_vor_drehen_level));

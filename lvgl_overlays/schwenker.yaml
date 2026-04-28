@@ -590,6 +590,55 @@ obj:
                         text_font: font_icons
                         text_color: 0xFFFFFF
 
+              # ── Pumpen-Auto-Button (EIN = 100% beim Drehen, AUS = manuell) ──
+              - button:
+                  id: btn_dr_pumpe_auto
+                  width: 180
+                  height: 55
+                  align: TOP_LEFT
+                  x: 100
+                  y: 10
+                  radius: 10
+                  bg_color: 0x1a5a8a
+                  bg_opa: COVER
+                  border_width: 0
+                  shadow_width: 0
+                  outline_width: 0
+                  pad_all: 0
+                  on_press:
+                    - lambda: |-
+                        id(dr_pumpe_auto) = !id(dr_pumpe_auto);
+                        if (id(dr_pumpe_auto)) {
+                          lv_label_set_text(id(lbl_dr_pumpe_auto), "Pumpe 100%");
+                          lv_obj_set_style_bg_color(id(btn_dr_pumpe_auto), lv_color_hex(0x1a5a8a), 0);
+                          // Wenn Drehmodus gerade aktiv: Pumpe sofort auf 100%
+                          if (id(dr_aktiv) && id(pumpe_a_aktiv)) {
+                            if (id(pumpe_vor_drehen_level) < 0.0f) {
+                              id(pumpe_vor_drehen_level) = lv_slider_get_value(id(slider_turmpumpe)) / 100.0f;
+                            }
+                            id(output_pumpe_dacA).set_level(1.0f);
+                            ESP_LOGI("drehen", "Pumpen-Auto EIN: 100%%");
+                          }
+                        } else {
+                          lv_label_set_text(id(lbl_dr_pumpe_auto), "Pumpe: manuell");
+                          lv_obj_set_style_bg_color(id(btn_dr_pumpe_auto), lv_color_hex(0x555555), 0);
+                          // Pumpe zurück auf gespeicherten Level falls Drehen läuft
+                          if (id(dr_aktiv) && id(pumpe_vor_drehen_level) >= 0.0f) {
+                            id(output_pumpe_dacA).set_level(id(pumpe_vor_drehen_level));
+                            lv_slider_set_value(id(slider_turmpumpe),
+                              (int)(id(pumpe_vor_drehen_level)*100.0f+0.5f), LV_ANIM_OFF);
+                            id(pumpe_vor_drehen_level) = -1.0f;
+                            ESP_LOGI("drehen", "Pumpen-Auto AUS: zurück auf manuell");
+                          }
+                        }
+                  widgets:
+                    - label:
+                        id: lbl_dr_pumpe_auto
+                        align: CENTER
+                        text: "Pumpe 100%"
+                        text_font: font_small
+                        text_color: 0xFFFFFF
+
               # ── Arc: Geschwindigkeit 5–400 UPM (links) ────────────────────
               - obj:
                   id: arc_dr_area_rpm

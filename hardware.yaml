@@ -53,6 +53,9 @@ esphome:
             } else {
               lv_label_set_text(id(lbl_schwenker_icon), "\xef\x80\xa1");  // U+F021 arrows-rotate (Schwenken)
             }
+            // Einstellungs-TabView: horizontales Wischen (Tab-Wechsel per Swipe) deaktivieren
+            // Vertikales Scrollen einzelner Tabs bleibt unberührt (separate child-Objekte)
+            lv_obj_set_scroll_dir(lv_tabview_get_content(id(settings_tabs)), LV_DIR_NONE);
     - priority: -150        # System in sicheren Aus-Zustand (Not-Aus beim Booten)
       then:
         - script.execute: script_system_aus
