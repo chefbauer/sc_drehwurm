@@ -15,7 +15,7 @@
 | **UI: Overlays** | Abschnitt „Overlays" → Unterabschnitte je Overlay |
 | **LED-Ring Logik** | `lights.yaml` + Abschnitt „LED-Ring" in dieser Datei |
 | **Schwenker-Motor / CAN** | Abschnitt „Schwenker" |
-| **ESPHome-Fallstricke (LVGL8, flex, hidden)** | `/memories/repo/esphome_yaml_rules.md` |
+| **ESPHome-Fallstricke (LVGL9, flex, hidden)** | `/memories/repo/esphome_yaml_rules.md` |
 | **Letzte Änderungen** | Abschnitt „Update-Log" (unten) |
 
 **Dateizuordnung:**
@@ -35,6 +35,9 @@
 > ohne dass der Benutzer es explizit fordert. Relevante Daten: Pin-Belegungen,
 > Plattform-/Bus-Entscheidungen, Sensor-IDs, neue Komponenten, geänderte Logik,
 > offene TODOs. Änderungen im Abschnitt **Changelog** dokumentieren.
+>
+> **Generelle Arbeitsanweisungen & Fallstricke** (addressable_lambda, LVGL, YAML-Regeln):
+> → [`sc_arbeitsanweisungen.md`](sc_arbeitsanweisungen.md) — **vor jeder Änderung an `lights.yaml` zwingend lesen!**
 >
 > **YAML-Komponenten-Übersichten:** Jede YAML-Datei hat am Anfang einen `# ── Komponenten ──`
 > Kommentarblock mit allen ESPHome-Typen und ihren IDs. Dieser Kommentarblock **muss
@@ -89,7 +92,7 @@ Ausgelegt für **Dosen und Flaschen** — durch das Drehen wird die Kühlleistun
 | Display-Modul | **Guition ESP32-P4 JC1060P470** |
 | Display | 4,7" integriert, 1024 × 600 px |
 | PSRAM | 32 MB |
-| LVGL Version | 8.x (kein LVGL 9!) |
+| LVGL Version | **9.5** (ESPHome 2026.4) |
 | Betrieb | Standalone (kein Home Assistant nötig) |
 | Zeit-Quelle | SNTP (NTP) — RTC wird später hinzugefügt |
 | Radio-Koprocessor | ESP32-C6 via `esp32_hosted` (SDIO 4-bit, extern definiert) |
@@ -549,11 +552,13 @@ Alle Sensoren auf `i2c_id: i2c_bus` (fremdkonfiguriert in main_config).
 
 ---
 
-## Bekannte LVGL-8-Einschränkungen
+## Bekannte LVGL-9-Einschränkungen (ESPHome 2026.4)
+
+> Upgrade von LVGL 8.x auf **9.5** erfolgte mit ESPHome 2026.4 — kompiliert fehlerfrei.
 
 | Problem | Lösung |
 |---|---|
-| `transform_scale_y` nicht verfügbar (LVGL9) | nicht verwenden |
+| `transform_scale_y` war LVGL9-only | jetzt verfügbar, aber noch nicht genutzt |
 | `bg_opa` nur `%`-Suffix oder Keywords | `50%`, `COVER`, `TRANSP` |
 | ESPHome setzt `LV_OBJ_FLAG_CLICKABLE` auf alle `obj` | `clickable: false` direkt im YAML setzen |
 | `obj` empfängt keinen `on_click` zuverlässig | Widget-Typ `button` verwenden |
@@ -592,7 +597,8 @@ Alle Sensoren auf `i2c_id: i2c_bus` (fremdkonfiguriert in main_config).
 - [x] `zero_means_zero: true` für Turmpumpe (kein Nachlaufen)
 - [x] `lights.yaml`: WS2812-Ring (80 LEDs, `pin_led_h1`) mit Slot-Farb-Effekt (motorpositionsbasiert)
 - [x] `lights.yaml`: Blink-Effekt — `bin_slot1_blink`…`bin_slot6_blink` → Slot-LEDs blinken 2 Hz wenn Countdown abgelaufen
-- [x] LED-Ring Update-Rate: 40 Hz (25 ms) — Motor-Position wird alle 50 ms (20 Hz) per CAN aktualisiert; jede neue Position ist innerhalb max. 25 ms sichtbar
+- [x] LED-Ring Update-Rate: **100 Hz (10 ms)** — Motor-Position per CAN alle 10 ms (100 Hz, separater Interval-Block); WS2812 172 LEDs = 5,44 ms Frame, 4,56 ms Reserve pro Tick
+- [x] LED-Effekt **„Slot Colors Mix"**: Vollring-Gradient bei max. Breite (≥28 LEDs), Spot+Fade-Modus bei reduzierter Breite; Button `btn_led_effekt_slot_mix` in Tab Licht
 - [x] Standby-System: `bin_standby` (TOF + LVGL-Idle), `global_lvgl_is_idle`, Mond-Icon in Statusleiste
 - [x] Timer/Countdown: `slot_is_countdown`, `slot_countdown_max_ms` (NVS-persistent), Globals + binary_sensors in `lvgl_basis.yaml`
 - [x] `script_open_timer_overlay`: öffnet `overlay_timer_cowntdown` mit Slot-Vorbelegung
@@ -608,7 +614,7 @@ Alle Sensoren auf `i2c_id: i2c_bus` (fremdkonfiguriert in main_config).
 - [x] Slot-Tabs: 60px breit (war 50px), anklickbar → Schwenker-Navigation
 - [x] `sw_work_current_mA` (NVS persistent): Strom wird beim Start und bei goto_slot geladen
 - [x] Motorstrom-Slider (`slider_motor_strom`): speichert bei Release in NVS, on_boot sync
-- [x] Motor Idle-Timeout: 10 s ohne Bewegung → FOC-Modus + 500 mA
+- [x] Motor Idle-Timeout: 10 s ohne Bewegung → FOC-Modus + 100 mA Arbeitsstrom + 10 % Idle-Strom (≈10 mA, praktisch stromlos)
 - [x] `sw_motor_busy` + `sw_stop_pending`: verhindert Timeout während Bewegung bzw. Slot-Fahrt
 - [x] Sanfter Stop: Halbzyklus wird fertig gefahren bevor Motor stoppt
 - [x] Slot-Marker (ring_slot1-6_marker): `obj` → `button` + on_click → goto_slot(N)
@@ -672,7 +678,7 @@ Alle Sensoren auf `i2c_id: i2c_bus` (fremdkonfiguriert in main_config).
 
 **Motor Idle-Timeout (50ms-Interval):**
 - Nach jedem Stopp: `sw_motor_last_move_ms = millis()`
-- 10 s ohne Bewegung (wenn !sw_aktiv && !dr_aktiv && !sw_motor_busy): → Mode 5 (FOC) + Strom auf 500 mA
+- 10 s ohne Bewegung (wenn !sw_aktiv && !dr_aktiv && !sw_motor_busy): → Mode 5 (FOC) + `script_motor_set_work_current_mA(100)` + `script_motor_set_idle_current_perc(10)` (~10 mA, praktisch stromlos)
 - `sw_motor_busy` wird während goto_slot und trim_slider aktiv gesetzt
 
 **Drehmodus (50ms-Interval):**
@@ -792,6 +798,14 @@ Alle Sensoren auf `i2c_id: i2c_bus` (fremdkonfiguriert in main_config).
 | 2026-04-25 (session) | — | 50ms-Interval: dr_aktiv-Block (konstante F5) vor Sinus; Idle-Timeout-Guard um `!dr_aktiv` erweitert |
 | 2026-04-25 (session) | — | `btn_schwenker_main` + `btn_schwenker_toggle`: Drehmodus-aware (dr_aktiv/sw_aktiv/dr_modus) |
 | 2026-03-27 (session) | — | `display_7z_settings.yaml`: Substitutionen c_standby_*, c_tof_update_interval*, c_ir_update_interval* |
+| (session) | — | `schwenker.yaml`: Idle-Timeout → `script_motor_set_work_current_mA(100)` + `script_motor_set_idle_current_perc(10)` statt 500 mA (verhindert FOC-Schwingung) |
+| (session) | — | `schwenker.yaml`: `script_schwenker_start` setzt `sw_stop_pending = false` (Bug: nach goto_slot startete Schwenker und stoppte sofort) |
+| (session) | — | `schwenker.yaml`: Interval aufgeteilt — `10ms`-Block nur für 0x30 CAN-Positionsabfrage (100 Hz); `50ms`-Block für Sinus-Regelschleife |
+| (session) | — | `schwenker.yaml`: Flip-Trigger `sw_phase_ms >= sw_halbperiode_ms + 250` (250 ms Mindestlaufzeit nach Richtungswechsel); `target` wird erst nach Richtungswechsel berechnet |
+| (session) | — | `lights.yaml`: `update_interval: 10ms` (100 Hz) für Effekt „Slot Colors" |
+| (session) | — | `lights.yaml`: Neuer Effekt **„Slot Colors Mix"** — Vollring-Gradient bei lps ≥ 28, Spot+Fade bei lps < 28; dir+phase Korrekturen integriert; kein GlobalsComponent-Zugriff |
+| (session) | — | `lvgl_basis.yaml`: Button `btn_led_effekt_slot_mix` (x=780, `#446622`) in Tab Licht → Effekt „Slot Colors Mix" |
+| (session) | — | `sc_arbeitsanweisungen.md` erstellt: Permanente KI-Arbeitsanweisungen (addressable_lambda-Regeln, Sensor-Wrapper-Pattern, LED-Effekt-Entwicklung, 100Hz-Setup) |
 - [x] Interval 500ms (alle 6 Slots)
 - [x] Hauptseite Titel
 - [x] Tank-Widget (Platzhalter)
@@ -841,3 +855,11 @@ Alle Sensoren auf `i2c_id: i2c_bus` (fremdkonfiguriert in main_config).
 | 2026-03-28 (session) | — | `lvgl_overlay.yaml`, `lvgl_basis.yaml`: Timer-Overlay Komplett-Redesign: weißer Hintergrund (#FFFFFF), `font_title` für Titel, Slot-Buttons + Typ-Buttons zentriert, OK startet sofort, Reset schließt ohne Autostart | `lvgl_overlay.yaml`, `lvgl_basis.yaml` |
 | 2026-03-28 (session) | — | `lights.yaml`: LED-Ring Farbkorrektur – `direction` "1"→"0" (CW), kanonische Farbordnung wiederhergestellt: Rot/Gelb/Grün/Cyan/Blau/Magenta | `lights.yaml` |
 | 2026-03-28 (session) | — | `sc_projektinfo.md`: Schnell-Referenz-Index oben ergänzt, 3 Duplikat-Abschnitte entfernt, Timer-Overlay-Doku aktualisiert, LED-Substitutionen + Slot-Farbtabelle eingefügt | `sc_projektinfo.md` |
+| (session) | — | Bugfix: Idle-Timeout 500 mA → 100 mA Arbeitsstrom + 10 % Idle (FOC-Schwingung verhindert) | `schwenker.yaml`, `motorcontrol_can-bus.yaml` |
+| (session) | — | Bugfix: `sw_stop_pending` wurde in `script_schwenker_start` nicht zurückgesetzt → Ein-Halbzyklus-Bug nach goto_slot | `schwenker.yaml` |
+| (session) | — | CAN 0x30 Positionsabfrage in separaten `10ms`-Interval-Block verschoben (100 Hz, getrennt vom 50ms-Sinus) | `schwenker.yaml` |
+| (session) | — | LED-Effekt „Slot Colors" auf `update_interval: 10ms` (100 Hz) erhöht | `lights.yaml` |
+| (session) | — | Neuer LED-Effekt „Slot Colors Mix": Vollring-Gradient (lps ≥ 28) + Spot+Fade (lps < 28); dir + phase fix | `lights.yaml` |
+| (session) | — | Button `btn_led_effekt_slot_mix` (Tab Licht, x=780) für neuen Mix-Effekt | `lvgl_basis.yaml` |
+| (session) | — | `sc_arbeitsanweisungen.md` neu: permanente Arbeitsanweisungen für KI | `sc_arbeitsanweisungen.md` |
+| 2026-04-28 (session) | — | Upgrade auf **ESPHome 2026.4 + LVGL 9.5** — kompiliert fehlerfrei; LVGL-8-Einschränkungen aktualisiert | alle YAML, `sc_projektinfo.md`, `sc_arbeitsanweisungen.md` |
