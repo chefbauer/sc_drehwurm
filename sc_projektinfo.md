@@ -798,6 +798,7 @@ Alle Sensoren auf `i2c_id: i2c_bus` (fremdkonfiguriert in main_config).
 | 2026-04-25 (session) | — | 50ms-Interval: dr_aktiv-Block (konstante F5) vor Sinus; Idle-Timeout-Guard um `!dr_aktiv` erweitert |
 | 2026-04-25 (session) | — | `btn_schwenker_main` + `btn_schwenker_toggle`: Drehmodus-aware (dr_aktiv/sw_aktiv/dr_modus) |
 | 2026-03-27 (session) | — | `display_7z_settings.yaml`: Substitutionen c_standby_*, c_tof_update_interval*, c_ir_update_interval* |
+| 2026-04-28 (session) | — | `lvgl_overlays/schwenker.yaml`: `arc_dr_rpm` + `arc_dr_acc` on_value senden bei `dr_aktiv` sofort F5-Befehl an Motor (Live-UPM/Acc-Änderung ohne Neustart) |
 | (session) | — | `schwenker.yaml`: Idle-Timeout → `script_motor_set_work_current_mA(100)` + `script_motor_set_idle_current_perc(10)` statt 500 mA (verhindert FOC-Schwingung) |
 | (session) | — | `schwenker.yaml`: `script_schwenker_start` setzt `sw_stop_pending = false` (Bug: nach goto_slot startete Schwenker und stoppte sofort) |
 | (session) | — | `schwenker.yaml`: Interval aufgeteilt — `10ms`-Block nur für 0x30 CAN-Positionsabfrage (100 Hz); `50ms`-Block für Sinus-Regelschleife |
