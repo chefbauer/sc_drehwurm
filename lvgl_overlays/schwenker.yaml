@@ -899,15 +899,14 @@ obj:
                         widgets:
                           - label:
                               id: lbl_drp1_name
-                              text: "①"
-                              align: TOP_LEFT
-                              x: 12
+                              text: "${c_drp1_name}"
+                              align: TOP_MID
                               y: 8
-                              text_font: font_preset_num
-                              text_color: 0xFFFFFF
+                              text_font: font_small
+                              text_color: 0xDDEEFF
                           - label:
                               id: lbl_drp1_vals
-                              text: "30 Upm · 1.0s · CW · CL"
+                              text: "R:20, A:50, P:ON"
                               align: BOTTOM_MID
                               y: -8
                               text_font: font_small
@@ -918,12 +917,9 @@ obj:
                               id(dr_acc)        = id(drp1_acc);
                               id(dr_richtung)   = id(drp1_richtung);
                               id(dr_motor_mode) = id(drp1_mode);
-                              lv_arc_set_value(id(arc_dr_rpm), std::max(5, std::min(400, id(drp1_rpm))));
-                              lv_arc_set_value(id(arc_dr_acc), std::max(1, std::min(30, id(drp1_acc))));
-                              char _b1[8]; snprintf(_b1,sizeof(_b1),"%d",id(drp1_rpm));
-                              lv_label_set_text(id(lbl_dr_rpm_val), _b1);
-                              char _b2[8]; snprintf(_b2,sizeof(_b2),"%.1fs",id(drp1_acc)/10.0f);
-                              lv_label_set_text(id(lbl_dr_acc_val), _b2);
+                              id(dr_pumpe_auto) = id(drp1_pumpe);
+                              lv_arc_set_value(id(arc_dr_rpm), id(drp1_rpm));
+                              lv_arc_set_value(id(arc_dr_acc), id(drp1_acc));
                               if (id(drp1_richtung) > 0) {
                                 lv_label_set_text(id(lbl_dr_richtung), "Rechts \xef\x81\x8b");
                                 lv_obj_set_style_bg_color(id(btn_dr_richtung), lv_color_hex(0x1a6b4a), 0);
@@ -938,20 +934,28 @@ obj:
                                 lv_label_set_text(id(lbl_dr_mode), "FOC");
                                 lv_obj_set_style_bg_color(id(btn_dr_mode), lv_color_hex(0x336688), 0);
                               }
-                              ESP_LOGI("drpreset","DP1 geladen");
+                              if (id(drp1_pumpe)) {
+                                lv_label_set_text(id(lbl_dr_pumpe_auto), "Pumpe 100%");
+                                lv_obj_set_style_bg_color(id(btn_dr_pumpe_auto), lv_color_hex(0x1a5a8a), 0);
+                              } else {
+                                lv_label_set_text(id(lbl_dr_pumpe_auto), "Pumpe: manuell");
+                                lv_obj_set_style_bg_color(id(btn_dr_pumpe_auto), lv_color_hex(0x555555), 0);
+                              }
+                              ESP_LOGI("drpreset", "DP1 geladen");
                         on_long_press:
                           - lambda: |-
                               id(drp1_rpm)      = id(dr_speed_rpm);
                               id(drp1_acc)      = id(dr_acc);
                               id(drp1_richtung) = id(dr_richtung);
                               id(drp1_mode)     = id(dr_motor_mode);
-                              char buf[32];
-                              snprintf(buf,sizeof(buf),"%d Upm \xc2\xb7 %.1fs \xc2\xb7 %s \xc2\xb7 %s",
-                                       id(drp1_rpm), id(drp1_acc)/10.0f,
-                                       id(drp1_richtung)>0?"CW":"CCW",
-                                       id(drp1_mode)==4?"CL":"FOC");
+                              id(drp1_pumpe)    = id(dr_pumpe_auto);
+                              char buf[28];
+                              snprintf(buf, sizeof(buf), "%s:%d, A:%d, P:%s",
+                                       id(drp1_richtung) > 0 ? "R" : "L",
+                                       id(drp1_rpm), id(drp1_acc),
+                                       id(drp1_pumpe) ? "ON" : "OFF");
                               lv_label_set_text(id(lbl_drp1_vals), buf);
-                              ESP_LOGI("drpreset","DP1 gespeichert");
+                              ESP_LOGI("drpreset", "DP1 gespeichert");
                     # DP2
                     - button:
                         id: btn_drp2
@@ -966,15 +970,14 @@ obj:
                         widgets:
                           - label:
                               id: lbl_drp2_name
-                              text: "②"
-                              align: TOP_LEFT
-                              x: 12
+                              text: "${c_drp2_name}"
+                              align: TOP_MID
                               y: 8
-                              text_font: font_preset_num
-                              text_color: 0xFFFFFF
+                              text_font: font_small
+                              text_color: 0xDDEEFF
                           - label:
                               id: lbl_drp2_vals
-                              text: "60 Upm · 0.5s · CW · CL"
+                              text: "R:50, A:100, P:ON"
                               align: BOTTOM_MID
                               y: -8
                               text_font: font_small
@@ -985,12 +988,9 @@ obj:
                               id(dr_acc)        = id(drp2_acc);
                               id(dr_richtung)   = id(drp2_richtung);
                               id(dr_motor_mode) = id(drp2_mode);
-                              lv_arc_set_value(id(arc_dr_rpm), std::max(5, std::min(400, id(drp2_rpm))));
-                              lv_arc_set_value(id(arc_dr_acc), std::max(1, std::min(30, id(drp2_acc))));
-                              char _b1[8]; snprintf(_b1,sizeof(_b1),"%d",id(drp2_rpm));
-                              lv_label_set_text(id(lbl_dr_rpm_val), _b1);
-                              char _b2[8]; snprintf(_b2,sizeof(_b2),"%.1fs",id(drp2_acc)/10.0f);
-                              lv_label_set_text(id(lbl_dr_acc_val), _b2);
+                              id(dr_pumpe_auto) = id(drp2_pumpe);
+                              lv_arc_set_value(id(arc_dr_rpm), id(drp2_rpm));
+                              lv_arc_set_value(id(arc_dr_acc), id(drp2_acc));
                               if (id(drp2_richtung) > 0) {
                                 lv_label_set_text(id(lbl_dr_richtung), "Rechts \xef\x81\x8b");
                                 lv_obj_set_style_bg_color(id(btn_dr_richtung), lv_color_hex(0x1a6b4a), 0);
@@ -1005,20 +1005,28 @@ obj:
                                 lv_label_set_text(id(lbl_dr_mode), "FOC");
                                 lv_obj_set_style_bg_color(id(btn_dr_mode), lv_color_hex(0x336688), 0);
                               }
-                              ESP_LOGI("drpreset","DP2 geladen");
+                              if (id(drp2_pumpe)) {
+                                lv_label_set_text(id(lbl_dr_pumpe_auto), "Pumpe 100%");
+                                lv_obj_set_style_bg_color(id(btn_dr_pumpe_auto), lv_color_hex(0x1a5a8a), 0);
+                              } else {
+                                lv_label_set_text(id(lbl_dr_pumpe_auto), "Pumpe: manuell");
+                                lv_obj_set_style_bg_color(id(btn_dr_pumpe_auto), lv_color_hex(0x555555), 0);
+                              }
+                              ESP_LOGI("drpreset", "DP2 geladen");
                         on_long_press:
                           - lambda: |-
                               id(drp2_rpm)      = id(dr_speed_rpm);
                               id(drp2_acc)      = id(dr_acc);
                               id(drp2_richtung) = id(dr_richtung);
                               id(drp2_mode)     = id(dr_motor_mode);
-                              char buf[32];
-                              snprintf(buf,sizeof(buf),"%d Upm \xc2\xb7 %.1fs \xc2\xb7 %s \xc2\xb7 %s",
-                                       id(drp2_rpm), id(drp2_acc)/10.0f,
-                                       id(drp2_richtung)>0?"CW":"CCW",
-                                       id(drp2_mode)==4?"CL":"FOC");
+                              id(drp2_pumpe)    = id(dr_pumpe_auto);
+                              char buf[28];
+                              snprintf(buf, sizeof(buf), "%s:%d, A:%d, P:%s",
+                                       id(drp2_richtung) > 0 ? "R" : "L",
+                                       id(drp2_rpm), id(drp2_acc),
+                                       id(drp2_pumpe) ? "ON" : "OFF");
                               lv_label_set_text(id(lbl_drp2_vals), buf);
-                              ESP_LOGI("drpreset","DP2 gespeichert");
+                              ESP_LOGI("drpreset", "DP2 gespeichert");
                     # DP3
                     - button:
                         id: btn_drp3
@@ -1033,15 +1041,14 @@ obj:
                         widgets:
                           - label:
                               id: lbl_drp3_name
-                              text: "③"
-                              align: TOP_LEFT
-                              x: 12
+                              text: "${c_drp3_name}"
+                              align: TOP_MID
                               y: 8
-                              text_font: font_preset_num
-                              text_color: 0xFFFFFF
+                              text_font: font_small
+                              text_color: 0xDDEEFF
                           - label:
                               id: lbl_drp3_vals
-                              text: "120 Upm · 0.3s · CW · CL"
+                              text: "R:80, A:140, P:ON"
                               align: BOTTOM_MID
                               y: -8
                               text_font: font_small
@@ -1052,12 +1059,9 @@ obj:
                               id(dr_acc)        = id(drp3_acc);
                               id(dr_richtung)   = id(drp3_richtung);
                               id(dr_motor_mode) = id(drp3_mode);
-                              lv_arc_set_value(id(arc_dr_rpm), std::max(5, std::min(400, id(drp3_rpm))));
-                              lv_arc_set_value(id(arc_dr_acc), std::max(1, std::min(30, id(drp3_acc))));
-                              char _b1[8]; snprintf(_b1,sizeof(_b1),"%d",id(drp3_rpm));
-                              lv_label_set_text(id(lbl_dr_rpm_val), _b1);
-                              char _b2[8]; snprintf(_b2,sizeof(_b2),"%.1fs",id(drp3_acc)/10.0f);
-                              lv_label_set_text(id(lbl_dr_acc_val), _b2);
+                              id(dr_pumpe_auto) = id(drp3_pumpe);
+                              lv_arc_set_value(id(arc_dr_rpm), id(drp3_rpm));
+                              lv_arc_set_value(id(arc_dr_acc), id(drp3_acc));
                               if (id(drp3_richtung) > 0) {
                                 lv_label_set_text(id(lbl_dr_richtung), "Rechts \xef\x81\x8b");
                                 lv_obj_set_style_bg_color(id(btn_dr_richtung), lv_color_hex(0x1a6b4a), 0);
@@ -1072,20 +1076,28 @@ obj:
                                 lv_label_set_text(id(lbl_dr_mode), "FOC");
                                 lv_obj_set_style_bg_color(id(btn_dr_mode), lv_color_hex(0x336688), 0);
                               }
-                              ESP_LOGI("drpreset","DP3 geladen");
+                              if (id(drp3_pumpe)) {
+                                lv_label_set_text(id(lbl_dr_pumpe_auto), "Pumpe 100%");
+                                lv_obj_set_style_bg_color(id(btn_dr_pumpe_auto), lv_color_hex(0x1a5a8a), 0);
+                              } else {
+                                lv_label_set_text(id(lbl_dr_pumpe_auto), "Pumpe: manuell");
+                                lv_obj_set_style_bg_color(id(btn_dr_pumpe_auto), lv_color_hex(0x555555), 0);
+                              }
+                              ESP_LOGI("drpreset", "DP3 geladen");
                         on_long_press:
                           - lambda: |-
                               id(drp3_rpm)      = id(dr_speed_rpm);
                               id(drp3_acc)      = id(dr_acc);
                               id(drp3_richtung) = id(dr_richtung);
                               id(drp3_mode)     = id(dr_motor_mode);
-                              char buf[32];
-                              snprintf(buf,sizeof(buf),"%d Upm \xc2\xb7 %.1fs \xc2\xb7 %s \xc2\xb7 %s",
-                                       id(drp3_rpm), id(drp3_acc)/10.0f,
-                                       id(drp3_richtung)>0?"CW":"CCW",
-                                       id(drp3_mode)==4?"CL":"FOC");
+                              id(drp3_pumpe)    = id(dr_pumpe_auto);
+                              char buf[28];
+                              snprintf(buf, sizeof(buf), "%s:%d, A:%d, P:%s",
+                                       id(drp3_richtung) > 0 ? "R" : "L",
+                                       id(drp3_rpm), id(drp3_acc),
+                                       id(drp3_pumpe) ? "ON" : "OFF");
                               lv_label_set_text(id(lbl_drp3_vals), buf);
-                              ESP_LOGI("drpreset","DP3 gespeichert");
+                              ESP_LOGI("drpreset", "DP3 gespeichert");
                     # DP4
                     - button:
                         id: btn_drp4
@@ -1100,15 +1112,14 @@ obj:
                         widgets:
                           - label:
                               id: lbl_drp4_name
-                              text: "④"
-                              align: TOP_LEFT
-                              x: 12
+                              text: "${c_drp4_name}"
+                              align: TOP_MID
                               y: 8
-                              text_font: font_preset_num
-                              text_color: 0xFFFFFF
+                              text_font: font_small
+                              text_color: 0xDDEEFF
                           - label:
                               id: lbl_drp4_vals
-                              text: "200 Upm · 0.2s · CCW · FOC"
+                              text: "L:120, A:180, P:ON"
                               align: BOTTOM_MID
                               y: -8
                               text_font: font_small
@@ -1119,12 +1130,9 @@ obj:
                               id(dr_acc)        = id(drp4_acc);
                               id(dr_richtung)   = id(drp4_richtung);
                               id(dr_motor_mode) = id(drp4_mode);
-                              lv_arc_set_value(id(arc_dr_rpm), std::max(5, std::min(400, id(drp4_rpm))));
-                              lv_arc_set_value(id(arc_dr_acc), std::max(1, std::min(30, id(drp4_acc))));
-                              char _b1[8]; snprintf(_b1,sizeof(_b1),"%d",id(drp4_rpm));
-                              lv_label_set_text(id(lbl_dr_rpm_val), _b1);
-                              char _b2[8]; snprintf(_b2,sizeof(_b2),"%.1fs",id(drp4_acc)/10.0f);
-                              lv_label_set_text(id(lbl_dr_acc_val), _b2);
+                              id(dr_pumpe_auto) = id(drp4_pumpe);
+                              lv_arc_set_value(id(arc_dr_rpm), id(drp4_rpm));
+                              lv_arc_set_value(id(arc_dr_acc), id(drp4_acc));
                               if (id(drp4_richtung) > 0) {
                                 lv_label_set_text(id(lbl_dr_richtung), "Rechts \xef\x81\x8b");
                                 lv_obj_set_style_bg_color(id(btn_dr_richtung), lv_color_hex(0x1a6b4a), 0);
@@ -1139,20 +1147,28 @@ obj:
                                 lv_label_set_text(id(lbl_dr_mode), "FOC");
                                 lv_obj_set_style_bg_color(id(btn_dr_mode), lv_color_hex(0x336688), 0);
                               }
-                              ESP_LOGI("drpreset","DP4 geladen");
+                              if (id(drp4_pumpe)) {
+                                lv_label_set_text(id(lbl_dr_pumpe_auto), "Pumpe 100%");
+                                lv_obj_set_style_bg_color(id(btn_dr_pumpe_auto), lv_color_hex(0x1a5a8a), 0);
+                              } else {
+                                lv_label_set_text(id(lbl_dr_pumpe_auto), "Pumpe: manuell");
+                                lv_obj_set_style_bg_color(id(btn_dr_pumpe_auto), lv_color_hex(0x555555), 0);
+                              }
+                              ESP_LOGI("drpreset", "DP4 geladen");
                         on_long_press:
                           - lambda: |-
                               id(drp4_rpm)      = id(dr_speed_rpm);
                               id(drp4_acc)      = id(dr_acc);
                               id(drp4_richtung) = id(dr_richtung);
                               id(drp4_mode)     = id(dr_motor_mode);
-                              char buf[32];
-                              snprintf(buf,sizeof(buf),"%d Upm \xc2\xb7 %.1fs \xc2\xb7 %s \xc2\xb7 %s",
-                                       id(drp4_rpm), id(drp4_acc)/10.0f,
-                                       id(drp4_richtung)>0?"CW":"CCW",
-                                       id(drp4_mode)==4?"CL":"FOC");
+                              id(drp4_pumpe)    = id(dr_pumpe_auto);
+                              char buf[28];
+                              snprintf(buf, sizeof(buf), "%s:%d, A:%d, P:%s",
+                                       id(drp4_richtung) > 0 ? "R" : "L",
+                                       id(drp4_rpm), id(drp4_acc),
+                                       id(drp4_pumpe) ? "ON" : "OFF");
                               lv_label_set_text(id(lbl_drp4_vals), buf);
-                              ESP_LOGI("drpreset","DP4 gespeichert");
+                              ESP_LOGI("drpreset", "DP4 gespeichert");
                     # DP5
                     - button:
                         id: btn_drp5
@@ -1167,15 +1183,14 @@ obj:
                         widgets:
                           - label:
                               id: lbl_drp5_name
-                              text: "⑤"
-                              align: TOP_LEFT
-                              x: 12
+                              text: "${c_drp5_name}"
+                              align: TOP_MID
                               y: 8
-                              text_font: font_preset_num
-                              text_color: 0xFFFFFF
+                              text_font: font_small
+                              text_color: 0xDDEEFF
                           - label:
                               id: lbl_drp5_vals
-                              text: "400 Upm · 0.2s · CW · FOC"
+                              text: "R:150, A:220, P:ON"
                               align: BOTTOM_MID
                               y: -8
                               text_font: font_small
@@ -1186,12 +1201,9 @@ obj:
                               id(dr_acc)        = id(drp5_acc);
                               id(dr_richtung)   = id(drp5_richtung);
                               id(dr_motor_mode) = id(drp5_mode);
-                              lv_arc_set_value(id(arc_dr_rpm), std::max(5, std::min(400, id(drp5_rpm))));
-                              lv_arc_set_value(id(arc_dr_acc), std::max(1, std::min(30, id(drp5_acc))));
-                              char _b1[8]; snprintf(_b1,sizeof(_b1),"%d",id(drp5_rpm));
-                              lv_label_set_text(id(lbl_dr_rpm_val), _b1);
-                              char _b2[8]; snprintf(_b2,sizeof(_b2),"%.1fs",id(drp5_acc)/10.0f);
-                              lv_label_set_text(id(lbl_dr_acc_val), _b2);
+                              id(dr_pumpe_auto) = id(drp5_pumpe);
+                              lv_arc_set_value(id(arc_dr_rpm), id(drp5_rpm));
+                              lv_arc_set_value(id(arc_dr_acc), id(drp5_acc));
                               if (id(drp5_richtung) > 0) {
                                 lv_label_set_text(id(lbl_dr_richtung), "Rechts \xef\x81\x8b");
                                 lv_obj_set_style_bg_color(id(btn_dr_richtung), lv_color_hex(0x1a6b4a), 0);
@@ -1206,20 +1218,28 @@ obj:
                                 lv_label_set_text(id(lbl_dr_mode), "FOC");
                                 lv_obj_set_style_bg_color(id(btn_dr_mode), lv_color_hex(0x336688), 0);
                               }
-                              ESP_LOGI("drpreset","DP5 geladen");
+                              if (id(drp5_pumpe)) {
+                                lv_label_set_text(id(lbl_dr_pumpe_auto), "Pumpe 100%");
+                                lv_obj_set_style_bg_color(id(btn_dr_pumpe_auto), lv_color_hex(0x1a5a8a), 0);
+                              } else {
+                                lv_label_set_text(id(lbl_dr_pumpe_auto), "Pumpe: manuell");
+                                lv_obj_set_style_bg_color(id(btn_dr_pumpe_auto), lv_color_hex(0x555555), 0);
+                              }
+                              ESP_LOGI("drpreset", "DP5 geladen");
                         on_long_press:
                           - lambda: |-
                               id(drp5_rpm)      = id(dr_speed_rpm);
                               id(drp5_acc)      = id(dr_acc);
                               id(drp5_richtung) = id(dr_richtung);
                               id(drp5_mode)     = id(dr_motor_mode);
-                              char buf[32];
-                              snprintf(buf,sizeof(buf),"%d Upm \xc2\xb7 %.1fs \xc2\xb7 %s \xc2\xb7 %s",
-                                       id(drp5_rpm), id(drp5_acc)/10.0f,
-                                       id(drp5_richtung)>0?"CW":"CCW",
-                                       id(drp5_mode)==4?"CL":"FOC");
+                              id(drp5_pumpe)    = id(dr_pumpe_auto);
+                              char buf[28];
+                              snprintf(buf, sizeof(buf), "%s:%d, A:%d, P:%s",
+                                       id(drp5_richtung) > 0 ? "R" : "L",
+                                       id(drp5_rpm), id(drp5_acc),
+                                       id(drp5_pumpe) ? "ON" : "OFF");
                               lv_label_set_text(id(lbl_drp5_vals), buf);
-                              ESP_LOGI("drpreset","DP5 gespeichert");
+                              ESP_LOGI("drpreset", "DP5 gespeichert");
 
     # ── Exit-Button (liegt über dem TabView) ──────────────────────────────
     - button:

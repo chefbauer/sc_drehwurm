@@ -54,6 +54,13 @@ substitutions:
   c_led_strip_outer_direction:   "1"    # 0=CW, 1=CCW (Draufsicht)
   c_led_strip_color_mirror:      "1"    # 0=normal, 1=gespiegelt (kompensiert direction=1)
 
+  # ── Drehen-Preset Namen (angezeigt in Preset-Buttons) ───────
+  c_drp1_name: "Bierdose"
+  c_drp2_name: "Bierflasche"
+  c_drp3_name: "P3"
+  c_drp4_name: "P4"
+  c_drp5_name: "P5"
+
 # ── Packages ─────────────────────────────────────────────────
 packages:
   # Basis-Hardware: Pins, I²C, Pumpen, Lüfter, Thermostat, AMG8833

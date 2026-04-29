@@ -29,7 +29,7 @@
 #            preset[1..5]_hp_ms / _rpm / _acc
 #            dr_aktiv, dr_modus, dr_speed_rpm, dr_acc, dr_richtung, dr_motor_mode
 #            dr_pumpe_auto
-#            drp[1..5]_rpm / _acc / _richtung / _mode
+#            drp[1..5]_rpm / _acc / _richtung / _mode / _pumpe
 #  script:   script_schwenker_settings_open, script_schwenker_start,
 #            script_schwenker_stop, script_schwenker_goto_slot,
 #            script_motor_reboot, script_pumpe_a_kurz, script_pumpe_a_lang,
@@ -276,7 +276,7 @@ globals:
   - id: drp1_acc
     type: int
     restore_value: yes
-    initial_value: '50'         # ~4.0s auf 20 UPM: (256-50)*0.05ms×160steps=1.65s
+    initial_value: '50'
   - id: drp1_richtung
     type: int
     restore_value: yes
@@ -285,6 +285,10 @@ globals:
     type: int
     restore_value: yes
     initial_value: '4'
+  - id: drp1_pumpe
+    type: bool
+    restore_value: yes
+    initial_value: 'true'
 
   - id: drp2_rpm
     type: int
@@ -293,7 +297,7 @@ globals:
   - id: drp2_acc
     type: int
     restore_value: yes
-    initial_value: '100'        # ~3.1s auf 50 UPM: (256-100)*0.05ms×400steps=3.12s
+    initial_value: '100'
   - id: drp2_richtung
     type: int
     restore_value: yes
@@ -302,6 +306,10 @@ globals:
     type: int
     restore_value: yes
     initial_value: '4'
+  - id: drp2_pumpe
+    type: bool
+    restore_value: yes
+    initial_value: 'true'
 
   - id: drp3_rpm
     type: int
@@ -310,7 +318,7 @@ globals:
   - id: drp3_acc
     type: int
     restore_value: yes
-    initial_value: '140'        # ~3.0s auf 80 UPM: (256-140)*0.05ms×640steps=3.71s
+    initial_value: '140'
   - id: drp3_richtung
     type: int
     restore_value: yes
@@ -319,6 +327,10 @@ globals:
     type: int
     restore_value: yes
     initial_value: '4'
+  - id: drp3_pumpe
+    type: bool
+    restore_value: yes
+    initial_value: 'true'
 
   - id: drp4_rpm
     type: int
@@ -327,7 +339,7 @@ globals:
   - id: drp4_acc
     type: int
     restore_value: yes
-    initial_value: '180'        # ~3.5s auf 120 UPM: (256-180)*0.05ms×960steps=3.65s
+    initial_value: '180'
   - id: drp4_richtung
     type: int
     restore_value: yes
@@ -336,6 +348,10 @@ globals:
     type: int
     restore_value: yes
     initial_value: '4'
+  - id: drp4_pumpe
+    type: bool
+    restore_value: yes
+    initial_value: 'true'
 
   - id: drp5_rpm
     type: int
@@ -344,7 +360,7 @@ globals:
   - id: drp5_acc
     type: int
     restore_value: yes
-    initial_value: '220'        # ~3.7s auf 150 UPM: (256-220)*0.05ms×1200steps=2.16s
+    initial_value: '220'
   - id: drp5_richtung
     type: int
     restore_value: yes
@@ -353,6 +369,10 @@ globals:
     type: int
     restore_value: yes
     initial_value: '5'        # FOC
+  - id: drp5_pumpe
+    type: bool
+    restore_value: yes
+    initial_value: 'true'
 
 # ============================================================
 # Scripts
