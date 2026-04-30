@@ -27,7 +27,7 @@ font:
     id: font_title
     size: 60
     bpp: 4
-    glyphs: " -/CEKPSTacdeghiklmnoprstuwx"  # Timer/Cowntdown + Sensor-Phalanx + Schwenker Einstellungen
+    glyphs: " -/CEKOPSTacdeghiklmnoprstuwx"  # Timer/Cowntdown + Sensor-Phalanx + Schwenker Einstellungen + STOP
 
   - file: "gfonts://Roboto@400"
     id: font_normal
