@@ -683,7 +683,7 @@ script:
             id(pumpe_a_auto_war_an) = false;
             bool motor_laeuft = id(sw_aktiv) || id(dr_aktiv);
             if (motor_laeuft && !id(pumpe_a_aktiv)) {
-              id(script_pumpe_a_kurz).execute();
+              id(script_pumpe_auto_spuelstoss).execute();
               id(pumpe_a_auto_war_an) = true;
             } else if (!motor_laeuft && id(pumpe_a_aktiv)) {
               id(script_pumpe_a_kurz).stop();
@@ -692,6 +692,22 @@ script:
               id(output_pumpe_dacA).set_level(0.0f);
             }
             ESP_LOGI("pumpe", "Modus: AUTO (motor=%d)", (int)motor_laeuft);
+          }
+
+  # ── AUTO: Spülstoß 100% für 10s, dann Slider-Wert ─────────
+  - id: script_pumpe_auto_spuelstoss
+    mode: restart
+    then:
+      - lambda: |-
+          id(pumpe_a_aktiv) = true;
+          id(output_pumpe_dacA).set_level(1.0f);
+          ESP_LOGI("pumpe", "AUTO: Spülstoß 100%% für 10s");
+      - delay: 10s
+      - lambda: |-
+          if (id(pumpe_a_modus) == 2 && (id(sw_aktiv) || id(dr_aktiv))) {
+            float level = lv_slider_get_value(id(slider_turmpumpe)) / 100.0f;
+            id(output_pumpe_dacA).set_level(level);
+            ESP_LOGI("pumpe", "AUTO: Spülstoß Ende → Slider %.0f%%", level * 100.0f);
           }
 
   # ── Beckenfüllung Kurz (25% → 5% Dauer) ──────────────────
@@ -970,10 +986,11 @@ interval:
             bool motor_laeuft = id(sw_aktiv) || id(dr_aktiv);
             if (motor_laeuft && !id(pumpe_a_aktiv) && !id(pumpe_a_auto_war_an)) {
               id(pumpe_a_auto_war_an) = true;
-              id(script_pumpe_a_kurz).execute();
-              ESP_LOGI("pumpe", "AUTO: Motor EIN → Pumpe EIN");
+              id(script_pumpe_auto_spuelstoss).execute();
+              ESP_LOGI("pumpe", "AUTO: Motor EIN → Pumpe EIN (Spülstoß 10s)");
             } else if (!motor_laeuft && id(pumpe_a_auto_war_an) && id(pumpe_a_aktiv)) {
               id(pumpe_a_auto_war_an) = false;
+              id(script_pumpe_auto_spuelstoss).stop();
               id(script_pumpe_a_kurz).stop();
               id(script_pumpe_a_lang).stop();
               id(pumpe_a_aktiv) = false;
