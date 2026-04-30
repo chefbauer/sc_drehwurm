@@ -693,13 +693,10 @@ obj:
                               if (id(dr_aktiv)) {
                                 int speed_val = (int)x * 8;
                                 uint8_t acc_b = (uint8_t)std::max(1, std::min(254, id(dr_acc)));
-                                int32_t tgt   = (int32_t)(id(dr_richtung)) * 8000000;
-                                uint32_t tgtv = (uint32_t)(tgt) & 0x00FFFFFFU;
+                                int dr_dir    = (id(dr_richtung) > 0) ? 1 : 0;
                                 id(can_bus)->send_data(${motor_can_id}, false,
-                                    add_crc(${motor_can_id}, { 0xF5,
-                                        (uint8_t)(speed_val >> 8), (uint8_t)(speed_val & 0xFF), acc_b,
-                                        (uint8_t)((tgtv>>16)&0xFF), (uint8_t)((tgtv>>8)&0xFF), (uint8_t)(tgtv&0xFF) }));
-                                ESP_LOGI("drehen", "Live-UPM: %d (F5=%d)", (int)x, speed_val);
+                                    gen_data_can_motor_set_speed(${motor_can_id}, dr_dir, speed_val, acc_b));
+                                ESP_LOGI("drehen", "Live-UPM: %d (F6=%d)", (int)x, speed_val);
                               }
                     - label:
                         id: lbl_dr_rpm_val
@@ -770,12 +767,9 @@ obj:
                               if (id(dr_aktiv)) {
                                 int speed_val = id(dr_speed_rpm) * 8;
                                 uint8_t acc_b = (uint8_t)std::max(1, std::min(254, (int)x));
-                                int32_t tgt   = (int32_t)(id(dr_richtung)) * 8000000;
-                                uint32_t tgtv = (uint32_t)(tgt) & 0x00FFFFFFU;
+                                int dr_dir    = (id(dr_richtung) > 0) ? 1 : 0;
                                 id(can_bus)->send_data(${motor_can_id}, false,
-                                    add_crc(${motor_can_id}, { 0xF5,
-                                        (uint8_t)(speed_val >> 8), (uint8_t)(speed_val & 0xFF), acc_b,
-                                        (uint8_t)((tgtv>>16)&0xFF), (uint8_t)((tgtv>>8)&0xFF), (uint8_t)(tgtv&0xFF) }));
+                                    gen_data_can_motor_set_speed(${motor_can_id}, dr_dir, speed_val, acc_b));
                                 ESP_LOGI("drehen", "Live-Acc: %d ramp=%.1fs", (int)x, rt);
                               }
                     - label:

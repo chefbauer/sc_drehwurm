@@ -421,11 +421,9 @@ script:
             id(dr_current_rpm)   = 0;
             id(dr_last_sent_rpm) = -1;
             uint8_t _acc_b = 0x01;
-            int32_t _stgt  = (int32_t)(id(dr_richtung)) * 8000000;
-            uint32_t _sv   = (uint32_t)(_stgt) & 0x00FFFFFFU;
+            int _dr_dir = (id(dr_richtung) > 0) ? 1 : 0;
             id(can_bus)->send_data(${motor_can_id}, false,
-                add_crc(${motor_can_id}, { 0xF5, 0x00, 0x00, _acc_b,
-                    (uint8_t)((_sv>>16)&0xFF), (uint8_t)((_sv>>8)&0xFF), (uint8_t)(_sv&0xFF) }));
+                gen_data_can_motor_set_speed(${motor_can_id}, _dr_dir, 0, _acc_b));
             if (id(pumpe_vor_drehen_level) >= 0.0f) {
               id(output_pumpe_dacA).set_level(id(pumpe_vor_drehen_level));
               id(pumpe_vor_drehen_level) = -1.0f;
@@ -531,11 +529,9 @@ script:
             - lambda: |-
                 id(dr_aktiv) = false;
                 uint8_t _acc_b = (uint8_t)std::max(1, std::min(254, id(dr_acc)));
-                int32_t _stgt  = (int32_t)(id(dr_richtung)) * 8000000;
-                uint32_t _sv   = (uint32_t)(_stgt) & 0x00FFFFFFU;
+                int _dr_dir = (id(dr_richtung) > 0) ? 1 : 0;
                 id(can_bus)->send_data(${motor_can_id}, false,
-                    add_crc(${motor_can_id}, { 0xF5, 0x00, 0x00, _acc_b,
-                        (uint8_t)((_sv>>16)&0xFF), (uint8_t)((_sv>>8)&0xFF), (uint8_t)(_sv&0xFF) }));
+                    gen_data_can_motor_set_speed(${motor_can_id}, _dr_dir, 0, _acc_b));
                 lv_obj_set_style_bg_color(id(btn_dr_start_stop), lv_color_hex(0x666666), 0);
                 lv_obj_set_style_bg_color(id(btn_schwenker_main), lv_color_hex(0x666666), 0);
                 ESP_LOGI("goto_slot", "Drehen gestoppt fuer Slot-Fahrt");
@@ -775,18 +771,15 @@ script:
           ESP_LOGI("drehen", "Strom: %d mA", cur_ma);
       - delay: 150ms
       - lambda: |-
-          // 128 Subdivisions: echte UPM × 8 = F5-Speed-Wert
+          // 128 Subdivisions: echte UPM × 8 = F6-Speed-Wert
           // acc 1–254: Motor-Hardware-Rampe; 0/255 = kein Ramping!
           id(dr_speed_rpm) = std::max(1, std::min(150, id(dr_speed_rpm)));
           id(dr_acc)       = std::max(1, std::min(254, id(dr_acc)));
-          int speed_val    = id(dr_speed_rpm) * 8;           // max 1200
+          int speed_val    = id(dr_speed_rpm) * 8;           // ×8 für 128 Subdivisions
           uint8_t acc_b    = (uint8_t)id(dr_acc);
-          int32_t tgt      = (int32_t)(id(dr_richtung)) * 8000000;
-          uint32_t tgtv    = (uint32_t)(tgt) & 0x00FFFFFFU;
+          int dr_dir       = (id(dr_richtung) > 0) ? 1 : 0;
           id(can_bus)->send_data(${motor_can_id}, false,
-              add_crc(${motor_can_id}, { 0xF5,
-                  (uint8_t)(speed_val >> 8), (uint8_t)(speed_val & 0xFF), acc_b,
-                  (uint8_t)((tgtv>>16)&0xFF), (uint8_t)((tgtv>>8)&0xFF), (uint8_t)(tgtv&0xFF) }));
+              gen_data_can_motor_set_speed(${motor_can_id}, dr_dir, speed_val, acc_b));
           id(dr_aktiv)  = true;
           id(dr_modus)  = true;   // Modus auf Drehen speichern (NVS)
           lv_label_set_text(id(lbl_schwenker_icon), "\xef\x8b\xb9");  // U+F2F9 rotate-right (Drehen)
@@ -801,7 +794,7 @@ script:
           lv_obj_set_style_bg_color(id(btn_dr_start_stop), lv_color_hex(0x229933), 0);
           lv_obj_set_style_bg_color(id(btn_schwenker_main), lv_color_hex(0x229933), 0);
           float ramp_s = (float)(id(dr_speed_rpm) * 8) * (256 - id(dr_acc)) * 0.00005f;
-          ESP_LOGI("drehen", "START  %d UPM (F5=%d)  acc=%d  ramp=%.1fs  dir=%+d  mode=%d",
+          ESP_LOGI("drehen", "START  %d UPM (F6=%d)  acc=%d  ramp=%.1fs  dir=%+d  mode=%d",
                    id(dr_speed_rpm), speed_val, id(dr_acc), ramp_s, id(dr_richtung), id(dr_motor_mode));
 
   # ── Drehen stoppen ────────────────────────────────────────
@@ -827,11 +820,9 @@ script:
           }
           // Stop: speed=0, gleicher acc wie beim Start → symmetrische Hardware-Bremse
           uint8_t acc_b = (uint8_t)std::max(1, std::min(254, id(dr_acc)));
-          int32_t stgt  = (int32_t)(id(dr_richtung)) * 8000000;
-          uint32_t sv   = (uint32_t)(stgt) & 0x00FFFFFFU;
+          int dr_dir = (id(dr_richtung) > 0) ? 1 : 0;
           id(can_bus)->send_data(${motor_can_id}, false,
-              add_crc(${motor_can_id}, { 0xF5, 0x00, 0x00, acc_b,
-                  (uint8_t)((sv>>16)&0xFF), (uint8_t)((sv>>8)&0xFF), (uint8_t)(sv&0xFF) }));
+              gen_data_can_motor_set_speed(${motor_can_id}, dr_dir, 0, acc_b));
           lv_obj_set_style_bg_color(id(btn_dr_start_stop), lv_color_hex(0x666666), 0);
           lv_obj_set_style_bg_color(id(btn_schwenker_main), lv_color_hex(0x666666), 0);
           id(sw_motor_busy) = false;
