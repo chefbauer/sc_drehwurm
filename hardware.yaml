@@ -62,6 +62,11 @@ esphome:
     - priority: -150        # System in sicheren Aus-Zustand (Not-Aus beim Booten)
       then:
         - script.execute: script_system_aus
+    - priority: -160        # Pumpe nach system_aus wieder auf AUTO-Anzeige setzen
+      then:
+        - lambda: |-
+            lv_obj_set_style_bg_color(id(btn_beckenfuellung), lv_color_hex(0x1a7a3a), 0);
+            lv_label_set_text(id(lbl_pumpe_modus), "A");
     - priority: -200        # nach allem anderen – Motor in Nullstellung
       then:
         - script.execute: script_motor_set_zero

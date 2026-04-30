@@ -102,7 +102,7 @@ font:
     id: font_arc_val
     size: 56
     bpp: 4
-    glyphs: "0123456789.s% "
+    glyphs: "0123456789.s% AM"
 
   # Großes Drehsymbol für Schwenker-Button (Font Awesome arrows-rotate U+F021)
   - file: "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/webfonts/fa-solid-900.ttf"
@@ -358,6 +358,15 @@ interval:
               id(script_schwenker_goto_slot)->execute(target);
             }
           }
+          // ── Auto-Arm: dr_auto_stop_armed aktuell halten wenn Slot läuft ─────
+          if (id(dr_aktiv)) {
+            for (int _k = 0; _k < 6; _k++) {
+              if (id(slot_status)[_k] == 1) {
+                id(dr_auto_stop_armed) = true;
+                break;
+              }
+            }
+          }
           // ── Auto-Stop: Drehmodus stoppen wenn alle Timer/CDs enden ──────────────
           if (id(dr_auto_stop_armed) && id(dr_aktiv)) {
             bool any_running = false;
@@ -408,8 +417,35 @@ lvgl:
                   text_color: 0x003366  # Dunkelblau
                   text_align: CENTER
 
-              # System-Hauptschalter / Notschalter rechts oben
-              # AUS: sofort bei on_press (Notfall!)  | EIN: nur per Long Press (Schutz vor Versehen)
+              # STOP-Button oben links — Verkehrszeichen-Optik (rot achteckig, STOP weiß)
+              # on_click: sofortiger Notaus (system_aus)
+              - button:
+                  id: btn_stop_notaus
+                  width: 80
+                  height: 80
+                  align: TOP_LEFT
+                  x: 10
+                  y: 10
+                  radius: 8
+                  bg_color: 0xCC0000
+                  bg_opa: COVER
+                  border_width: 4
+                  border_color: 0xFF4444
+                  shadow_width: 0
+                  outline_width: 0
+                  pad_all: 0
+                  on_click:
+                    - lambda: |-
+                        id(script_system_aus).execute();
+                  widgets:
+                    - label:
+                        align: CENTER
+                        text: "STOP"
+                        text_font: font_title
+                        text_color: 0xFFFFFF
+
+              # System-Schalter rechts oben: Long Press = EIN/AUS toggle (nur Climate)
+              # Short Press: keine Funktion mehr (dafür gibts den STOP-Button links)
               - button:
                   id: btn_system_power
                   width: 80
@@ -424,13 +460,12 @@ lvgl:
                   shadow_width: 0
                   outline_width: 0
                   pad_all: 0
-                  on_press:
-                    - lambda: |-
-                        id(script_system_aus).execute();  // NOTAUS: immer, egal ob EIN oder AUS
                   on_long_press:
                     - lambda: |-
-                        if (!id(system_ein)) {
-                          id(script_system_ein).execute();  // EIN: nur per Long Press
+                        if (id(system_ein)) {
+                          id(script_system_aus).execute();
+                        } else {
+                          id(script_system_ein).execute();
                         }
                   widgets:
                     - label:
@@ -469,18 +504,17 @@ lvgl:
                         id(script_pumpe_a_kurz).stop();
                         id(script_pumpe_a_lang).execute();
                   widgets:
-                    - label:
+                    - label:  # Wellen-Icon: zentriert, semi-transparent als Hintergrund
                         align: CENTER
-                        y: -8
                         text: "\uF773"
                         text_font: font_icons
                         text_color: 0xFFFFFF
-                    - label:
+                        text_opa: 45%
+                    - label:  # Modus-Overlay: A / M / leer (oben drüber)
                         id: lbl_pumpe_modus
-                        align: BOTTOM_MID
-                        y: -6
-                        text: "M"
-                        text_font: font_small
+                        align: CENTER
+                        text: "A"
+                        text_font: font_arc_val
                         text_color: 0xFFFFFF
 
               # Schwenker-Steuerung: Großer runder Toggle-Button
