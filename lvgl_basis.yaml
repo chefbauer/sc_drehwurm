@@ -358,6 +358,18 @@ interval:
               id(script_schwenker_goto_slot)->execute(target);
             }
           }
+          // ── Auto-Stop: Drehmodus stoppen wenn alle Timer/CDs enden ──────────────
+          if (id(dr_auto_stop_armed) && id(dr_aktiv)) {
+            bool any_running = false;
+            for (int _j = 0; _j < 6; _j++) {
+              if (id(slot_status)[_j] == 1) { any_running = true; break; }
+            }
+            if (!any_running) {
+              id(dr_auto_stop_armed) = false;
+              ESP_LOGI("drehen", "Auto-Stop: alle Timer beendet, stoppe Drehmodus");
+              id(script_drehen_stop)->execute();
+            }
+          }
 lvgl:
   log_level: INFO
   color_depth: 16

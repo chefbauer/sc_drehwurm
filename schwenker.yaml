@@ -104,6 +104,11 @@ globals:
     restore_value: no
     initial_value: 'false'
 
+  - id: dr_auto_stop_armed     # true = Drehmodus soll stoppen wenn alle Timer/CDs enden
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+
   - id: sw_auto_stop_slot      # Slot-Index (0-basiert) für Auto-Stop-Positionsfahrt
     type: int
     restore_value: no
@@ -793,6 +798,15 @@ script:
           }
           lv_obj_set_style_bg_color(id(btn_dr_start_stop), lv_color_hex(0x229933), 0);
           lv_obj_set_style_bg_color(id(btn_schwenker_main), lv_color_hex(0x229933), 0);
+          // Auto-Stop: Flag setzen wenn mindestens ein Slot läuft
+          id(dr_auto_stop_armed) = false;
+          for (int _s = 0; _s < 6; _s++) {
+            if (id(slot_status)[_s] == 1) {
+              id(dr_auto_stop_armed) = true;
+              ESP_LOGI("drehen", "Auto-Stop armed: erster aktiver Slot=%d", _s + 1);
+              break;
+            }
+          }
           float ramp_s = (float)(id(dr_speed_rpm) * 8) * (256 - id(dr_acc)) * 0.00005f;
           ESP_LOGI("drehen", "START  %d UPM (F6=%d)  acc=%d  ramp=%.1fs  dir=%+d  mode=%d",
                    id(dr_speed_rpm), speed_val, id(dr_acc), ramp_s, id(dr_richtung), id(dr_motor_mode));
@@ -809,6 +823,7 @@ script:
             return;
           }
           id(dr_aktiv)       = false;
+          id(dr_auto_stop_armed) = false;
           id(dr_current_rpm) = 0;
           id(dr_last_sent_rpm) = -1;
           // Pumpe zurück auf gespeicherten Level
