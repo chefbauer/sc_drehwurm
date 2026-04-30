@@ -53,6 +53,9 @@ esphome:
             } else {
               lv_label_set_text(id(lbl_schwenker_icon), "\xef\x80\xa1");  // U+F021 arrows-rotate (Schwenken)
             }
+            // Pumpen-Button: immer auf AUTO starten
+            lv_obj_set_style_bg_color(id(btn_beckenfuellung), lv_color_hex(0x1a7a3a), 0);
+            lv_label_set_text(id(lbl_pumpe_modus), "A");
             // Einstellungs-TabView: horizontales Wischen (Tab-Wechsel per Swipe) deaktivieren
             // Vertikales Scrollen einzelner Tabs bleibt unberührt (separate child-Objekte)
             lv_obj_set_scroll_dir(lv_tabview_get_content(id(settings_tabs)), LV_DIR_NONE);

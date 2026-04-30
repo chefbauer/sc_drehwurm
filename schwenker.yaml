@@ -273,6 +273,21 @@ globals:
     restore_value: yes
     initial_value: 'true'
 
+  - id: pumpe_a_modus           # 0=AUS, 1=MANUELL, 2=AUTO (immer AUTO beim Boot)
+    type: int
+    restore_value: no
+    initial_value: '2'
+
+  - id: pumpe_a_modus_vor_turbo # Modus vor TURBO-Start merken
+    type: int
+    restore_value: no
+    initial_value: '1'
+
+  - id: pumpe_a_auto_war_an     # AUTO-Intern: war Pumpe durch AUTO eingeschaltet?
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+
   # ── Drehe-Presets ─────────────────────────────────────────
   - id: drp1_rpm
     type: int
@@ -624,6 +639,61 @@ script:
           id(can_bus)->send_data(${motor_can_id}, false, data);
           ESP_LOGI("schwenker", "Motor Re-Init abgeschlossen");
 
+  # ── Pumpe: Modus setzen (0=AUS, 1=MANUELL, 2=AUTO) ────────────
+  - id: script_pumpe_set_modus
+    mode: restart
+    parameters:
+      modus: int
+    then:
+      - lambda: |-
+          id(pumpe_a_modus) = modus;
+          // Farbe + Label aktualisieren
+          uint32_t color;
+          const char* lbl;
+          if (modus == 2) {
+            color = 0x1a7a3a;  // grün = AUTO
+            lbl   = "A";
+          } else if (modus == 1) {
+            color = 0x1a5a8a;  // blau = MANUELL
+            lbl   = "M";
+          } else {
+            color = 0x555555;  // grau = AUS
+            lbl   = "";
+          }
+          lv_obj_set_style_bg_color(id(btn_beckenfuellung), lv_color_hex(color), 0);
+          lv_label_set_text(id(lbl_pumpe_modus), lbl);
+          // Aktion je Modus
+          if (modus == 0) {
+            // AUS: Pumpe stoppen
+            id(script_pumpe_a_kurz).stop();
+            id(script_pumpe_a_lang).stop();
+            id(pumpe_a_aktiv) = false;
+            id(pumpe_a_auto_war_an) = false;
+            id(output_pumpe_dacA).set_level(0.0f);
+            ESP_LOGI("pumpe", "Modus: AUS");
+          } else if (modus == 1) {
+            // MANUELL: einschalten falls noch nicht aktiv
+            id(pumpe_a_auto_war_an) = false;
+            if (!id(pumpe_a_aktiv)) {
+              id(script_pumpe_a_kurz).execute();
+            }
+            ESP_LOGI("pumpe", "Modus: MANUELL");
+          } else {
+            // AUTO: nur einschalten wenn Motor läuft
+            id(pumpe_a_auto_war_an) = false;
+            bool motor_laeuft = id(sw_aktiv) || id(dr_aktiv);
+            if (motor_laeuft && !id(pumpe_a_aktiv)) {
+              id(script_pumpe_a_kurz).execute();
+              id(pumpe_a_auto_war_an) = true;
+            } else if (!motor_laeuft && id(pumpe_a_aktiv)) {
+              id(script_pumpe_a_kurz).stop();
+              id(script_pumpe_a_lang).stop();
+              id(pumpe_a_aktiv) = false;
+              id(output_pumpe_dacA).set_level(0.0f);
+            }
+            ESP_LOGI("pumpe", "Modus: AUTO (motor=%d)", (int)motor_laeuft);
+          }
+
   # ── Beckenfüllung Kurz (25% → 5% Dauer) ──────────────────
   - id: script_pumpe_a_kurz
     mode: restart
@@ -631,7 +701,6 @@ script:
       - lambda: |-
           id(pumpe_a_aktiv) = true;
           id(output_pumpe_dacA).set_level(0.25f);  // 25% Anlauf
-          lv_obj_set_style_bg_color(id(btn_beckenfuellung), lv_color_hex(0x2255CC), 0);
           ESP_LOGI("pumpe", "Beckenfüllung KURZ start");
       - delay: 300ms
       - lambda: |-
@@ -643,10 +712,13 @@ script:
     mode: restart
     then:
       - lambda: |-
+          // Modus vor Turbo merken, damit wir nachher zurückkehren
+          id(pumpe_a_modus_vor_turbo) = id(pumpe_a_modus);
           id(pumpe_a_aktiv) = true;
           id(output_pumpe_dacA).set_level(0.25f);  // 25% Anlauf
-          lv_obj_set_style_bg_color(id(btn_beckenfuellung), lv_color_hex(0x2255CC), 0);
-          ESP_LOGI("pumpe", "Beckenfüllung LANG start");
+          lv_obj_set_style_bg_color(id(btn_beckenfuellung), lv_color_hex(0xCC7700), 0);  // orange = TURBO
+          lv_label_set_text(id(lbl_pumpe_modus), "T");
+          ESP_LOGI("pumpe", "Beckenfüllung TURBO start (Modus vorher=%d)", id(pumpe_a_modus_vor_turbo));
       #- delay: 300ms
       #- lambda: |-
       #    id(output_pumpe_dacA).set_level(0.02f);  // 15% Zwischenphase
@@ -657,6 +729,9 @@ script:
       - lambda: |-
           id(output_pumpe_dacA).set_level(0.05f);  // 5% Dauer
           lv_slider_set_value(id(slider_turmpumpe), 5, LV_ANIM_OFF);
+          // Nach Turbo: zurück zum gespeicherten Modus
+          id(script_pumpe_set_modus)->execute(id(pumpe_a_modus_vor_turbo));
+          ESP_LOGI("pumpe", "TURBO ende, zurück zu Modus %d", id(pumpe_a_modus_vor_turbo));
 
   # ── Beckenfüllung AUS ────────────────────────────────────
   - id: script_pumpe_a_aus
@@ -664,8 +739,11 @@ script:
     then:
       - lambda: |-
           id(pumpe_a_aktiv) = false;
+          id(pumpe_a_auto_war_an) = false;
           id(output_pumpe_dacA).set_level(0.0f);
+          // Farbe + Label nach aktuellem Modus setzen (AUS erzwingt grau)
           lv_obj_set_style_bg_color(id(btn_beckenfuellung), lv_color_hex(0x555555), 0);
+          lv_label_set_text(id(lbl_pumpe_modus), "");
           ESP_LOGI("pumpe", "Beckenfüllung AUS");
 
   # ── System EIN ───────────────────────────────────────────
@@ -693,7 +771,9 @@ script:
           call.perform();
           id(output_pumpe_dacA).turn_off();
           id(pumpe_a_aktiv) = false;
+          id(pumpe_a_auto_war_an) = false;
           lv_obj_set_style_bg_color(id(btn_beckenfuellung), lv_color_hex(0x555555), 0);
+          lv_label_set_text(id(lbl_pumpe_modus), "");
           if (id(dr_aktiv)) id(script_drehen_stop).execute();
           id(output_pumpe_dacB).turn_off();
           ESP_LOGI("system", "AUS");
@@ -885,7 +965,24 @@ interval:
             }
           }
 
-          // ── Drehmodus: F5 einmalig in script_drehen_start gesendet – hier nichts tun ──
+          // ── Pumpe AUTO-Modus: Pumpe mit Motor an/aus ──────────────────────────
+          if (id(pumpe_a_modus) == 2) {
+            bool motor_laeuft = id(sw_aktiv) || id(dr_aktiv);
+            if (motor_laeuft && !id(pumpe_a_aktiv) && !id(pumpe_a_auto_war_an)) {
+              id(pumpe_a_auto_war_an) = true;
+              id(script_pumpe_a_kurz).execute();
+              ESP_LOGI("pumpe", "AUTO: Motor EIN → Pumpe EIN");
+            } else if (!motor_laeuft && id(pumpe_a_auto_war_an) && id(pumpe_a_aktiv)) {
+              id(pumpe_a_auto_war_an) = false;
+              id(script_pumpe_a_kurz).stop();
+              id(script_pumpe_a_lang).stop();
+              id(pumpe_a_aktiv) = false;
+              id(output_pumpe_dacA).set_level(0.0f);
+              ESP_LOGI("pumpe", "AUTO: Motor AUS → Pumpe AUS");
+            }
+          }
+
+          // ── Drehmodus: F6 in script_drehen_start gesendet – hier nichts tun ─────
           if (id(dr_aktiv)) {
             return;
           }

@@ -441,6 +441,9 @@ lvgl:
                         text_color: 0xFFFFFF
               
               # Beckenfüllungs-Button (rund, tangential 45° rechts unten am Ring)
+              # Modi: 0=AUS(grau), 1=MANUELL(blau), 2=AUTO(grün)
+              # Short: Cycle AUS→MANUELL→AUTO→AUS
+              # Long:  TURBO (dann zurück zum vorherigen Modus)
               - button:
                   id: btn_beckenfuellung
                   width: 80
@@ -457,27 +460,27 @@ lvgl:
                   pad_all: 0
                   on_short_click:
                     - lambda: |-
-                        if (id(pumpe_a_aktiv)) {
-                          id(script_pumpe_a_kurz).stop();
-                          id(script_pumpe_a_lang).stop();
-                          id(script_pumpe_a_aus).execute();
-                        } else {
-                          id(script_pumpe_a_kurz).execute();
-                        }
+                        // Cycle: 0→1→2→0
+                        int naechster = (id(pumpe_a_modus) + 1) % 3;
+                        id(script_pumpe_set_modus)->execute(naechster);
                   on_long_press:
                     - lambda: |-
-                        if (id(pumpe_a_aktiv)) {
-                          id(script_pumpe_a_kurz).stop();
-                          id(script_pumpe_a_lang).stop();
-                          id(script_pumpe_a_aus).execute();
-                        } else {
-                          id(script_pumpe_a_lang).execute();
-                        }
+                        // TURBO: immer, script_pumpe_a_lang merkt Modus selbst
+                        id(script_pumpe_a_kurz).stop();
+                        id(script_pumpe_a_lang).execute();
                   widgets:
                     - label:
                         align: CENTER
+                        y: -8
                         text: "\uF773"
                         text_font: font_icons
+                        text_color: 0xFFFFFF
+                    - label:
+                        id: lbl_pumpe_modus
+                        align: BOTTOM_MID
+                        y: -6
+                        text: "M"
+                        text_font: font_small
                         text_color: 0xFFFFFF
 
               # Schwenker-Steuerung: Großer runder Toggle-Button
