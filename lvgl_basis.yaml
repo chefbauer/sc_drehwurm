@@ -417,8 +417,7 @@ lvgl:
                   text_color: 0x003366  # Dunkelblau
                   text_align: CENTER
 
-              # STOP-Button oben links — Verkehrszeichen-Optik (rot achteckig, STOP weiß)
-              # on_click: sofortiger Notaus (system_aus)
+              # Not-Aus Button oben links
               - button:
                   id: btn_stop_notaus
                   width: 80
@@ -429,8 +428,7 @@ lvgl:
                   radius: 8
                   bg_color: 0xCC0000
                   bg_opa: COVER
-                  border_width: 4
-                  border_color: 0xFF4444
+                  border_width: 0
                   shadow_width: 0
                   outline_width: 0
                   pad_all: 0
@@ -440,9 +438,10 @@ lvgl:
                   widgets:
                     - label:
                         align: CENTER
-                        text: "STOP"
-                        text_font: font_title
+                        text: "Not-\nAus"
+                        text_font: font_tab
                         text_color: 0xFFFFFF
+                        text_align: CENTER
 
               # System-Schalter rechts oben: Long Press = EIN/AUS toggle (nur Climate)
               # Short Press: keine Funktion mehr (dafür gibts den STOP-Button links)
